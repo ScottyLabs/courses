@@ -2,6 +2,7 @@
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { MagnifyingGlass, UserCircle, Clock, User } from '@steeze-ui/heroicons';
 	import favicon from '@/lib/assets/favicon.ico';
+	import ThemeToggle from '@/lib/components/ThemeToggle.svelte';
 </script>
 
 <header class="flex min-h-16 flex-row items-center justify-between bg-bg-secondary p-6 shadow-md">
@@ -31,7 +32,8 @@
 		</a>
 	</div>
 
-	<div>
+	<div class="flex items-center gap-4">
+		<ThemeToggle />
 		<p>log in</p>
 	</div>
 </header>
