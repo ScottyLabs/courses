@@ -5,6 +5,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	ssr: { noExternal: ['@steeze-ui/svelte-icon'] },
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
