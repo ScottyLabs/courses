@@ -4,7 +4,7 @@
 	import favicon from '@/lib/assets/favicon.ico';
 </script>
 
-<header class="bg-bg-gray flex h-16 flex-row items-center justify-between p-6 shadow-md">
+<header class="flex h-16 flex-row items-center justify-between bg-bg-secondary p-6 shadow-md">
 	<a href="/" class="flex flex-initial flex-row justify-start hover:underline">
 		<div class="flex items-center">
 			<img src={favicon} class="h-8 w-8 rounded" alt="favicon" />
