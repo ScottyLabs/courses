@@ -18,11 +18,6 @@
 {@render children()}
 
 <style>
-	:global(:root) {
-		--color-white: #ffffff;
-		--color-gray: #f0f4f8;
-	}
-
 	:global(body) {
 		margin: 0;
 		padding: 0;
