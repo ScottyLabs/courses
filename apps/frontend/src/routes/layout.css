@@ -3,7 +3,8 @@
 @plugin '@tailwindcss/typography';
 
 @theme {
-	--color-white: #ffffff;
-	--color-gray: #f0f4f8;
-	--color-dark-gray: #4a5662;
+	--color-bg-primary: #ffffff;
+	--color-bg-secondary: #f0f4f8;
+	--color-fg-black: #4a5662;
+  --color-fg-gray: #7a8fa3;
 }
