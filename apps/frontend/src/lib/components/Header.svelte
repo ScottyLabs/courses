@@ -24,15 +24,15 @@
 			<Icon src={MagnifyingGlass} class="h-6 w-6 [stroke-width:2] text-fg-gray" />
 			<span class="font-medium text-fg-gray">Courses</span>
 		</a>
-		<a href="/courses" class="flex flex-row items-center gap-2.5">
+		<a href="/instructors" class="flex flex-row items-center gap-2.5">
 			<Icon src={UserCircle} class="h-6 w-6 [stroke-width:2] text-fg-gray" />
 			<span class="font-medium text-fg-gray">Instructors</span>
 		</a>
-		<a href="/courses" class="flex flex-row items-center gap-2.5">
+		<a href="/schedules" class="flex flex-row items-center gap-2.5">
 			<Icon src={Clock} class="h-6 w-6 [stroke-width:2] text-fg-gray" />
 			<span class="font-medium text-fg-gray">Schedules</span>
 		</a>
-		<a href="/courses" class="flex flex-row items-center gap-2.5">
+		<a href="/profile" class="flex flex-row items-center gap-2.5">
 			<Icon src={User} class="h-6 w-6 [stroke-width:2] text-fg-gray" />
 			<span class="font-medium text-fg-gray">Profile</span>
 		</a>
