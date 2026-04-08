@@ -20,6 +20,10 @@
 		margin: 0;
 		padding: 0;
 
+		min-height: 100dvh;
+		display: flex;
+		flex-direction: column;
+
 		font-family: 'Inter', sans-serif;
 	}
 </style>
