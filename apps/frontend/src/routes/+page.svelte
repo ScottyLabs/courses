@@ -1,2 +1,3 @@
-<link rel="icon" href="/favicon.ico" />
-<h1>CMU Courses</h1>
+<main>
+	<h1>CMU Courses</h1>
+</main>
