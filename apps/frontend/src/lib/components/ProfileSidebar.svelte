@@ -4,8 +4,8 @@
 	import { BookmarkPlus, CalendarPlus, Users } from '@steeze-ui/lucide-icons';
 </script>
 
-<div class="justify-inital flex min-w-80 flex-col border-r-1 border-border p-6 text-fg-black">
-	<div>
+<div class="justify-inital flex min-w-80 flex-col border-r-1 border-border py-6 text-fg-black">
+	<div class="px-6">
 		<div class="flex flex-row items-center justify-between">
 			<div class="text-lg">Profile</div>
 			<button class="flex cursor-pointer flex-row justify-end">
@@ -24,25 +24,35 @@
 		</div>
 	</div>
 	<div>
-		<div class="flex flex-row items-center gap-2 py-3">
+		<button
+			class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={BookmarkPlus} class="h-5 w-5 text-gray-500" />
 			<span>Saved Courses</span>
-		</div>
-		<div class="flex flex-row items-center gap-2 py-3">
+		</button>
+		<button
+			class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={Calendar} class="h-5 w-5 text-gray-500" />
 			<span>Currently Taking</span>
-		</div>
-		<div class="flex flex-row items-center gap-2 py-3">
+		</button>
+		<button
+			class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={Check} class="h-5 w-5 text-gray-500" />
 			<span>Courses Taken</span>
-		</div>
-		<div class="flex flex-row items-center gap-2 py-3">
+		</button>
+		<button
+			class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={CalendarPlus} class="h-5 w-5 text-gray-500" />
 			<span>Schedule</span>
-		</div>
-		<div class="flex flex-row items-center gap-2 py-3">
+		</button>
+		<button
+			class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={Users} class="h-5 w-5 text-gray-500" />
 			<span>Friends</span>
-		</div>
+		</button>
 	</div>
 </div>
