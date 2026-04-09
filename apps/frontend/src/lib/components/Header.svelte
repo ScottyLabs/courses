@@ -1,12 +1,7 @@
 <script>
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import {
-		MagnifyingGlass,
-		UserCircle,
-		Clock,
-		User,
-		ArrowRightOnRectangle
-	} from '@steeze-ui/heroicons';
+	import { MagnifyingGlass, UserCircle, Clock, User } from '@steeze-ui/heroicons';
+	import { LogOut } from '@steeze-ui/lucide-icons';
 	import favicon from '@/lib/assets/favicon.ico';
 	import ThemeToggle from '@/lib/components/ThemeToggle.svelte';
 </script>
@@ -43,7 +38,7 @@
 		<button
 			class="flex cursor-pointer items-center gap-2 rounded-full border border-fg-light-gray px-3 py-2 text-fg-black transition-colors duration-200 hover:border-fg-black hover:text-fg-black"
 		>
-			<Icon src={ArrowRightOnRectangle} class="h-5 w-5 [stroke-width:2]" />
+			<Icon src={LogOut} class="h-5 w-5 [stroke-width:2]" />
 			<span class="font-medium">Sign out</span>
 		</button>
 	</div>
