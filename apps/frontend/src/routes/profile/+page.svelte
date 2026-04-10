@@ -7,7 +7,7 @@
 <Header />
 <main class="flex flex-1 flex-col">
 	<div class="flex flex-1 flex-row">
-        <ProfileSidebar />
+		<ProfileSidebar />
 	</div>
 </main>
 <Footer />
