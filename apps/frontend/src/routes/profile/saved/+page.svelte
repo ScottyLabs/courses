@@ -10,7 +10,7 @@
 <main class="flex flex-1 flex-col">
 	<div class="flex flex-1 flex-row">
 		<ProfileSidebar />
-		<div class="flex min-w-full flex-col">
+		<div class="flex flex-1 flex-col">
 			<div class="flex flex-col gap-6 border-b-1 border-border p-8">
 				<div class="text-xl text-fg-black">Saved Courses</div>
 				<div class="flex flex-row gap-3">
