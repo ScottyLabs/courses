@@ -4,7 +4,7 @@
 </script>
 
 <footer
-	class="flex min-h-16 flex-row items-center justify-between border border-t-1 border-border bg-bg-secondary px-8 py-4"
+	class="flex min-h-16 flex-row items-center justify-between border-t-1 border-border bg-bg-secondary px-8 py-4"
 >
 	<div class="text-normal flex flex-col text-sm text-fg-gray">
 		<p>Designed, developed and maintained with ❤️ by ScottyLabs.</p>
