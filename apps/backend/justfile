@@ -1,0 +1,34 @@
+# list all commands
+@default:
+    just --list
+
+# start dev server
+dev:
+    cargo run
+
+# run tests
+test:
+    cargo test
+
+# generate seaorm entities
+gen:
+    sea-orm-cli generate entity \
+        --database-url postgresql://postgres:donotuseinproduction@localhost:5432/courses_db \
+        --output-dir ./src/db/entity \
+        --entity-format dense
+
+# run db migrations
+migrate:
+    sea-orm-cli migrate up
+
+# check db migration status
+migrate-status:
+    sea-orm-cli migrate status
+
+# create a new migration
+migrate-new name:
+    sea-orm-cli migrate generate {{name}}
+
+# rollback last migration
+rollback:
+    sea-orm-cli migrate down
