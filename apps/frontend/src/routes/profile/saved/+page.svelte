@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { ChevronUp } from '@steeze-ui/heroicons';
+	import CourseCard from '$lib/components/CourseCard.svelte';
 </script>
 
 <div class="flex flex-1 flex-col">
@@ -21,5 +22,13 @@
 			</button>
 		</div>
 	</div>
-	<div class="grid flex-1 grid-cols-2 bg-bg-secondary">bottom</div>
+	<div class="flex-1 bg-bg-secondary">
+		<div class="grid grid-cols-2 gap-6 p-8">
+			<CourseCard />
+			<CourseCard />
+			<CourseCard />
+			<CourseCard />
+			<CourseCard />
+		</div>
+	</div>
 </div>
