@@ -14,21 +14,36 @@
 		<button onclick={toggleHidden} class="cursor-pointer px-6 pb-34">
 			<Icon src={ChevronRight} class="h-5 w-5 [stroke-width:2]" />
 		</button>
-		<button class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border">
+		<a
+			href="profile/saved"
+			class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={BookmarkPlus} class="h-5 w-5 text-gray-500" />
-		</button>
-		<button class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border">
+		</a>
+		<a
+			href="profile/current"
+			class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={Calendar} class="h-5 w-5 text-gray-500" />
-		</button>
-		<button class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border">
+		</a>
+		<a
+			href="profile/completed"
+			class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={Check} class="h-5 w-5 text-gray-500" />
-		</button>
-		<button class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border">
+		</a>
+		<a
+			href="profile/schedule"
+			class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={CalendarPlus} class="h-5 w-5 text-gray-500" />
-		</button>
-		<button class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border">
+		</a>
+		<a
+			href="profile/friends"
+			class="cursor-pointer px-6 py-3.5 transition-colors duration-200 hover:bg-border"
+		>
 			<Icon src={Users} class="h-5 w-5 text-gray-500" />
-		</button>
+		</a>
 	</div>
 {:else}
 	<div class="justify-inital flex min-w-80 flex-col border-r-1 border-border py-6 text-fg-black">
@@ -51,36 +66,41 @@
 			</div>
 		</div>
 		<div>
-			<button
+			<a
+				href="profile/saved"
 				class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
 			>
 				<Icon src={BookmarkPlus} class="h-5 w-5 text-gray-500" />
 				<span>Saved Courses</span>
-			</button>
-			<button
+			</a>
+			<a
+				href="profile/current"
 				class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
 			>
 				<Icon src={Calendar} class="h-5 w-5 text-gray-500" />
 				<span>Currently Taking</span>
-			</button>
-			<button
+			</a>
+			<a
+				href="profile/completed"
 				class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
 			>
 				<Icon src={Check} class="h-5 w-5 text-gray-500" />
 				<span>Courses Taken</span>
-			</button>
-			<button
+			</a>
+			<a
+				href="profile/schedule"
 				class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
 			>
 				<Icon src={CalendarPlus} class="h-5 w-5 text-gray-500" />
 				<span>Schedule</span>
-			</button>
-			<button
+			</a>
+			<a
+				href="profile/friends"
 				class="flex w-full cursor-pointer flex-row items-center gap-2 px-6 py-3 transition-colors duration-200 hover:bg-border"
 			>
 				<Icon src={Users} class="h-5 w-5 text-gray-500" />
 				<span>Friends</span>
-			</button>
+			</a>
 		</div>
 	</div>
 {/if}

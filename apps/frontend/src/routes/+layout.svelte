@@ -25,6 +25,7 @@
 		padding: 0;
 
 		min-height: 100dvh;
+		min-width: 100dvh;
 		display: flex;
 		flex-direction: column;
 
