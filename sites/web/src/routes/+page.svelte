@@ -1,10 +1,5 @@
-<script lang="ts">
-	import Header from '@/lib/components/Header.svelte';
-	import Footer from '@/lib/components/Footer.svelte';
-</script>
-
-<Header />
-<main class="flex-1">
-	<h1>CMU Courses</h1>
+<main class="flex flex-1 flex-col">
+	<div class="flex flex-1 flex-row">
+		<!-- Auto redirect from here? -->
+	</div>
 </main>
-<Footer />
