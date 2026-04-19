@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:18-alpine
-    container_name: courses-db
+    container_name: cmucourses-db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: donotuseinproduction
-      POSTGRES_DB: courses_db
+      POSTGRES_DB: cmucourses_db
     ports:
       - "127.0.0.1:5432:5432"
     volumes:

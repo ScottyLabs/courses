@@ -13,7 +13,7 @@ test:
 # generate seaorm entities
 gen:
     sea-orm-cli generate entity \
-        --database-url postgresql://postgres:donotuseinproduction@localhost:5432/courses_db \
+        --database-url postgresql://postgres:donotuseinproduction@localhost:5432/cmucourses_db \
         --output-dir ./src/db/entity \
         --entity-format dense
 
