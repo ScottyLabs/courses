@@ -1,0 +1,47 @@
+# list all commands
+@default:
+    just --list
+
+# start dev server
+dev:
+    docker compose up -d
+    cargo run
+
+# run tests
+test:
+    cargo test
+
+# generate seaorm entities
+gen:
+    sea-orm-cli generate entity \
+        --database-url postgresql://postgres:donotuseinproduction@localhost:5432/cmucourses_db \
+        --output-dir ./src/db/entity \
+        --entity-format dense
+
+# run all docker compose containers
+compose-up:
+    docker compose up -d
+
+# stop all docker compose containers
+compose-stop:
+    docker compose stop
+
+# remove all docker compose containers
+compose-down:
+    docker compose down
+
+# run db migrations
+migrate:
+    sea-orm-cli migrate up
+
+# check db migration status
+migrate-status:
+    sea-orm-cli migrate status
+
+# create a new migration
+migrate-new name:
+    sea-orm-cli migrate generate {{name}}
+
+# rollback last migration
+rollback:
+    sea-orm-cli migrate down
