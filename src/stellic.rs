@@ -85,16 +85,28 @@ impl Stellic {
     }
 
     fn get(&self, url: &str) -> Result<String> {
-        Ok(self
-            .agent
-            .get(url)
-            .header("Cookie", &self.cookie)
-            .header("X-CSRFToken", &self.csrf)
-            .header("X-Requested-With", "XMLHttpRequest")
-            .header("Referer", &format!("{BASE}/app/courses"))
-            .call()?
-            .into_body()
-            .read_to_string()?)
+        let mut attempt: u32 = 0;
+        loop {
+            let result = self
+                .agent
+                .get(url)
+                .header("Cookie", &self.cookie)
+                .header("X-CSRFToken", &self.csrf)
+                .header("X-Requested-With", "XMLHttpRequest")
+                .header("Referer", &format!("{BASE}/app/courses"))
+                .call();
+            match result {
+                Ok(r) => return Ok(r.into_body().read_to_string()?),
+                Err(e) => {
+                    if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
+                        return Err(e.into());
+                    }
+                    let delay_ms = (200u64 << attempt.min(5)).min(5000);
+                    std::thread::sleep(Duration::from_millis(delay_ms));
+                    attempt += 1;
+                }
+            }
+        }
     }
 
     fn write_course(&self, course: &str, file: &str, contents: &str) -> Result<()> {
