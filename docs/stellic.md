@@ -25,7 +25,7 @@ POST requests additionally need a content type, but Stellic is inconsistent abou
 
 ### POST /planner/getstudentprofile/
 
-Body (form): `student_username=<andrew_id>`. Returns the student profile, of which the scraper uses `default_plan_id` and `term_joined: {semester, year}` (the latter anchors the `lyear` window). The scraper also uses this call as its auth check on startup: if the response is not XSSI-prefixed JSON, the cookie is bad and we re-prompt.
+Body (form): empty, or `student_username=<anything>`. The session cookie identifies the user; the body's `student_username` value is ignored by the server for student-role callers (Stellic returns the cookie's profile regardless of the value sent). Returns the student profile, of which the scraper uses `username` (echoed back in subsequent calls' `student_username` field), `default_plan_id`, and `term_joined: {semester, year}` (the latter anchors the `lyear` window). The scraper also uses this call as its auth check on startup: if the response is not XSSI-prefixed JSON, the cookie is bad and we re-prompt.
 
 ### GET /catalog/getcourseinfo/
 

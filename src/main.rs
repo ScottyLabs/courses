@@ -1,6 +1,8 @@
+mod canvas;
 mod discovery;
 mod requirements;
 mod stellic;
+mod syllabi;
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
@@ -11,6 +13,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use tracing::{debug, info, warn};
 use tracing_subscriber::EnvFilter;
 
+use canvas::Canvas;
 use discovery::{Sem, Soc, Task, course_tasks, fetch_soc, parse_fce};
 use stellic::Stellic;
 
@@ -20,7 +23,8 @@ const SEASONS: &[&str] = &["fall", "spring", "summer_1", "summer_2"];
 enum Mode {
     Courses,
     Programs,
-    Both,
+    Syllabi,
+    All,
 }
 
 #[derive(Parser, Debug)]
@@ -38,16 +42,19 @@ struct Args {
     #[arg(long, default_value = "data/programs", env = "PROGRAMS_DIR")]
     programs_dir: PathBuf,
 
+    #[arg(long, default_value = "data/syllabi", env = "SYLLABI_DIR")]
+    syllabi_dir: PathBuf,
+
     #[arg(long, env = "COOKIE_HEADER")]
     cookie_header: Option<String>,
 
-    #[arg(long, env = "ANDREW_ID")]
-    andrew_id: String,
+    #[arg(long, env = "CANVAS_TOKEN")]
+    canvas_token: Option<String>,
 
     #[arg(long, env = "LIMIT")]
     limit: Option<usize>,
 
-    #[arg(long, value_enum, default_value_t = Mode::Both, env = "MODE")]
+    #[arg(long, value_enum, default_value_t = Mode::Courses, env = "MODE")]
     mode: Mode,
 }
 
@@ -59,39 +66,111 @@ fn main() -> Result<()> {
         .init();
     let args = Args::parse();
 
-    let (stellic, term_joined) = Stellic::login(
-        args.cookie_header.clone(),
-        &args.andrew_id,
-        args.out_dir.clone(),
-    )?;
-    let joined_sem = Sem::from_id(term_joined.semester).context("unknown joined semester id")?;
-    let anchor = joined_sem.ay_start(term_joined.year);
-    info!(
-        plan_id = %stellic.plan_id,
-        joined_year = term_joined.year,
-        joined_sem = ?joined_sem,
-        anchor,
-        "authed"
-    );
-
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(args.concurrency)
         .build()?;
 
+    let needs_stellic = matches!(
+        args.mode,
+        Mode::Courses | Mode::Programs | Mode::All
+    );
+    let needs_canvas = matches!(args.mode, Mode::Syllabi | Mode::All);
+
+    let stellic_anchor = if needs_stellic {
+        let (stellic, term_joined) =
+            Stellic::login(args.cookie_header.clone(), args.out_dir.clone())?;
+        let joined_sem =
+            Sem::from_id(term_joined.semester).context("unknown joined semester id")?;
+        let anchor = joined_sem.ay_start(term_joined.year);
+        info!(
+            plan_id = %stellic.plan_id,
+            joined_year = term_joined.year,
+            joined_sem = ?joined_sem,
+            anchor,
+            "authed"
+        );
+        Some((stellic, anchor))
+    } else {
+        None
+    };
+
+    let canvas = if needs_canvas {
+        let token = args
+            .canvas_token
+            .clone()
+            .context("--canvas-token (or CANVAS_TOKEN) required for syllabi mode")?;
+        Some(Canvas::new(token))
+    } else {
+        None
+    };
+
     match args.mode {
-        Mode::Courses => scrape_courses(&stellic, &args, anchor, &pool)?,
-        Mode::Programs => scrape_programs(&stellic, &args, &pool)?,
-        Mode::Both => {
-            let (cr, pr) = pool.install(|| {
+        Mode::Courses => {
+            let (s, anchor) = stellic_anchor.as_ref().unwrap();
+            scrape_courses(s, &args, *anchor, &pool)?;
+        }
+        Mode::Programs => {
+            let (s, _) = stellic_anchor.as_ref().unwrap();
+            scrape_programs(s, &args, &pool)?;
+        }
+        Mode::Syllabi => {
+            scrape_syllabi(canvas.as_ref().unwrap(), &args, &pool)?;
+        }
+        Mode::All => {
+            let (s, anchor) = stellic_anchor.as_ref().unwrap();
+            let c = canvas.as_ref().unwrap();
+            let ((cr, pr), sr) = pool.install(|| {
                 rayon::join(
-                    || scrape_courses(&stellic, &args, anchor, &pool),
-                    || scrape_programs(&stellic, &args, &pool),
+                    || {
+                        rayon::join(
+                            || scrape_courses(s, &args, *anchor, &pool),
+                            || scrape_programs(s, &args, &pool),
+                        )
+                    },
+                    || scrape_syllabi(c, &args, &pool),
                 )
             });
             cr?;
             pr?;
+            sr?;
         }
     }
+    Ok(())
+}
+
+fn scrape_syllabi(canvas: &Canvas, args: &Args, pool: &rayon::ThreadPool) -> Result<()> {
+    let mut tasks = pool.install(|| syllabi::build_tasks(canvas))?;
+    if let Some(n) = args.limit {
+        tasks.truncate(n);
+    }
+    let total = tasks.len();
+    info!(total, concurrency = args.concurrency, "scraping syllabi");
+
+    let done = AtomicUsize::new(0);
+    let failed = AtomicUsize::new(0);
+    pool.install(|| {
+        tasks.into_par_iter().for_each(|task| {
+            let result = syllabi::save_task(canvas, &args.syllabi_dir, &task);
+            let n = done.fetch_add(1, Ordering::Relaxed) + 1;
+            if let Err(e) = result {
+                failed.fetch_add(1, Ordering::Relaxed);
+                debug!(error = %e, task = ?task, "syllabus save failed");
+            }
+            if n.is_multiple_of(500) {
+                info!(
+                    done = n,
+                    total,
+                    failed = failed.load(Ordering::Relaxed),
+                    "progress"
+                );
+            }
+        });
+    });
+    info!(
+        done = done.load(Ordering::Relaxed),
+        failed = failed.load(Ordering::Relaxed),
+        "syllabi complete"
+    );
     Ok(())
 }
 

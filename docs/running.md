@@ -4,14 +4,15 @@
 
 | Flag | Env | Default | Purpose |
 |---|---|---|---|
-| `--andrew-id` | `ANDREW_ID` | (required) | Andrew ID sent to `getstudentprofile/`. |
-| `--cookie-header` | `COOKIE_HEADER` | (prompt) | Full `Cookie:` header value. If absent, the scraper prompts on stderr with instructions. |
-| `--mode` | `MODE` | `both` | One of `courses`, `programs`, `both`. Selects which pipeline runs. |
-| `--fce-path` | `FCE_PATH` | `data/fces.csv` | SmartEvals FCE CSV (used in `courses` and `both`). |
+| `--cookie-header` | `COOKIE_HEADER` | (prompt) | Stellic full `Cookie:` header value. Required for `courses`, `programs`, `all`. The cookie's session identifies the user; no separate Andrew ID is required. |
+| `--canvas-token` | `CANVAS_TOKEN` | (none) | Canvas API token. Required for `syllabi` and `all`. Generate at `https://canvas.cmu.edu/profile/settings`. |
+| `--mode` | `MODE` | `courses` | One of `courses`, `programs`, `syllabi`, `all`. Selects which pipeline runs (`all` runs the three in parallel). |
+| `--fce-path` | `FCE_PATH` | `data/fces.csv` | SmartEvals FCE CSV (used in `courses` and `all`). |
 | `--out-dir` | `OUT_DIR` | `data/courses_history` | Course pipeline output root. |
 | `--programs-dir` | `PROGRAMS_DIR` | `data/programs` | Programs pipeline output root. |
-| `--concurrency` | `CONCURRENCY` | `32` | Worker count for the rayon pool that runs Stellic tasks. |
-| `--limit` | `LIMIT` | (no limit) | Cap on number of tasks, for smoke tests. Applied to both pipelines when `--mode both`. |
+| `--syllabi-dir` | `SYLLABI_DIR` | `data/syllabi` | Syllabi pipeline output root. |
+| `--concurrency` | `CONCURRENCY` | `32` | Worker count for the rayon pool that runs HTTP tasks. |
+| `--limit` | `LIMIT` | (no limit) | Cap on number of tasks, for smoke tests. Applied to all pipelines that run. |
 
 Log filtering is via `RUST_LOG` (tracing `EnvFilter`); the default level is `info`.
 
@@ -58,9 +59,21 @@ Each file wraps the matching `req_tree.programs[]` subtree with audit and progra
 
 Stripped before writing: `audit_data`, top-level `programs`, `course_plan_info`, `placeholders_info`, `unmatched`, `notcounted`, `unmatched_slots`, `permissions`, `program_permissions`, `student_audit`, `full_gpa`, `student_enrollment_levels`, `plan_diplomas`, `remaining_reqs_details`, `last_computed`, `debug_info`, `uni_req_programs`. Cross-reference fields (`unique_course_parents_mapping`, `program_reqs`) are filtered to keys that match the requested audit version, since unfiltered they would also include the caller's auto-attached gen-ed audits and leak the caller's college affiliation.
 
+Syllabi pipeline:
+
+```
+<syllabi_dir>/
+  <term_code>/                   # e.g. S26, F24, M25, N23
+    <dept_code>/                 # e.g. ARC, CS, ART
+      <course_section>.<ext>     # File items: original PDF/DOC
+      <course_section>.url       # Page items: plain-text Canvas page URL
+```
+
+The pipeline only saves items in each sub-course's "Available Syllabi" module. `File` items are downloaded with their original filename extension. `Page` items are saved as a single-line `.url` file containing the Canvas page URL where the syllabus is rendered, since the page body itself is just a redirect stub and the target course's `syllabus_body` is empty most of the time and ambiguous when populated. Downstream consumers can either link directly to the URL or follow it for users who can authenticate. "Unavailable Syllabi" and "Individualized Experiences" modules are skipped because their items are placeholders without retrievable content. See [`syllabi.md`](./syllabi.md) for the registry structure and the rationale.
+
 ## Concurrency
 
-A custom rayon thread pool sized by `--concurrency` runs both pipelines. When `--mode both`, the two pipelines run concurrently within the same pool via `rayon::join`, sharing the thread budget; their outputs go to separate directories so they don't collide. A shared `ureq::Agent` provides the HTTP connection pool internally.
+A custom rayon thread pool sized by `--concurrency` runs every pipeline. When `--mode all`, the three pipelines run concurrently within the same pool via nested `rayon::join`, sharing the thread budget; their outputs go to separate directories so they don't collide. A shared `ureq::Agent` provides the HTTP connection pool internally.
 
 Course pipeline:
 
@@ -74,7 +87,13 @@ Programs pipeline:
 
 Step 2 of the programs pipeline is heavier than any course-pipeline call: each `getauditinfo` returns ~80 KB and the server takes several seconds to compute the audit, so its tolerable concurrency is lower than the course endpoint's.
 
-Empirical concurrency findings on this Stellic deployment:
+Syllabi pipeline:
+
+1. Sub-course discovery: walks the master `syllabus-registry` course's term modules, resolves each dept's `sis_course_id`, and lists each sub-course's modules to gather `Available Syllabi` items. Roughly 1797 sub-course module-list calls.
+2. Item save: for each `File` item, fetches file metadata then downloads the file; for each `Page` item, fetches the page body and writes its HTML.
+
+Empirical concurrency findings:
 
 - Programs pipeline (`getauditinfo` test-apply): best throughput at concurrency 32 (~1.2 s per task on a 512-task run). Concurrency 64 dropped to ~3 s per task with sporadic failures, and 128 stalled. The default is 32.
 - Course pipeline (`getcourseinfo`, `getcoursesections`): handles concurrency 64 cleanly during full-history scrapes; the per-call cost is small enough that the bottleneck is HTTP latency rather than server compute. If running the course pipeline alone, raising `--concurrency` to 64 is safe.
+- Syllabi pipeline (Canvas file downloads): plateaus around concurrency 32 at ~28 MB/s on the dev machine. 64 and 128 do not improve throughput, with 128 slightly regressing. The bottleneck is most likely client-side bandwidth or Canvas's per-IP connection cap.

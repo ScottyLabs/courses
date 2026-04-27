@@ -16,6 +16,7 @@ pub struct TermJoined {
 
 #[derive(Debug, Deserialize)]
 struct Profile {
+    username: String,
     default_plan_id: String,
     term_joined: TermJoined,
 }
@@ -50,7 +51,7 @@ pub struct Stellic {
     agent: ureq::Agent,
     cookie: String,
     csrf: String,
-    andrew_id: String,
+    username: String,
     pub plan_id: String,
     out_dir: PathBuf,
 }
@@ -58,7 +59,6 @@ pub struct Stellic {
 impl Stellic {
     pub fn login(
         cookie: Option<String>,
-        andrew_id: &str,
         out_dir: PathBuf,
     ) -> Result<(Self, TermJoined)> {
         let agent: ureq::Agent = ureq::Agent::config_builder()
@@ -87,7 +87,7 @@ impl Stellic {
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .header("Origin", BASE)
                 .header("Referer", &format!("{BASE}/app/home"))
-                .send(&format!("student_username={andrew_id}"))?
+                .send("")?
                 .into_body()
                 .read_to_string()?;
             if !body.starts_with(")]}'") {
@@ -95,6 +95,7 @@ impl Stellic {
                 continue;
             }
             let Profile {
+                username,
                 default_plan_id,
                 term_joined,
             } = serde_json::from_str(strip_xssi(&body))?;
@@ -103,7 +104,7 @@ impl Stellic {
                     agent,
                     cookie: c,
                     csrf,
-                    andrew_id: andrew_id.to_string(),
+                    username,
                     plan_id: default_plan_id,
                     out_dir,
                 },
@@ -180,7 +181,7 @@ impl Stellic {
 
     pub fn get_audit_data(&self, audit_id: u32) -> Result<serde_json::Value> {
         let body_obj = serde_json::json!({
-            "student_username": self.andrew_id,
+            "student_username": self.username,
             "audit": audit_id,
             "default_audit_version": {"id": audit_id},
             "official": true,
