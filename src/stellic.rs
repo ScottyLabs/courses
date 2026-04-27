@@ -63,6 +63,9 @@ impl Stellic {
     ) -> Result<(Self, TermJoined)> {
         let agent: ureq::Agent = ureq::Agent::config_builder()
             .timeout_global(Some(Duration::from_secs(60)))
+            .timeout_per_call(Some(Duration::from_secs(60)))
+            .timeout_recv_response(Some(Duration::from_secs(30)))
+            .timeout_recv_body(Some(Duration::from_secs(45)))
             .build()
             .into();
         let mut cookie = cookie;
@@ -114,6 +117,7 @@ impl Stellic {
     }
 
     fn get(&self, url: &str) -> Result<String> {
+        const MAX_ATTEMPTS: u32 = 5;
         let mut attempt: u32 = 0;
         loop {
             let result = self
@@ -130,15 +134,19 @@ impl Stellic {
                     if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
                         return Err(e.into());
                     }
+                    attempt += 1;
+                    if attempt >= MAX_ATTEMPTS {
+                        return Err(e.into());
+                    }
                     let delay_ms = (200u64 << attempt.min(5)).min(5000);
                     std::thread::sleep(Duration::from_millis(delay_ms));
-                    attempt += 1;
                 }
             }
         }
     }
 
     fn post_json(&self, url: &str, body: &str) -> Result<String> {
+        const MAX_ATTEMPTS: u32 = 5;
         let mut attempt: u32 = 0;
         loop {
             let result = self
@@ -157,9 +165,12 @@ impl Stellic {
                     if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
                         return Err(e.into());
                     }
+                    attempt += 1;
+                    if attempt >= MAX_ATTEMPTS {
+                        return Err(e.into());
+                    }
                     let delay_ms = (200u64 << attempt.min(5)).min(5000);
                     std::thread::sleep(Duration::from_millis(delay_ms));
-                    attempt += 1;
                 }
             }
         }

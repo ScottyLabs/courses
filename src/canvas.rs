@@ -40,12 +40,16 @@ impl Canvas {
     pub fn new(token: String) -> Self {
         let agent: ureq::Agent = ureq::Agent::config_builder()
             .timeout_global(Some(Duration::from_secs(120)))
+            .timeout_per_call(Some(Duration::from_secs(60)))
+            .timeout_recv_response(Some(Duration::from_secs(30)))
+            .timeout_recv_body(Some(Duration::from_secs(60)))
             .build()
             .into();
         Self { agent, token }
     }
 
     fn get_with_retry(&self, url: &str, with_auth: bool) -> Result<ureq::Body> {
+        const MAX_ATTEMPTS: u32 = 5;
         let mut attempt: u32 = 0;
         loop {
             let mut req = self.agent.get(url);
@@ -58,9 +62,12 @@ impl Canvas {
                     if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
                         return Err(e.into());
                     }
+                    attempt += 1;
+                    if attempt >= MAX_ATTEMPTS {
+                        return Err(e.into());
+                    }
                     let delay = (200u64 << attempt.min(5)).min(5000);
                     std::thread::sleep(Duration::from_millis(delay));
-                    attempt += 1;
                 }
             }
         }
