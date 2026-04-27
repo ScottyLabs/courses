@@ -33,6 +33,18 @@ Adding a major (type 1) to a plan does not just include the major's own requirem
 
 Concentration-specific type 4 bundles (e.g. "Health Information Systems Concentration ...") do not auto-attach into a plan-based audit; they only enter that audit if explicitly added or selected as the major's concentration. The requirement scraper avoids this entirely by using the test-apply audit path against each catalog program's published audit version directly (see `stellic.md`'s `getauditinfo` section), which works for every type uniformly.
 
+## Coverage ceiling
+
+Of the 2129 catalog programs, 1291 are reachable from a student-role account via the test-apply audit path. The remaining 838 return zero audit versions at every status (`published`, `draft`, `archived`, `unpublished`, `obsolete`). Two separate undergraduate accounts produced identical coverage sets, so visibility on this Stellic deployment does not appear to depend on the student's college or declared major within the undergraduate role.
+
+Among the 838 unreachable:
+
+- 130 are "Student Defined" programs, which are per-student custom degrees with no shared audit by design.
+- 22 type-4 entries return a skeleton (no course satisfiers) via `getprogramsrequirements/` even though `getauditversions/` returns nothing. These are mostly older BSA/BHA/BEA gen-ed and concentration requirement bundles.
+- 686 return nothing on either endpoint. These are typically MS/PHD programs (`MS in Economics`, `PHD in Applied Physics`, `MS in Computer Science`, etc.), combined-degree programs (`BSA in Mathematical Sciences and Music Performance`), and a small set of older sub-requirement bundles.
+
+It is not yet confirmed whether graduate-role accounts see additional audits for graduate programs that are unreachable from undergrad accounts. If they do, a multi-account scrape would broaden coverage. If they don't, the remaining 838 require an admin/registrar role and are out of reach from any student-role account.
+
 ## Requirement tree shape
 
 The `req_tree` returned by `getauditinfo` is a recursive node structure:
