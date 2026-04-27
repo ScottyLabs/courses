@@ -20,10 +20,37 @@ struct Profile {
     term_joined: TermJoined,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Program {
+    pub id: u32,
+    pub name: String,
+    #[serde(rename = "type")]
+    #[allow(dead_code)]
+    pub program_type: u8,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AuditVersion {
+    pub id: u32,
+    pub requirement: u64,
+    pub name: String,
+}
+
+#[derive(Deserialize)]
+struct ProgramsResp {
+    programs: Vec<Program>,
+}
+
+#[derive(Deserialize)]
+struct AuditVersionsResp {
+    audits: Vec<AuditVersion>,
+}
+
 pub struct Stellic {
     agent: ureq::Agent,
     cookie: String,
     csrf: String,
+    andrew_id: String,
     pub plan_id: String,
     out_dir: PathBuf,
 }
@@ -76,6 +103,7 @@ impl Stellic {
                     agent,
                     cookie: c,
                     csrf,
+                    andrew_id: andrew_id.to_string(),
                     plan_id: default_plan_id,
                     out_dir,
                 },
@@ -109,6 +137,61 @@ impl Stellic {
         }
     }
 
+    fn post_json(&self, url: &str, body: &str) -> Result<String> {
+        let mut attempt: u32 = 0;
+        loop {
+            let result = self
+                .agent
+                .post(url)
+                .header("Cookie", &self.cookie)
+                .header("X-CSRFToken", &self.csrf)
+                .header("X-Requested-With", "XMLHttpRequest")
+                .header("Content-Type", "application/json")
+                .header("Origin", BASE)
+                .header("Referer", &format!("{BASE}/app/home"))
+                .send(body);
+            match result {
+                Ok(r) => return Ok(r.into_body().read_to_string()?),
+                Err(e) => {
+                    if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
+                        return Err(e.into());
+                    }
+                    let delay_ms = (200u64 << attempt.min(5)).min(5000);
+                    std::thread::sleep(Duration::from_millis(delay_ms));
+                    attempt += 1;
+                }
+            }
+        }
+    }
+
+    pub fn get_programs(&self) -> Result<Vec<Program>> {
+        let body = self.get(&format!("{BASE}/catalog/getprograms/?campus_id=1"))?;
+        let resp: ProgramsResp = serde_json::from_str(strip_xssi(&body))?;
+        Ok(resp.programs)
+    }
+
+    pub fn get_audit_versions(&self, program_id: u32) -> Result<Vec<AuditVersion>> {
+        let body = self.get(&format!(
+            "{BASE}/planner/getauditversions/?program={program_id}&status=published"
+        ))?;
+        let resp: AuditVersionsResp = serde_json::from_str(strip_xssi(&body))?;
+        Ok(resp.audits)
+    }
+
+    pub fn get_audit_data(&self, audit_id: u32) -> Result<serde_json::Value> {
+        let body_obj = serde_json::json!({
+            "student_username": self.andrew_id,
+            "audit": audit_id,
+            "default_audit_version": {"id": audit_id},
+            "official": true,
+        });
+        let body = self.post_json(
+            &format!("{BASE}/planner/getauditinfo/"),
+            &body_obj.to_string(),
+        )?;
+        Ok(serde_json::from_str(strip_xssi(&body))?)
+    }
+
     fn write_course(&self, course: &str, file: &str, contents: &str) -> Result<()> {
         let dir = self.out_dir.join(course.replace('-', ""));
         fs::create_dir_all(&dir)?;
@@ -120,12 +203,17 @@ impl Stellic {
         let body = self.get(&format!(
             "{BASE}/catalog/getcourseinfo/?campus_id=1&course_code={course}&physical_year=2026"
         ))?;
-        let stripped = strip_xssi(&body);
-        let json: serde_json::Value = serde_json::from_str(stripped)?;
+        let mut json: serde_json::Value = serde_json::from_str(strip_xssi(&body))?;
         if json.get("success").and_then(|s| s.as_bool()) == Some(false) {
             return Ok(());
         }
-        self.write_course(course, "info.json", stripped)
+        if let Some(obj) = json.as_object_mut() {
+            // This is personal information
+            obj.remove("student_context");
+            obj.remove("enrollment_action_windows");
+            obj.remove("alerts");
+        }
+        self.write_course(course, "info.json", &serde_json::to_string(&json)?)
     }
 
     pub fn save_sections(&self, course: &str, lyear: i32, sem_id: u8) -> Result<()> {
@@ -133,8 +221,7 @@ impl Stellic {
             "{BASE}/planner/getcoursesections/?campus_id=1&course_code={course}&physical_year=2026&plan_id={}&sem_id={sem_id}&year={lyear}",
             self.plan_id
         ))?;
-        let stripped = strip_xssi(&body);
-        let json: serde_json::Value = serde_json::from_str(stripped)?;
+        let mut json: serde_json::Value = serde_json::from_str(strip_xssi(&body))?;
         let nonempty = json
             .get("data_list")
             .and_then(|d| d.as_array())
@@ -142,7 +229,18 @@ impl Stellic {
         if !nonempty {
             return Ok(());
         }
-        self.write_course(course, &format!("ly{lyear}_sm{sem_id}.json"), stripped)
+        if let Some(arr) = json.get_mut("data_list").and_then(|d| d.as_array_mut()) {
+            for entry in arr {
+                if let Some(obj) = entry.as_object_mut() {
+                    obj.remove("current");
+                }
+            }
+        }
+        self.write_course(
+            course,
+            &format!("ly{lyear}_sm{sem_id}.json"),
+            &serde_json::to_string(&json)?,
+        )
     }
 }
 

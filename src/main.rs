@@ -1,8 +1,9 @@
 mod discovery;
+mod requirements;
 mod stellic;
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -15,17 +16,27 @@ use stellic::Stellic;
 
 const SEASONS: &[&str] = &["fall", "spring", "summer_1", "summer_2"];
 
+#[derive(Copy, Clone, Debug, ValueEnum, PartialEq, Eq)]
+enum Mode {
+    Courses,
+    Programs,
+    Both,
+}
+
 #[derive(Parser, Debug)]
 #[command(version)]
 struct Args {
     #[arg(long, default_value = "data/fces.csv", env = "FCE_PATH")]
     fce_path: PathBuf,
 
-    #[arg(long, default_value_t = 64, env = "CONCURRENCY")]
+    #[arg(long, default_value_t = 32, env = "CONCURRENCY")]
     concurrency: usize,
 
     #[arg(long, default_value = "data/courses_history", env = "OUT_DIR")]
     out_dir: PathBuf,
+
+    #[arg(long, default_value = "data/programs", env = "PROGRAMS_DIR")]
+    programs_dir: PathBuf,
 
     #[arg(long, env = "COOKIE_HEADER")]
     cookie_header: Option<String>,
@@ -35,6 +46,9 @@ struct Args {
 
     #[arg(long, env = "LIMIT")]
     limit: Option<usize>,
+
+    #[arg(long, value_enum, default_value_t = Mode::Both, env = "MODE")]
+    mode: Mode,
 }
 
 fn main() -> Result<()> {
@@ -45,7 +59,11 @@ fn main() -> Result<()> {
         .init();
     let args = Args::parse();
 
-    let (stellic, term_joined) = Stellic::login(args.cookie_header, &args.andrew_id, args.out_dir)?;
+    let (stellic, term_joined) = Stellic::login(
+        args.cookie_header.clone(),
+        &args.andrew_id,
+        args.out_dir.clone(),
+    )?;
     let joined_sem = Sem::from_id(term_joined.semester).context("unknown joined semester id")?;
     let anchor = joined_sem.ay_start(term_joined.year);
     info!(
@@ -56,6 +74,33 @@ fn main() -> Result<()> {
         "authed"
     );
 
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(args.concurrency)
+        .build()?;
+
+    match args.mode {
+        Mode::Courses => scrape_courses(&stellic, &args, anchor, &pool)?,
+        Mode::Programs => scrape_programs(&stellic, &args, &pool)?,
+        Mode::Both => {
+            let (cr, pr) = pool.install(|| {
+                rayon::join(
+                    || scrape_courses(&stellic, &args, anchor, &pool),
+                    || scrape_programs(&stellic, &args, &pool),
+                )
+            });
+            cr?;
+            pr?;
+        }
+    }
+    Ok(())
+}
+
+fn scrape_courses(
+    stellic: &Stellic,
+    args: &Args,
+    anchor: i32,
+    pool: &rayon::ThreadPool,
+) -> Result<()> {
     let (fce, soc_results) = rayon::join(
         || parse_fce(&args.fce_path).context("fce"),
         || {
@@ -95,13 +140,10 @@ fn main() -> Result<()> {
         tasks.truncate(n);
     }
     let total = tasks.len();
-    info!(total, concurrency = args.concurrency, "scraping");
+    info!(total, concurrency = args.concurrency, "scraping courses");
 
     let done = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(args.concurrency)
-        .build()?;
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
             let result = match &task {
@@ -127,11 +169,52 @@ fn main() -> Result<()> {
             }
         });
     });
-
     info!(
         done = done.load(Ordering::Relaxed),
         failed = failed.load(Ordering::Relaxed),
-        "complete"
+        "courses complete"
+    );
+    Ok(())
+}
+
+fn scrape_programs(stellic: &Stellic, args: &Args, pool: &rayon::ThreadPool) -> Result<()> {
+    let mut programs = stellic.get_programs()?;
+    info!(count = programs.len(), "fetched program catalog");
+    if let Some(n) = args.limit {
+        programs.truncate(n);
+    }
+    let mut tasks =
+        pool.install(|| requirements::build_tasks(stellic, &programs));
+    if let Some(n) = args.limit {
+        tasks.truncate(n);
+    }
+    let total = tasks.len();
+    info!(total, concurrency = args.concurrency, "scraping requirements");
+
+    let done = AtomicUsize::new(0);
+    let failed = AtomicUsize::new(0);
+    pool.install(|| {
+        tasks.into_par_iter().for_each(|task| {
+            let result = requirements::save_audit(stellic, &args.programs_dir, &task);
+            let n = done.fetch_add(1, Ordering::Relaxed) + 1;
+            if let Err(e) = result {
+                failed.fetch_add(1, Ordering::Relaxed);
+                debug!(error = %e, task = ?task, "audit save failed");
+            }
+            if n.is_multiple_of(200) {
+                info!(
+                    done = n,
+                    total,
+                    failed = failed.load(Ordering::Relaxed),
+                    "progress"
+                );
+            }
+        });
+    });
+    info!(
+        done = done.load(Ordering::Relaxed),
+        failed = failed.load(Ordering::Relaxed),
+        "requirements complete"
     );
     Ok(())
 }
