@@ -72,6 +72,10 @@ pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task) -> Result<()> {
         );
         return Ok(());
     };
+    let mut matching = matching.clone();
+    if let Some(obj) = matching.as_object_mut() {
+        obj.remove("uid");
+    }
     let mut filtered_ucpm = serde_json::Map::new();
     if let Some(ucpm) = resp.get("unique_course_parents_mapping").and_then(|v| v.as_object()) {
         let target = task.requirement.to_string();
