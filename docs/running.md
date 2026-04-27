@@ -71,6 +71,8 @@ Syllabi pipeline:
 
 The pipeline only saves items in each sub-course's "Available Syllabi" module. `File` items are downloaded with their original filename extension. `Page` items are saved as a single-line `.url` file containing the Canvas page URL where the syllabus is rendered, since the page body itself is just a redirect stub and the target course's `syllabus_body` is empty most of the time and ambiguous when populated. Downstream consumers can either link directly to the URL or follow it for users who can authenticate. "Unavailable Syllabi" and "Individualized Experiences" modules are skipped because their items are placeholders without retrievable content. See [`syllabi.md`](./syllabi.md) for the registry structure and the rationale.
 
+The syllabi pipeline is rerun-safe: before any HTTP work, `save_task` checks whether `<course_section>.*` already exists under `<term>/<dept>/` and skips if so. To force a full re-fetch, delete the matching files (or the whole `<syllabi_dir>`) before running.
+
 ## Concurrency
 
 A custom rayon thread pool sized by `--concurrency` runs every pipeline. When `--mode all`, the three pipelines run concurrently within the same pool via nested `rayon::join`, sharing the thread budget; their outputs go to separate directories so they don't collide. A shared `ureq::Agent` provides the HTTP connection pool internally.

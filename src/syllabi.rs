@@ -78,6 +78,9 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
 
 pub fn save_task(canvas: &Canvas, dir: &Path, task: &Task) -> Result<()> {
     let prog_dir = dir.join(&task.term).join(&task.dept);
+    if already_saved(&prog_dir, &task.course_section) {
+        return Ok(());
+    }
     fs::create_dir_all(&prog_dir)?;
     match task.item_type.as_str() {
         "File" => {
@@ -152,4 +155,17 @@ fn course_section(title: &str) -> Option<String> {
 
 fn canvas_page_url(api_url: &str) -> String {
     api_url.replacen("/api/v1/", "/", 1)
+}
+
+fn already_saved(prog_dir: &Path, course_section: &str) -> bool {
+    let prefix = format!("{course_section}.");
+    let Ok(entries) = fs::read_dir(prog_dir) else {
+        return false;
+    };
+    entries.flatten().any(|e| {
+        e.file_name()
+            .to_str()
+            .map(|n| n.starts_with(&prefix))
+            .unwrap_or(false)
+    })
 }
