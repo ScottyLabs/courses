@@ -1,3 +1,14 @@
+//! Programs pipeline that fans out from the catalog's flat program list into
+//! every published audit version per program, then fetches each audit and
+//! writes a trimmed `<catalog_id>/<audit_id>.json` per (program, audit).
+//! The test-apply audit path sidesteps Stellic's plan and major caps and
+//! returns the full requirement tree for any reachable audit in one call.
+//!
+//! The build-tasks pass parallelizes over programs because
+//! `getauditversions` is cheap and mostly IO-bound; the save pass parallelizes
+//! over audits because `getauditinfo` is heavy server-side and benefits from
+//! pipelining.
+
 use anyhow::Result;
 use rayon::prelude::*;
 use std::fs;

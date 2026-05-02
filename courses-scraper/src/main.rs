@@ -1,3 +1,11 @@
+//! CMU course catalog scraper. Pulls course info, sections, program audits
+//! and syllabi from Stellic and Canvas into `exported/`, driven by FCE and
+//! Schedule of Classes discovery feeds. The companion `courses-index` crate
+//! reads this output to build the client-side search index.
+//!
+//! `docs/` at the repo root carries per-source reference material covering
+//! API shapes, data conventions, and operator guidance.
+
 mod canvas;
 mod discovery;
 mod requirements;

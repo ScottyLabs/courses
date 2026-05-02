@@ -1,3 +1,8 @@
+//! HTTP client for CMU's Canvas instance, scoped to what the syllabi pipeline
+//! needs (module walks over the Syllabus Registry course, plus file metadata
+//! fetches for downloadable attachments). Authentication is a user-generated
+//! API token passed as a bearer header.
+
 use anyhow::Result;
 use serde::Deserialize;
 use std::time::Duration;

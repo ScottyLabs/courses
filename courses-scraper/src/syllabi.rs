@@ -1,3 +1,15 @@
+//! Syllabi pipeline that walks Canvas's Syllabus Registry course to discover
+//! every (term, dept) sub-course, enumerates each sub-course's `Available
+//! Syllabi` module, and saves File items as their original downloads and Page
+//! items as plain-text `.url` pointers under
+//! `<syllabi_dir>/<term>/<dept>/<course_section>.<ext>`.
+//!
+//! Page items get the URL-only treatment because the page bodies are usually
+//! stub redirects pointing into enrollment-restricted course sites; saving the
+//! pointer lets downstream consumers decide whether to follow it.
+//! `Unavailable Syllabi` and `Individualized Experiences` modules are skipped
+//! on purpose because their items have no retrievable content.
+
 use anyhow::{Context, Result};
 use rayon::prelude::*;
 use std::fs;

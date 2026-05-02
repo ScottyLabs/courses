@@ -1,3 +1,14 @@
+//! HTTP client for CMU's Stellic deployment, a browser-only app behind
+//! Shibboleth that needs a pasted `Cookie:` header plus CSRF header on every
+//! request and strips an XSSI prefix off every JSON response before parsing.
+//! The endpoints it wraps are the ones the scraper actually uses
+//! (`getstudentprofile`, `getcourseinfo`, `getcoursesections`, `getprograms`,
+//! `getauditversions`, `getauditinfo`).
+//!
+//! First-run auth goes through `login`, which verifies the cookie by fetching
+//! the profile and stashes it for reuse; there is no refresh flow, so a stale
+//! cookie re-prompts.
+
 use anyhow::Result;
 use serde::Deserialize;
 use std::fs;
@@ -259,9 +270,10 @@ fn strip_xssi(body: &str) -> &str {
 
 fn obtain_cookie() -> Result<String> {
     eprintln!(
-        "\nAuthenticate at https://academicaudit.andrew.cmu.edu, then in DevTools → Network,\n\
-         click the request to https://academicaudit.andrew.cmu.edu/planner/getstudentprofile/,\n\
-         copy the entire 'Cookie:' request header value, and paste it below:\n"
+        "\nAuthenticate at https://academicaudit.andrew.cmu.edu, then open the\n\
+         DevTools Network tab, click the request to\n\
+         https://academicaudit.andrew.cmu.edu/planner/getstudentprofile/,\n\
+         copy the entire 'Cookie' request header value, and paste it below.\n"
     );
     eprint!("> ");
     std::io::stderr().flush()?;

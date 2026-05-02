@@ -1,3 +1,13 @@
+//! Course discovery unions the FCE CSV (long-tail history) with the current
+//! Schedule of Classes dumps to produce both the list of courses to scrape
+//! and the per-course section tasks to issue, since neither feed is complete
+//! on its own.
+//!
+//! The only value that needs explanation is `lyear`, Stellic's academic-year
+//! offset from the student's `term_joined`, which is range-bounded so tuples
+//! outside it resolve to no reachable sections. `plan_window` handles the
+//! StuCo opt-out case where a `98-` course ran but produced no FCE row.
+
 use anyhow::Result;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -58,6 +68,8 @@ struct FceRow {
     num: String,
 }
 
+/// One HTTP call's worth of work. `Info` grabs `getcourseinfo` for a course;
+/// `Sections` grabs `getcoursesections` for a specific (course, lyear, sem).
 #[derive(Debug)]
 pub enum Task {
     Info(String),
@@ -117,6 +129,9 @@ pub fn parse_fce(path: &Path) -> Result<HashMap<String, HashSet<(u32, Sem)>>> {
     Ok(out)
 }
 
+/// Emit every task for one course. Always one `Info`, plus one `Sections` per
+/// (lyear, sem) we know the course was offered in. `anchor` is the AY start
+/// year of the student's `term_joined`, used to compute lyear offsets.
 pub fn course_tasks(
     course: &str,
     fce: &HashMap<String, HashSet<(u32, Sem)>>,
