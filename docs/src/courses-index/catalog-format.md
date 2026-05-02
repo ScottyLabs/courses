@@ -27,12 +27,12 @@ The magic number is `CIDX` and the current format version is `4`. Loading reject
 
 ## Regions
 
-| Region | Body |
-| --- | --- |
-| `courses` | bincode of `Vec<Course>` |
-| `professors` | bincode of `Vec<Professor>` |
-| `sections` | bincode of `Vec<SectionTime>` |
-| `fce_rows` | bincode of `Vec<FceRow>` |
+| Region          | Body                                 |
+| --------------- | ------------------------------------ |
+| `courses`       | bincode of `Vec<Course>`             |
+| `professors`    | bincode of `Vec<Professor>`          |
+| `sections`      | bincode of `Vec<SectionTime>`        |
+| `fce_rows`      | bincode of `Vec<FceRow>`             |
 | `prebuilt_text` | bincode of `PrebuiltText` (optional) |
 
 The `prebuilt_text` region carries the FST bytes plus the postings arena that the text index would otherwise rebuild on each load. With it present, building the in-memory index skips the most expensive phase.
@@ -43,10 +43,11 @@ The `prebuilt_text` region carries the FST bytes plus the postings arena that th
 
 ## Storage abstractions
 
-The reader is generic over a `CatalogStorage` trait so the same code path works for in-memory slices (browser wasm, in-process tests) and file handles (native CLI). Two concrete impls live in `binary/storage.rs`:
+The reader is generic over a `CatalogStorage` trait so the same code path works for in-memory slices and on-disk files. `read_range` returns `Cow<[u8]>`, so backends that already hold the bytes hand back a borrowed slice with no copy or allocation. Three concrete impls live in `binary/storage.rs`:
 
 - `MemoryStorage` borrows a `&[u8]`, used by the wasm crate after `DecompressionStream` decodes into a typed array.
-- `FileStorage` wraps a `File`, used by the native side when working directly with on-disk catalogs.
+- `OwnedMemoryStorage` owns a `Vec<u8>`, used when the native side has already pulled the entire file into memory (e.g. after gunzipping a transit blob).
+- `FileStorage` mmaps the file. Region reads return borrowed slices into the mapped buffer; the kernel pages bytes in on demand and shares the mapping across reads.
 
 ## Format versioning
 

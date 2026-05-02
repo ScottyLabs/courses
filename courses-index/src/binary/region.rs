@@ -118,7 +118,10 @@ pub fn read_table(storage: &dyn CatalogStorage) -> Result<Vec<RegionEntry>> {
     Ok(out)
 }
 
-pub fn read_region_bytes(storage: &dyn CatalogStorage, entry: &RegionEntry) -> Result<Vec<u8>> {
+pub fn read_region_bytes<'a>(
+    storage: &'a dyn CatalogStorage,
+    entry: &RegionEntry,
+) -> Result<std::borrow::Cow<'a, [u8]>> {
     storage.read_range(entry.body_offset, entry.body_len)
 }
 

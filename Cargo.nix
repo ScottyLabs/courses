@@ -1154,6 +1154,11 @@ rec {
             features = [ "levenshtein" ];
           }
           {
+            name = "memmap2";
+            packageId = "memmap2";
+            target = { target, features }: (!("wasm32" == target."arch" or null));
+          }
+          {
             name = "rayon";
             packageId = "rayon";
           }
@@ -2462,6 +2467,27 @@ rec {
           "use_std" = [ "std" ];
         };
         resolvedDefaultFeatures = [ "alloc" "default" "std" ];
+      };
+      "memmap2" = rec {
+        crateName = "memmap2";
+        version = "0.9.10";
+        edition = "2021";
+        sha256 = "1qz0n4ch68pz2mp07sdwnk27imdjjqy6aqir3hp9j4g0iw19hh3i";
+        authors = [
+          "Dan Burkert <dan@danburkert.com>"
+          "Yevhenii Reizner <razrfalcon@gmail.com>"
+          "The Contributors"
+        ];
+        dependencies = [
+          {
+            name = "libc";
+            packageId = "libc";
+            target = { target, features }: (target."unix" or false);
+          }
+        ];
+        features = {
+          "stable_deref_trait" = [ "dep:stable_deref_trait" ];
+        };
       };
       "mime" = rec {
         crateName = "mime";
