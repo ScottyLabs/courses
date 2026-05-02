@@ -1,6 +1,5 @@
-//! Web-app backend for the CMU courses frontend. Today it streams the
-//! catalog binary to the wasm client and nothing else; tomorrow it will pick
-//! up auth, user schedules, and sharing on top of seaORM/SQLite.
+//! Web-app backend serving the catalog binary at `/catalog/binary` and,
+//! when `--static-dir` is set, the SPA bundle at `/`.
 
 use std::path::PathBuf;
 
@@ -29,8 +28,9 @@ struct Args {
     #[arg(long, env = "CATALOG_PATH")]
     catalog_path: PathBuf,
 
+    /// When set, the frontend SPA bundle at this path is served at `/`.
     #[arg(long, env = "STATIC_DIR")]
-    static_dir: PathBuf,
+    static_dir: Option<PathBuf>,
 }
 
 #[derive(Clone)]
@@ -52,19 +52,26 @@ async fn main() -> Result<()> {
         catalog_path: args.catalog_path,
     };
 
-    let static_files = ServeDir::new(&args.static_dir)
-        .append_index_html_on_directories(true)
-        .fallback(ServeFile::new(args.static_dir.join("index.html")));
-
-    let app = Router::new()
+    let mut app = Router::new()
         .route("/health", get(health))
         .route("/catalog/binary", get(catalog_binary))
-        .with_state(state)
-        .fallback_service(static_files)
-        .layer(TraceLayer::new_for_http());
+        .with_state(state);
+
+    if let Some(dir) = args.static_dir.as_ref() {
+        let static_files = ServeDir::new(dir)
+            .append_index_html_on_directories(true)
+            .fallback(ServeFile::new(dir.join("index.html")));
+        app = app.fallback_service(static_files);
+    }
+
+    let app = app.layer(TraceLayer::new_for_http());
 
     let listener = TcpListener::bind(&args.bind).await?;
-    info!(addr = %args.bind, static_dir = %args.static_dir.display(), "listening");
+    info!(
+        addr = %args.bind,
+        static_dir = ?args.static_dir.as_ref().map(|p| p.display().to_string()),
+        "listening"
+    );
     axum::serve(listener, app).await?;
     Ok(())
 }

@@ -1,7 +1,6 @@
 //! Public-facing course catalog API. Loads the catalog binary into memory
-//! at startup, exposes versioned REST routes (`/v1/...`), and re-loads on
-//! changes to the catalog file. No database; the catalog file is the only
-//! source of truth.
+//! at startup, exposes versioned REST routes under `/v1/`, and reloads on
+//! changes to the catalog file.
 
 use std::path::PathBuf;
 use std::sync::Arc;
