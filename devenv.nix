@@ -1,9 +1,14 @@
 { pkgs, inputs, lib, config, ... }:
 
 let
-  cargoNix = pkgs.callPackage ./Cargo.nix { };
-  courses-api = cargoNix.workspaceMembers.courses-api.build;
-  courses-web-api = cargoNix.workspaceMembers.courses-web-api.build;
+  system = pkgs.stdenv.hostPlatform.system;
+  built = import ./nix/packages.nix {
+    inherit pkgs;
+    bun2nixOverlay = inputs.bun2nix.overlays.default;
+    rustOverlay = import inputs.rust-overlay;
+    repoRoot = ./.;
+  };
+  inherit (built) courses-api courses-web-api courses-web;
 
   catalogPath = "${config.devenv.root}/exported/catalog/binary";
 in
@@ -34,8 +39,8 @@ in
 
   processes = {
     courses-api.exec = "${courses-api}/bin/courses-api --bind 127.0.0.1:3001 --catalog-path ${catalogPath}";
-    courses-web-api.exec = "${courses-web-api}/bin/courses-web-api --bind 127.0.0.1:3002 --catalog-path ${catalogPath}";
+    courses-web-api.exec = "${courses-web-api}/bin/courses-web-api --bind 127.0.0.1:3002 --catalog-path ${catalogPath} --static-dir ${courses-web}";
   };
 
-  outputs = { inherit courses-api courses-web-api; };
+  outputs = { inherit courses-api courses-web-api courses-web; };
 }

@@ -2,66 +2,48 @@
   description = "CMU Courses";
 
   nixConfig = {
-    extra-substituters = [ "https://scottylabs.cachix.org" ];
+    extra-substituters = [
+      "https://scottylabs.cachix.org"
+      "https://nix-community.cachix.org"
+    ];
     extra-trusted-public-keys = [
       "scottylabs.cachix.org-1:hajjEX5SLi/Y7yYloiXTt2IOr3towcTGRhMh1vu6Tjg="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
   };
 
   inputs = {
     nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
     devenv.url = "github:cachix/devenv";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    bun2nix = {
+      url = "github:nix-community/bun2nix?tag=2.0.8";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, devenv, ... }:
+  outputs = { self, nixpkgs, devenv, rust-overlay, bun2nix, ... }:
     let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      pkgsFor = system: nixpkgs.legacyPackages.${system};
+      pkgsFor = system: import nixpkgs { inherit system; };
     in
     {
       packages = forAllSystems (system:
         let
           pkgs = pkgsFor system;
-          cargoNix = pkgs.callPackage ./Cargo.nix { };
-          courses-api = cargoNix.workspaceMembers.courses-api.build;
-          courses-web-api = cargoNix.workspaceMembers.courses-web-api.build;
-
-          courses-web = pkgs.stdenv.mkDerivation {
-            pname = "courses-web";
-            version = "0.1.0";
-            src = ./.;
-
-            nativeBuildInputs = with pkgs; [
-              bun
-              cargo
-              rustc
-              wasm-pack
-              wasm-bindgen-cli
-              binaryen
-            ];
-
-            buildPhase = ''
-              runHook preBuild
-              cd courses-web
-              export HOME=$(mktemp -d)
-              bun install --frozen-lockfile --no-save
-              bun run build:wasm
-              bun run build
-              runHook postBuild
-            '';
-
-            installPhase = ''
-              runHook preInstall
-              mkdir -p $out
-              cp -r build/. $out/
-              runHook postInstall
-            '';
+          built = import ./nix/packages.nix {
+            inherit pkgs;
+            bun2nixOverlay = bun2nix.overlays.default;
+            rustOverlay = import rust-overlay;
+            repoRoot = ./.;
           };
         in
-        {
-          inherit courses-web courses-api courses-web-api;
-          default = courses-web;
+        built // {
+          default = built.courses-web;
           devenv = devenv.packages.${system}.devenv;
         }
       );
