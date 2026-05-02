@@ -23,6 +23,9 @@
       packages = forAllSystems (system:
         let
           pkgs = pkgsFor system;
+          cargoNix = pkgs.callPackage ./Cargo.nix { };
+          courses-api = cargoNix.workspaceMembers.courses-api.build;
+          courses-web-api = cargoNix.workspaceMembers.courses-web-api.build;
 
           courses-web = pkgs.stdenv.mkDerivation {
             pname = "courses-web";
@@ -57,7 +60,7 @@
           };
         in
         {
-          inherit courses-web;
+          inherit courses-web courses-api courses-web-api;
           default = courses-web;
           devenv = devenv.packages.${system}.devenv;
         }
