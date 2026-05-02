@@ -123,6 +123,17 @@ let
       runHook postInstall
     '';
   };
+  docsSrc = pkgs.lib.fileset.toSource {
+    root = repoRoot;
+    fileset = repoRoot + "/docs";
+  };
+
+  docs = pkgs.runCommand "courses-docs"
+    { nativeBuildInputs = [ pkgs.mdbook ]; }
+    ''
+      mkdir -p $out
+      mdbook build -d $out ${docsSrc}/docs
+    '';
 in
 {
   inherit
@@ -130,5 +141,6 @@ in
     courses-web-api
     courses-web
     courses-index-wasm-bindings
+    docs
     ;
 }

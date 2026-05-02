@@ -8,7 +8,7 @@ let
     rustOverlay = import inputs.rust-overlay;
     repoRoot = ./.;
   };
-  inherit (built) courses-api courses-web-api courses-web;
+  inherit (built) courses-api courses-web-api courses-web docs;
 
   catalogPath = "${config.devenv.root}/exported/catalog/binary";
 in
@@ -23,6 +23,7 @@ in
     kennel = {
       services.courses-api = { };
       services.courses-web-api = { };
+      sites.docs = { };
     };
   };
 
@@ -42,5 +43,5 @@ in
     courses-web-api.exec = "${courses-web-api}/bin/courses-web-api --bind 127.0.0.1:3002 --catalog-path ${catalogPath} --static-dir ${courses-web}";
   };
 
-  outputs = { inherit courses-api courses-web-api courses-web; };
+  outputs = { inherit courses-api courses-web-api courses-web docs; };
 }
