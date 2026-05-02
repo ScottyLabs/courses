@@ -1,3 +1,31 @@
+# Rust
 target/
+.cargo/
+
+# Nix / devenv
+.devenv/
+.devenv.flake.nix
+.pre-commit-config.yaml
+result
+result-*
+
+# direnv
+.direnv/
+
+# AI
 .claude/
+.mcp.json
+PLAN.md
+
+# Bun / Node
+node_modules/
+courses-web/.svelte-kit/
+courses-web/build/
+courses-web/src/lib/courses-index/
+
+# Generated artifacts
 exported/
+courses-web/static/catalog.bin
+
+# OS
+.DS_Store
