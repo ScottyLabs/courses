@@ -21,13 +21,13 @@ The wasm and REST surfaces both serialize this struct directly; both accept eith
 
 ## Sort orders
 
-| Variant | Behavior |
-| --- | --- |
-| `Relevance` | BM25 with PageRank tiebreak. Falls back to `PageRankDesc` when no text query is present. |
-| `PageRankDesc` | Sort by precomputed PageRank, descending. Used for browse-style listings. |
-| `FceHrsPerWeekAsc` | Lightest workload first, requires the FCE hours field to be present. |
-| `FceInterestDesc`, `FceOverallTeachingDesc` | FCE rating ranks. |
-| `CourseNumAsc`, `CodeAsc` | Alphabetical / numeric on the course identifier. |
+| Variant                                     | Behavior                                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `Relevance`                                 | BM25 with PageRank tiebreak. Falls back to `PageRankDesc` when no text query is present. |
+| `PageRankDesc`                              | Sort by precomputed PageRank, descending. Used for browse-style listings.                |
+| `FceHrsPerWeekAsc`                          | Lightest workload first, requires the FCE hours field to be present.                     |
+| `FceInterestDesc`, `FceOverallTeachingDesc` | FCE rating ranks.                                                                        |
+| `CourseNumAsc`, `CodeAsc`                   | Alphabetical / numeric on the course identifier.                                         |
 
 ## Score blending
 

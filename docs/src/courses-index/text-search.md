@@ -2,13 +2,13 @@
 
 Each course is indexed across five fields with distinct BM25 weights:
 
-| Field | Weight | Source |
-| --- | --- | --- |
-| `code` | 5.0 | course code (e.g. `15-122`), tokenized into prefix forms so partial codes match |
-| `name` | 2.0 | course title |
-| `instructor_names` | 1.5 | section instructor list |
-| `description` | 1.0 | catalog description |
-| `prereqs_text` | 1.0 | prereq prose, when present |
+| Field              | Weight | Source                                                                          |
+| ------------------ | ------ | ------------------------------------------------------------------------------- |
+| `code`             | 5.0    | course code (e.g. `15-122`), tokenized into prefix forms so partial codes match |
+| `name`             | 2.0    | course title                                                                    |
+| `instructor_names` | 1.5    | section instructor list                                                         |
+| `description`      | 1.0    | catalog description                                                             |
+| `prereqs_text`     | 1.0    | prereq prose, when present                                                      |
 
 Tokenization is field-specific. Course codes go through `tokenize_code`, which emits prefix variants so that `15`, `15-1`, and `15-122` are all reachable. Description, name, and prereq text use a general tokenizer that lowercases and strips punctuation; instructor names use the same general path with diacritic folding.
 
