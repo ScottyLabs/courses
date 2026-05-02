@@ -33,7 +33,10 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
             })
         })
         .collect();
-    info!(count = dept_refs.len(), "discovered (term, dept) sub-courses");
+    info!(
+        count = dept_refs.len(),
+        "discovered (term, dept) sub-courses"
+    );
 
     let done = AtomicUsize::new(0);
     let total = dept_refs.len();
@@ -95,7 +98,10 @@ pub fn save_task(canvas: &Canvas, dir: &Path, task: &Task) -> Result<()> {
                 })
                 .unwrap_or("bin");
             let bytes = canvas.download_bytes(&meta.url)?;
-            fs::write(prog_dir.join(format!("{}.{ext}", task.course_section)), bytes)?;
+            fs::write(
+                prog_dir.join(format!("{}.{ext}", task.course_section)),
+                bytes,
+            )?;
         }
         "Page" => {
             let page_url = canvas_page_url(&task.url);
@@ -148,7 +154,13 @@ fn course_section(title: &str) -> Option<String> {
     }
     let safe: String = prefix
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
     Some(safe)
 }

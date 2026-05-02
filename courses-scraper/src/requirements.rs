@@ -60,9 +60,10 @@ pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task) -> Result<()> {
     else {
         return Ok(());
     };
-    let Some(matching) = programs.iter().find(|p| {
-        p.get("id").and_then(|i| i.as_u64()) == Some(task.requirement)
-    }) else {
+    let Some(matching) = programs
+        .iter()
+        .find(|p| p.get("id").and_then(|i| i.as_u64()) == Some(task.requirement))
+    else {
         debug!(
             program_id = task.program_id,
             program = %task.program_name,
@@ -77,7 +78,10 @@ pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task) -> Result<()> {
         obj.remove("uid");
     }
     let mut filtered_ucpm = serde_json::Map::new();
-    if let Some(ucpm) = resp.get("unique_course_parents_mapping").and_then(|v| v.as_object()) {
+    if let Some(ucpm) = resp
+        .get("unique_course_parents_mapping")
+        .and_then(|v| v.as_object())
+    {
         let target = task.requirement.to_string();
         for (course_req_id, mapping) in ucpm {
             if let Some(padded) = mapping.get(&target) {

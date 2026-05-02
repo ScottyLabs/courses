@@ -57,10 +57,7 @@ pub struct Stellic {
 }
 
 impl Stellic {
-    pub fn login(
-        cookie: Option<String>,
-        out_dir: PathBuf,
-    ) -> Result<(Self, TermJoined)> {
+    pub fn login(cookie: Option<String>, out_dir: PathBuf) -> Result<(Self, TermJoined)> {
         let agent: ureq::Agent = ureq::Agent::config_builder()
             .timeout_global(Some(Duration::from_secs(60)))
             .timeout_per_call(Some(Duration::from_secs(60)))

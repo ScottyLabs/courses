@@ -70,10 +70,7 @@ fn main() -> Result<()> {
         .num_threads(args.concurrency)
         .build()?;
 
-    let needs_stellic = matches!(
-        args.mode,
-        Mode::Courses | Mode::Programs | Mode::All
-    );
+    let needs_stellic = matches!(args.mode, Mode::Courses | Mode::Programs | Mode::All);
     let needs_canvas = matches!(args.mode, Mode::Syllabi | Mode::All);
 
     let stellic_anchor = if needs_stellic {
@@ -262,13 +259,16 @@ fn scrape_programs(stellic: &Stellic, args: &Args, pool: &rayon::ThreadPool) -> 
     if let Some(n) = args.limit {
         programs.truncate(n);
     }
-    let mut tasks =
-        pool.install(|| requirements::build_tasks(stellic, &programs));
+    let mut tasks = pool.install(|| requirements::build_tasks(stellic, &programs));
     if let Some(n) = args.limit {
         tasks.truncate(n);
     }
     let total = tasks.len();
-    info!(total, concurrency = args.concurrency, "scraping requirements");
+    info!(
+        total,
+        concurrency = args.concurrency,
+        "scraping requirements"
+    );
 
     let done = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);

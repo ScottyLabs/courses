@@ -30,7 +30,6 @@ pub struct FileMeta {
     pub url: String,
 }
 
-
 pub struct Canvas {
     agent: ureq::Agent,
     token: String,
@@ -96,7 +95,6 @@ impl Canvas {
     pub fn get_file_meta(&self, api_url: &str) -> Result<FileMeta> {
         self.get_json(api_url)
     }
-
 
     pub fn download_bytes(&self, url: &str) -> Result<Vec<u8>> {
         Ok(self.get_with_retry(url, false)?.read_to_vec()?)
