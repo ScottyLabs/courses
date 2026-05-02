@@ -2,6 +2,7 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
+  bun2nixCli = inputs.bun2nix.packages.${system}.default;
   built = import ./nix/packages.nix {
     inherit pkgs;
     bun2nixOverlay = inputs.bun2nix.overlays.default;
@@ -27,12 +28,12 @@ in
     };
   };
 
-  packages = with pkgs; [
+  packages = (with pkgs; [
     wasm-pack
     wasm-bindgen-cli
     courses-api
     courses-web-api
-  ];
+  ]) ++ [ bun2nixCli ];
 
   env = {
     CATALOG_PATH = catalogPath;
