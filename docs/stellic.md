@@ -87,12 +87,12 @@ Query: `program_id=<id>&programs=<id>` (both required, both the same value). Ret
 
 ## Limits
 
-| Resource | Cap | Notes |
-|---|---|---|
-| Plans per user | 3 | Server-enforced; the 4th `createplan` returns code 493 with text "You can't have more than 3 plans at a time." |
-| Majors (type 1) per plan | 5 | Server-enforced and counts the user's existing declared majors, so a student with two declared majors gets only three free major slots on a fresh plan. |
-| Minors, additional majors, sub-requirement bundles, eligibility | None observed | 22 mixed programs of these types fit in one plan without rejection. |
-| `lyear` on `getcoursesections/` | `0..=3` | Out-of-range values fail or return empty. |
+| Resource                                                        | Cap           | Notes                                                                                                                                                   |
+| --------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Plans per user                                                  | 3             | Server-enforced; the 4th `createplan` returns code 493 with text "You can't have more than 3 plans at a time."                                          |
+| Majors (type 1) per plan                                        | 5             | Server-enforced and counts the user's existing declared majors, so a student with two declared majors gets only three free major slots on a fresh plan. |
+| Minors, additional majors, sub-requirement bundles, eligibility | None observed | 22 mixed programs of these types fit in one plan without rejection.                                                                                     |
+| `lyear` on `getcoursesections/`                                 | `0..=3`       | Out-of-range values fail or return empty.                                                                                                               |
 
 The plan and major caps only matter for the plan-based audit flow. The requirement scraper uses the test-apply path, which is plan-free, so neither cap applies to it.
 

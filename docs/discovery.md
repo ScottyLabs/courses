@@ -8,7 +8,7 @@ The course set is the union of two feeds.
 
 1. The FCE CSV at `data/fces.csv`, exported from SmartEvals. Columns used: `Year`, `Sem` (`Fall`/`Spring`/`Summer`), `Num` (5-digit, e.g. `21122`). Each row indicates the course was offered in that (year, sem).
 
-2. Schedule of Classes dumps at `https://enr-apps.as.cmu.edu/assets/SOC/sched_layout_{season}.dat`, where `season` is one of `fall`, `spring`, `summer_1`, `summer_2`. Tab-delimited; the term comes from a `Semester: <Fall|Spring|Summer> <year>` header line, course codes from rows starting with a tab.
+1. Schedule of Classes dumps at `https://enr-apps.as.cmu.edu/assets/SOC/sched_layout_{season}.dat`, where `season` is one of `fall`, `spring`, `summer_1`, `summer_2`. Tab-delimited; the term comes from a `Semester: <Fall|Spring|Summer> <year>` header line, course codes from rows starting with a tab.
 
 A failed fetch (404 or parse failure) on a season means the season has not been published yet. That season contributes no codes or tuples.
 
@@ -45,9 +45,9 @@ StuCo instructors can opt out of FCEs, so a `98-` course that ran may have no FC
 
 ## Deduplication
 
-| Boundary | Mechanism |
-|---|---|
-| FCE rows to (year, sem) tuples per course | `HashSet<(year, sem)>` |
-| FCE codes union SOC codes | `HashSet<String>` |
-| FCE tuples union SOC term per course | `HashSet<(year, sem)>` |
-| Re-runs (output files) | None; re-runs overwrite the output files. |
+| Boundary                                  | Mechanism                                 |
+| ----------------------------------------- | ----------------------------------------- |
+| FCE rows to (year, sem) tuples per course | `HashSet<(year, sem)>`                    |
+| FCE codes union SOC codes                 | `HashSet<String>`                         |
+| FCE tuples union SOC term per course      | `HashSet<(year, sem)>`                    |
+| Re-runs (output files)                    | None; re-runs overwrite the output files. |

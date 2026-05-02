@@ -17,13 +17,13 @@ A single catalog program resolves to one audit version at a time, the one matchi
 
 The `type` integer is only exposed by `getprograms/`, and once a program is added to a plan the label disappears. The five values:
 
-| type | name | count | examples |
-|---|---|---|---|
-| 1 | Major | 1139 | "BS in Mathematical Sciences", "BFA in Music Performance (Tuba)", "PHD in Architecture-Engineering-Construction Management", "MS in Software Engineering" |
-| 2 | Minor | 211 | "Minor in Computer Science", "Minor in Decision Making and Intelligent Systems", "Minor in Music Theory" |
-| 3 | Additional Major | 144 | "Additional Major in Computer Science", "Additional Major in International Relations and Politics" |
-| 4 | Sub-requirement bundle | 633 | "Mellon College of Science - General Education - EY2021+", "EY2019 - SCS General Education - Cognitive Studies Requirement (AI)", "Health Information Systems Concentration - BS in Information Systems", "EY2017 Drama - MFA PTM Requirements" |
-| 5 | Eligibility track | 2 | "Undergraduate Pre-Health", "Sigma Tau Delta Eligibility" |
+| type | name                   | count | examples                                                                                                                                                                                                                                        |
+| ---- | ---------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Major                  | 1139  | "BS in Mathematical Sciences", "BFA in Music Performance (Tuba)", "PHD in Architecture-Engineering-Construction Management", "MS in Software Engineering"                                                                                       |
+| 2    | Minor                  | 211   | "Minor in Computer Science", "Minor in Decision Making and Intelligent Systems", "Minor in Music Theory"                                                                                                                                        |
+| 3    | Additional Major       | 144   | "Additional Major in Computer Science", "Additional Major in International Relations and Politics"                                                                                                                                              |
+| 4    | Sub-requirement bundle | 633   | "Mellon College of Science - General Education - EY2021+", "EY2019 - SCS General Education - Cognitive Studies Requirement (AI)", "Health Information Systems Concentration - BS in Information Systems", "EY2017 Drama - MFA PTM Requirements" |
+| 5    | Eligibility track      | 2     | "Undergraduate Pre-Health", "Sigma Tau Delta Eligibility"                                                                                                                                                                                       |
 
 Type 1 is the actual degree program a student majors in. Type 3 is a way to declare a second major and is typically a slimmer requirement set than the equivalent type 1. Type 4 is a partial requirement set intended to combine with a major: per-college and per-AY-version gen-ed, concentration tracks within a major, and college-wide degree checks. Type 5 is a reusable eligibility track that lives alongside a major.
 

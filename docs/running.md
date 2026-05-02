@@ -2,17 +2,17 @@
 
 ## CLI
 
-| Flag | Env | Default | Purpose |
-|---|---|---|---|
-| `--cookie-header` | `COOKIE_HEADER` | (prompt) | Stellic full `Cookie:` header value. Required for `courses`, `programs`, `all`. The cookie's session identifies the user; no separate Andrew ID is required. |
-| `--canvas-token` | `CANVAS_TOKEN` | (none) | Canvas API token. Required for `syllabi` and `all`. Generate at `https://canvas.cmu.edu/profile/settings`. |
-| `--mode` | `MODE` | `courses` | One of `courses`, `programs`, `syllabi`, `all`. Selects which pipeline runs (`all` runs the three in parallel). |
-| `--fce-path` | `FCE_PATH` | `data/fces.csv` | SmartEvals FCE CSV (used in `courses` and `all`). |
-| `--out-dir` | `OUT_DIR` | `data/courses_history` | Course pipeline output root. |
-| `--programs-dir` | `PROGRAMS_DIR` | `data/programs` | Programs pipeline output root. |
-| `--syllabi-dir` | `SYLLABI_DIR` | `data/syllabi` | Syllabi pipeline output root. |
-| `--concurrency` | `CONCURRENCY` | `32` | Worker count for the rayon pool that runs HTTP tasks. |
-| `--limit` | `LIMIT` | (no limit) | Cap on number of tasks, for smoke tests. Applied to all pipelines that run. |
+| Flag              | Env             | Default                    | Purpose                                                                                                                                                      |
+| ----------------- | --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--cookie-header` | `COOKIE_HEADER` | (prompt)                   | Stellic full `Cookie:` header value. Required for `courses`, `programs`, `all`. The cookie's session identifies the user; no separate Andrew ID is required. |
+| `--canvas-token`  | `CANVAS_TOKEN`  | (none)                     | Canvas API token. Required for `syllabi` and `all`. Generate at `https://canvas.cmu.edu/profile/settings`.                                                   |
+| `--mode`          | `MODE`          | `courses`                  | One of `courses`, `programs`, `syllabi`, `all`. Selects which pipeline runs (`all` runs the three in parallel).                                              |
+| `--fce-path`      | `FCE_PATH`      | `data/fces.csv`            | SmartEvals FCE CSV (used in `courses` and `all`).                                                                                                            |
+| `--out-dir`       | `OUT_DIR`       | `exported/courses_history` | Course pipeline output root.                                                                                                                                 |
+| `--programs-dir`  | `PROGRAMS_DIR`  | `exported/programs`        | Programs pipeline output root.                                                                                                                               |
+| `--syllabi-dir`   | `SYLLABI_DIR`   | `exported/syllabi`         | Syllabi pipeline output root.                                                                                                                                |
+| `--concurrency`   | `CONCURRENCY`   | `32`                       | Worker count for the rayon pool that runs HTTP tasks.                                                                                                        |
+| `--limit`         | `LIMIT`         | (no limit)                 | Cap on number of tasks, for smoke tests. Applied to all pipelines that run.                                                                                  |
 
 Log filtering is via `RUST_LOG` (tracing `EnvFilter`); the default level is `info`.
 
@@ -80,19 +80,19 @@ A custom rayon thread pool sized by `--concurrency` runs every pipeline. When `-
 Course pipeline:
 
 1. Startup discovery uses `rayon::join` to overlap the FCE parse (single-threaded CSV read) with the four SOC fetches, which themselves run as a rayon par_iter across the four seasons.
-2. Task execution sends one HTTP GET per task (course info or course sections), so `--concurrency` directly bounds in-flight HTTP requests. Progress is logged every 500 completed tasks.
+1. Task execution sends one HTTP GET per task (course info or course sections), so `--concurrency` directly bounds in-flight HTTP requests. Progress is logged every 500 completed tasks.
 
 Programs pipeline:
 
 1. Audit-version discovery: one `GET /planner/getauditversions/` per catalog program in parallel, building the task list. Progress is logged every 200 programs.
-2. Audit fetch: one `POST /planner/getauditinfo/` (test-apply mode) per task in parallel. Progress is logged every 200 completed tasks.
+1. Audit fetch: one `POST /planner/getauditinfo/` (test-apply mode) per task in parallel. Progress is logged every 200 completed tasks.
 
 Step 2 of the programs pipeline is heavier than any course-pipeline call: each `getauditinfo` returns ~80 KB and the server takes several seconds to compute the audit, so its tolerable concurrency is lower than the course endpoint's.
 
 Syllabi pipeline:
 
 1. Sub-course discovery: walks the master `syllabus-registry` course's term modules, resolves each dept's `sis_course_id`, and lists each sub-course's modules to gather `Available Syllabi` items. Roughly 1797 sub-course module-list calls.
-2. Item save: for each `File` item, fetches file metadata then downloads the file; for each `Page` item, fetches the page body and writes its HTML.
+1. Item save: for each `File` item, fetches file metadata then downloads the file; for each `Page` item, fetches the page body and writes its HTML.
 
 Empirical concurrency findings:
 

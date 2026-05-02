@@ -17,21 +17,21 @@ The token currently in use for development expires August 25 at 12:00 AM. After 
 The registry is a three-level Canvas hierarchy:
 
 1. The master course (`3769`) contains 30 modules, one per term, named like `Spring 2026 (S26)` or `Summer 2024 (M24)`. Term codes follow `<season><yy>` where `season` is `S` (spring), `M` (summer-1), `N` (summer-2), or `F` (fall). Coverage runs from Summer 2019 (M19).
-2. Each term module's items are 60 `ExternalUrl` entries, one per department, with titles like `Architecture (48XXX)`. Each item's `external_url` points to a per-(term, department) sub-course identified by `sis_course_id:syllabus-registry-<TERM>-<DEPT>` (e.g. `syllabus-registry-S26-ARC`). At the time of writing, the registry contains 1797 such sub-courses across all terms.
-3. Each dept sub-course has up to four modules: `Notice to Users`, `Available Syllabi`, `Unavailable Syllabi`, `Individualized Experiences`. Items inside are either `File` (a Canvas file object that resolves to a downloadable PDF/DOC) or `Page` (a Canvas page).
+1. Each term module's items are 60 `ExternalUrl` entries, one per department, with titles like `Architecture (48XXX)`. Each item's `external_url` points to a per-(term, department) sub-course identified by `sis_course_id:syllabus-registry-<TERM>-<DEPT>` (e.g. `syllabus-registry-S26-ARC`). At the time of writing, the registry contains 1797 such sub-courses across all terms.
+1. Each dept sub-course has up to four modules: `Notice to Users`, `Available Syllabi`, `Unavailable Syllabi`, `Individualized Experiences`. Items inside are either `File` (a Canvas file object that resolves to a downloadable PDF/DOC) or `Page` (a Canvas page).
 
-  - "Available Syllabi" `File` items are each a real downloadable file (e.g. `48649_S26_designleadership_mcnutt.pdf`, content type `application/pdf`).
-  - "Available Syllabi" `Page` items contain only a small JSON redirect blob like `<div id="syllabus-source" style="display: none;">{"canvas_course_id":"52739",...}</div>`. The actual syllabus lives on the regular Canvas course site for that class, which is generally enrollment-restricted, so most of these pointers are not retrievable from a normal student token.
-  - "Unavailable Syllabi" pages are placeholders the registry generates for courses where the instructor never uploaded a syllabus. They contain no syllabus content.
-  - "Individualized Experiences" entries are independent-study and similar courses. Most are placeholder pages.
+- "Available Syllabi" `File` items are each a real downloadable file (e.g. `48649_S26_designleadership_mcnutt.pdf`, content type `application/pdf`).
+- "Available Syllabi" `Page` items contain only a small JSON redirect blob like `<div id="syllabus-source" style="display: none;">{"canvas_course_id":"52739",...}</div>`. The actual syllabus lives on the regular Canvas course site for that class, which is generally enrollment-restricted, so most of these pointers are not retrievable from a normal student token.
+- "Unavailable Syllabi" pages are placeholders the registry generates for courses where the instructor never uploaded a syllabus. They contain no syllabus content.
+- "Individualized Experiences" entries are independent-study and similar courses. Most are placeholder pages.
 
 ## Retrieval
 
 To list every file in the registry, we walk:
 
 1. `GET /api/v1/courses/3769/modules?include[]=items&per_page=100` to get every term module with its dept items.
-2. For each term-module item, the `external_url` ends in `sis_course_id:<id>`. Hit `GET /api/v1/courses/sis_course_id:<id>/modules?include[]=items&per_page=20` for each.
-3. Within each sub-course's `Available Syllabi` module, every `File`-typed item has a `url` like `/api/v1/courses/<id>/files/<file_id>`. Fetch that to get the file metadata, including a `url` field that is the actual downloadable URL with a `verifier` query parameter.
+1. For each term-module item, the `external_url` ends in `sis_course_id:<id>`. Hit `GET /api/v1/courses/sis_course_id:<id>/modules?include[]=items&per_page=20` for each.
+1. Within each sub-course's `Available Syllabi` module, every `File`-typed item has a `url` like `/api/v1/courses/<id>/files/<file_id>`. Fetch that to get the file metadata, including a `url` field that is the actual downloadable URL with a `verifier` query parameter.
 
 Pagination is via the standard Canvas `Link` header; modules and items use `per_page` up to 100. The `?per_page=100` parameter is a soft hint — Canvas may return fewer.
 

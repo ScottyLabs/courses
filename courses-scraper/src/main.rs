@@ -44,13 +44,13 @@ struct Args {
     #[arg(long, default_value_t = 32, env = "CONCURRENCY")]
     concurrency: usize,
 
-    #[arg(long, default_value = "data/courses_history", env = "OUT_DIR")]
+    #[arg(long, default_value = "exported/courses_history", env = "OUT_DIR")]
     out_dir: PathBuf,
 
-    #[arg(long, default_value = "data/programs", env = "PROGRAMS_DIR")]
+    #[arg(long, default_value = "exported/programs", env = "PROGRAMS_DIR")]
     programs_dir: PathBuf,
 
-    #[arg(long, default_value = "data/syllabi", env = "SYLLABI_DIR")]
+    #[arg(long, default_value = "exported/syllabi", env = "SYLLABI_DIR")]
     syllabi_dir: PathBuf,
 
     #[arg(long, env = "COOKIE_HEADER")]
