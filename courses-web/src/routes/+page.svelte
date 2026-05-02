@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import init, { WasmIndex } from '$lib/courses-index/courses_index_wasm.js';
+	import { loadCatalog } from '$lib/catalog';
 
 	type Hit = { course_id: number; score: number };
 	type QueryResult = {
@@ -12,9 +13,11 @@
 
 	let index: WasmIndex | null = $state(null);
 	let loadMs = $state<number | null>(null);
+	let versionMs = $state<number | null>(null);
 	let fetchMs = $state<number | null>(null);
 	let decompressMs = $state<number | null>(null);
 	let buildMs = $state<number | null>(null);
+	let fromCache = $state<boolean>(false);
 	let courseCount = $state<number | null>(null);
 	let query = $state('linear algebra');
 	let lastResult = $state<QueryResult | null>(null);
@@ -25,20 +28,17 @@
 	onMount(async () => {
 		await init();
 		const t0 = performance.now();
-		const response = await fetch('/catalog/binary');
+		const load = await loadCatalog();
 		const t1 = performance.now();
-		const decompressed = await new Response(
-			response.body!.pipeThrough(new DecompressionStream('gzip'))
-		).arrayBuffer();
+		index = new WasmIndex(load.bytes);
 		const t2 = performance.now();
-		const bytes = new Uint8Array(decompressed);
-		index = new WasmIndex(bytes);
-		const t3 = performance.now();
 
-		fetchMs = t1 - t0;
-		decompressMs = t2 - t1;
-		buildMs = t3 - t2;
-		loadMs = t3 - t0;
+		versionMs = load.versionMs;
+		fetchMs = load.fetchMs;
+		decompressMs = load.decompressMs;
+		buildMs = t2 - t1;
+		loadMs = t2 - t0;
+		fromCache = load.fromCache;
 		courseCount = index.course_count();
 		runQuery();
 	});
@@ -94,8 +94,8 @@
 		<p>Loading catalog...</p>
 	{:else}
 		<p>
-			Loaded {courseCount} courses in {loadMs.toFixed(1)} ms (fetch {fetchMs?.toFixed(1)} + gunzip {decompressMs?.toFixed(1)}
-			+ build {buildMs?.toFixed(1)}).
+			Loaded {courseCount} courses in {loadMs.toFixed(1)} ms ({fromCache ? 'OPFS hit' : 'fresh download'}: version {versionMs?.toFixed(1)}
+			+ fetch/read {fetchMs?.toFixed(1)} + gunzip {decompressMs?.toFixed(1)} + build {buildMs?.toFixed(1)}).
 		</p>
 
 		<section>

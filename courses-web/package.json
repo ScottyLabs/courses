@@ -8,16 +8,19 @@
         "build": "vite build",
         "preview": "vite preview",
         "prepare": "svelte-kit sync || echo ''",
+        "postinstall": "bun2nix -o bun.nix",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "build:wasm": "wasm-pack build ../courses-index-wasm --target web --out-dir ../courses-web/src/lib/courses-index --release",
-        "build:catalog": "cd .. && cargo run --release -p courses-index -- --write-catalog courses-web/static/catalog/binary"
+        "build:catalog": "cd .. && cargo run --release -p courses-index -- --write-catalog courses-web/static/catalog/binary",
+        "build:types": "cd .. && cargo run --quiet -p courses-web-api -- --emit-openapi > /tmp/courses-openapi.json && bunx openapi-typescript /tmp/courses-openapi.json -o courses-web/src/lib/api.d.ts"
     },
     "devDependencies": {
         "@sveltejs/adapter-static": "^3.0.10",
         "@sveltejs/kit": "^2.57.0",
         "@sveltejs/vite-plugin-svelte": "^7.0.0",
         "@types/node": "^24",
+        "openapi-typescript": "^7.13.0",
         "svelte": "^5.55.2",
         "svelte-check": "^4.4.6",
         "typescript": "^6.0.2",
