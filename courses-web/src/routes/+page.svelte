@@ -22,12 +22,10 @@
 	let resolvedHits = $state<{ hit: Hit; course: CourseSummary }[]>([]);
 	let bench = $state<{ label: string; hits: number; p50_us: number; p99_us: number }[]>([]);
 
-	const catalogUrl = import.meta.env.VITE_CATALOG_URL ?? '/catalog.bin';
-
 	onMount(async () => {
 		await init();
 		const t0 = performance.now();
-		const response = await fetch(catalogUrl);
+		const response = await fetch('/catalog/binary');
 		const t1 = performance.now();
 		const decompressed = await new Response(
 			response.body!.pipeThrough(new DecompressionStream('gzip'))

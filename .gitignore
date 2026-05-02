@@ -25,7 +25,7 @@ courses-web/src/lib/courses-index/
 
 # Generated artifacts
 exported/
-courses-web/static/catalog.bin
+courses-web/static/catalog/
 
 # OS
 .DS_Store

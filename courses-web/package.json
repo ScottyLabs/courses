@@ -11,7 +11,7 @@
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
         "build:wasm": "wasm-pack build ../courses-index-wasm --target web --out-dir ../courses-web/src/lib/courses-index --release",
-        "build:catalog": "cd .. && cargo run --release -p courses-index -- --write-catalog courses-web/static/catalog.bin"
+        "build:catalog": "cd .. && cargo run --release -p courses-index -- --write-catalog courses-web/static/catalog/binary"
     },
     "devDependencies": {
         "@sveltejs/adapter-static": "^3.0.10",

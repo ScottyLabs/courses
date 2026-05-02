@@ -8,10 +8,6 @@ declare global {
         // interface PageState {}
         // interface Platform {}
     }
-
-    interface ImportMetaEnv {
-        readonly VITE_CATALOG_URL?: string;
-    }
 }
 
 export {};
