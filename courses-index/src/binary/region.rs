@@ -8,8 +8,7 @@
 //! keeps wasm-side reading allocation-free. The browser already takes
 //! advantage of that with [`read_payload_minimal`], which skips the
 //! `professors` and `fce_rows` regions during cold start because the
-//! search UI doesn't read them. Future OPFS-streaming work can borrow
-//! ranges directly out of the decompressed buffer in the same shape.
+//! search UI doesn't read them.
 //!
 //! File layout (after gzip is unwrapped):
 //!

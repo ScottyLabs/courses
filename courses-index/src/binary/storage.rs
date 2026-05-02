@@ -1,12 +1,12 @@
 //! Storage abstraction for the catalog blob. Decouples "where bytes come
 //! from" from "how the catalog is decoded" so the same reader logic works
-//! against an in-memory `Vec<u8>`, an mmap'd file on disk, or (eventually)
-//! an OPFS file in the browser. Inspired by the `MemoryProvider` pattern in
-//! the veeso/wasm-dbms project.
+//! against a borrowed `&[u8]`, an owned `Vec<u8>`, or an mmap'd file on
+//! disk. Inspired by the `MemoryProvider` pattern in the veeso/wasm-dbms
+//! project.
 //!
 //! Reads are addressed by byte offset and length and return `Cow<[u8]>`, so
-//! backends that already hold the bytes (in-memory, mmap) hand back a
-//! borrowed slice with no copy or allocation.
+//! backends that already hold the bytes hand back a borrowed slice with no
+//! copy or allocation.
 
 use std::borrow::Cow;
 
