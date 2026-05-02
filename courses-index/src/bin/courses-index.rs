@@ -1,8 +1,7 @@
 //! Native CLI for the catalog pipeline. Walks `exported/` and `data/fces.csv`
 //! into a `Corpus`, builds the in-memory index, and exposes flags for the
-//! various development workflows attached to it (catalog read/write, patch
-//! generation, ad-hoc queries, schedule helpers, the bench harness, and
-//! description-corpus analysis).
+//! various development workflows attached to it: catalog read/write, patch
+//! generation, ad-hoc queries, schedule helpers, and the bench harness.
 
 use std::path::PathBuf;
 
@@ -12,7 +11,7 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 use courses_index::{
-    analysis, binary,
+    binary,
     index::{FacetAxis, FacetFilters, Index, Query, Searcher, SortOrder},
     load,
 };
@@ -87,11 +86,6 @@ struct Args {
 
     #[arg(long)]
     patch: Option<PathBuf>,
-
-    /// Analyze Course.description corpus for intern candidates and print a
-    /// ranked list of phrases by estimated byte savings.
-    #[arg(long)]
-    analyze_descriptions: bool,
 }
 
 fn main() -> Result<()> {
@@ -261,10 +255,6 @@ fn main() -> Result<()> {
 
     if args.schedule_demo {
         run_schedule_demo(&index);
-    }
-
-    if args.analyze_descriptions {
-        analysis::run(&index);
     }
 
     let mut top: Vec<(&str, &str, f32)> = index
