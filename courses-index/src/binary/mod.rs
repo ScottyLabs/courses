@@ -25,9 +25,9 @@ use std::path::Path;
 #[cfg(not(target_arch = "wasm32"))]
 use anyhow::{Context, Result};
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "gzip_runtime"))]
 use crate::index::text::PrebuiltText;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "gzip_runtime"))]
 use crate::load::Corpus;
 
 const GZIP_MAGIC: [u8; 2] = [0x1f, 0x8b];
@@ -36,7 +36,7 @@ const GZIP_MAGIC: [u8; 2] = [0x1f, 0x8b];
 /// file at `path`. When `compress` is true the file is gzip-wrapped so the
 /// browser can decode it via `DecompressionStream`. With `compress = false`
 /// the file is written raw, useful for binary diff tooling.
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "gzip_runtime"))]
 pub fn write_catalog(
     path: &Path,
     corpus: &Corpus,
@@ -51,7 +51,7 @@ pub fn write_catalog(
 
 /// Read a catalog file from disk, transparently unwrapping the outer gzip
 /// layer if present.
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "gzip_runtime"))]
 pub fn read_catalog(path: &Path) -> Result<CatalogPayload> {
     let bytes = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
     let raw = if bytes.starts_with(&GZIP_MAGIC) {
