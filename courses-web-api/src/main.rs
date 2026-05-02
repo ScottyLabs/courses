@@ -1,24 +1,30 @@
-//! Web-app backend serving the catalog binary at `/catalog/binary` and,
-//! when `--static-dir` is set, the SPA bundle at `/`.
+//! Web-app backend serving the catalog binary at `/catalog/binary`, the
+//! catalog content hash at `/catalog/version`, the OpenAPI spec at
+//! `/openapi.json`, and (when `--static-dir` is set) the SPA bundle at `/`.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use anyhow::Result;
+use arc_swap::ArcSwap;
 use axum::{
-    Router,
     extract::State,
     http::{StatusCode, header},
     response::{IntoResponse, Response},
-    routing::get,
 };
 use clap::Parser;
-use tokio::{fs::File, net::TcpListener};
+use serde::Serialize;
+use sha2::{Digest, Sha256};
+use tokio::{fs::File, net::TcpListener, sync::mpsc};
 use tokio_util::io::ReaderStream;
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
 };
-use tracing::info;
+use tracing::{error, info, warn};
+use utoipa::{OpenApi, ToSchema};
+use utoipa_axum::{router::OpenApiRouter, routes};
+use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -26,16 +32,48 @@ struct Args {
     bind: String,
 
     #[arg(long, env = "CATALOG_PATH")]
-    catalog_path: PathBuf,
+    catalog_path: Option<PathBuf>,
 
     /// When set, the frontend SPA bundle at this path is served at `/`.
     #[arg(long, env = "STATIC_DIR")]
     static_dir: Option<PathBuf>,
+
+    /// Print the OpenAPI spec as JSON to stdout and exit. Used by the
+    /// frontend's type-generation step.
+    #[arg(long)]
+    emit_openapi: bool,
 }
 
 #[derive(Clone)]
 struct AppState {
     catalog_path: PathBuf,
+    version: Arc<ArcSwap<CatalogVersion>>,
+}
+
+/// Identity of the currently-served catalog file.
+#[derive(Serialize, Clone, ToSchema)]
+struct CatalogVersion {
+    /// SHA-256 of the catalog file as hex. Stable cache key for OPFS.
+    hash: String,
+    /// File size in bytes.
+    bytes: u64,
+}
+
+#[derive(OpenApi)]
+#[openapi(
+    info(title = "courses-web-api", version = "0.1.0"),
+    components(schemas(CatalogVersion))
+)]
+struct ApiDoc;
+
+fn hash_catalog(path: &std::path::Path) -> Result<CatalogVersion> {
+    let bytes = std::fs::read(path)?;
+    let mut hasher = Sha256::new();
+    hasher.update(&bytes);
+    Ok(CatalogVersion {
+        hash: hex::encode(hasher.finalize()),
+        bytes: bytes.len() as u64,
+    })
 }
 
 #[tokio::main]
@@ -48,14 +86,44 @@ async fn main() -> Result<()> {
         .init();
 
     let args = Args::parse();
+
+    if args.emit_openapi {
+        let dummy = AppState {
+            catalog_path: PathBuf::new(),
+            version: Arc::new(ArcSwap::from_pointee(CatalogVersion {
+                hash: String::new(),
+                bytes: 0,
+            })),
+        };
+        let (_, openapi) = build_router(dummy).split_for_parts();
+        println!("{}", openapi.to_pretty_json()?);
+        return Ok(());
+    }
+
+    let catalog_path = args
+        .catalog_path
+        .clone()
+        .ok_or_else(|| anyhow::anyhow!("--catalog-path is required"))?;
+
+    let initial = hash_catalog(&catalog_path).unwrap_or_else(|e| {
+        warn!(error = %e, "initial catalog hash failed, serving empty version");
+        CatalogVersion {
+            hash: String::new(),
+            bytes: 0,
+        }
+    });
+    info!(hash = %initial.hash, bytes = initial.bytes, "catalog version computed");
+
     let state = AppState {
-        catalog_path: args.catalog_path,
+        catalog_path: catalog_path.clone(),
+        version: Arc::new(ArcSwap::from_pointee(initial)),
     };
 
-    let mut app = Router::new()
-        .route("/health", get(health))
-        .route("/catalog/binary", get(catalog_binary))
-        .with_state(state);
+    spawn_watcher(catalog_path, state.clone());
+
+    let (api_router, openapi) = build_router(state).split_for_parts();
+
+    let mut app = api_router.merge(SwaggerUi::new("/swagger-ui").url("/openapi.json", openapi));
 
     if let Some(dir) = args.static_dir.as_ref() {
         let static_files = ServeDir::new(dir)
@@ -76,10 +144,78 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+fn spawn_watcher(path: PathBuf, state: AppState) {
+    use notify::{RecursiveMode, Watcher};
+    use std::time::Duration;
+
+    let (tx, mut rx) = mpsc::channel::<()>(8);
+
+    let watch_path = path.clone();
+    std::thread::spawn(move || {
+        let mut watcher = match notify::recommended_watcher(move |res: notify::Result<_>| {
+            if let Err(e) = res {
+                warn!(error = %e, "fs watcher error");
+                return;
+            }
+            let _ = tx.blocking_send(());
+        }) {
+            Ok(w) => w,
+            Err(e) => {
+                error!(error = %e, "failed to start fs watcher");
+                return;
+            }
+        };
+        if let Err(e) = watcher.watch(&watch_path, RecursiveMode::NonRecursive) {
+            error!(error = %e, path = %watch_path.display(), "watch failed");
+            return;
+        }
+        std::thread::park();
+    });
+
+    tokio::spawn(async move {
+        while rx.recv().await.is_some() {
+            tokio::time::sleep(Duration::from_millis(250)).await;
+            while rx.try_recv().is_ok() {}
+            match tokio::task::spawn_blocking({
+                let path = path.clone();
+                move || hash_catalog(&path)
+            })
+            .await
+            {
+                Ok(Ok(next)) => {
+                    info!(hash = %next.hash, bytes = next.bytes, "catalog version updated");
+                    state.version.store(Arc::new(next));
+                }
+                Ok(Err(e)) => warn!(error = %e, "rehash failed"),
+                Err(e) => warn!(error = %e, "rehash task panicked"),
+            }
+        }
+    });
+}
+
+#[utoipa::path(get, path = "/health", responses((status = 200, body = String)))]
 async fn health() -> &'static str {
     "ok"
 }
 
+#[utoipa::path(
+    get,
+    path = "/catalog/version",
+    responses((status = 200, body = CatalogVersion))
+)]
+async fn catalog_version(State(state): State<AppState>) -> Response {
+    let v = state.version.load_full();
+    axum::Json((*v).clone()).into_response()
+}
+
+#[utoipa::path(
+    get,
+    path = "/catalog/binary",
+    responses(
+        (status = 200, description = "Catalog binary, gzipped (Content-Encoding: gzip)", content_type = "application/octet-stream"),
+        (status = 503, description = "Catalog file unavailable")
+    )
+)]
 async fn catalog_binary(State(state): State<AppState>) -> Response {
     use tokio::io::AsyncReadExt;
 
@@ -129,4 +265,12 @@ async fn catalog_binary(State(state): State<AppState>) -> Response {
         h.insert(header::CONTENT_ENCODING, "gzip".parse().unwrap());
     }
     response
+}
+
+fn build_router(state: AppState) -> OpenApiRouter {
+    OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .routes(routes!(health))
+        .routes(routes!(catalog_version))
+        .routes(routes!(catalog_binary))
+        .with_state(state)
 }
