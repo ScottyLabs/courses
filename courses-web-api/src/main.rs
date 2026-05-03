@@ -2,20 +2,16 @@
 //! catalog content hash at `/catalog/version`, the OpenAPI spec at
 //! `/openapi.json`, and (when `--static-dir` is set) the SPA bundle at `/`.
 //!
-//! The catalog comes from one of three sources:
+//! The catalog comes from one of two sources:
 //!
 //! - **S3 mode** when `--s3-bucket` is set. The handler polls the object's
 //!   ETag every `--poll-interval` seconds; on change it pulls the body into
 //!   memory and serves it from there. The canonical mode used by the main
-//!   deploy.
+//!   deploy and by local dev (against the in-devenv garage instance).
 //! - **Upstream proxy mode** when `--catalog-upstream-url` is set. The
 //!   handler reverse-proxies `/catalog/version` and `/catalog/binary` to
 //!   the URL. Used by PR/staging deploys that piggyback on the main
 //!   deploy's catalog rather than getting their own scrape.
-//! - **Local file mode** when `--catalog-path` is set. The handler reads
-//!   the file from disk on every request, hashing the content for the
-//!   version response. Used by local devenv before S3 credentials are
-//!   wired through.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -70,10 +66,6 @@ struct Args {
     #[arg(long, env = "CATALOG_UPSTREAM_URL")]
     catalog_upstream_url: Option<String>,
 
-    /// Read the catalog from this local file path. Mutex with the other two.
-    #[arg(long, env = "CATALOG_PATH")]
-    catalog_path: Option<PathBuf>,
-
     /// When set, the frontend SPA bundle at this path is served at `/`.
     #[arg(long, env = "STATIC_DIR")]
     static_dir: Option<PathBuf>,
@@ -95,9 +87,6 @@ enum CatalogSource {
     Upstream {
         client: reqwest::Client,
         base: String,
-    },
-    Local {
-        path: PathBuf,
     },
 }
 
@@ -153,17 +142,9 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let mode_count = [
-        args.s3_bucket.is_some(),
-        args.catalog_upstream_url.is_some(),
-        args.catalog_path.is_some(),
-    ]
-    .iter()
-    .filter(|x| **x)
-    .count();
-    if mode_count != 1 {
+    if args.s3_bucket.is_some() == args.catalog_upstream_url.is_some() {
         return Err(anyhow!(
-            "exactly one of --s3-bucket, --catalog-upstream-url, --catalog-path must be set"
+            "exactly one of --s3-bucket, --catalog-upstream-url must be set"
         ));
     }
 
@@ -200,16 +181,13 @@ async fn main() -> Result<()> {
             key: args.s3_key.clone(),
             cache,
         }
-    } else if let Some(url) = &args.catalog_upstream_url {
+    } else {
+        let url = args.catalog_upstream_url.as_ref().unwrap();
         info!(upstream = %url, "running in upstream-proxy mode");
         CatalogSource::Upstream {
             client: reqwest::Client::new(),
             base: url.trim_end_matches('/').to_string(),
         }
-    } else {
-        let path = args.catalog_path.clone().unwrap();
-        info!(path = %path.display(), "running in local-file mode");
-        CatalogSource::Local { path }
     };
 
     let state = AppState { source };
@@ -335,23 +313,6 @@ async fn catalog_version(State(state): State<AppState>) -> Response {
                 Err(e) => (StatusCode::BAD_GATEWAY, format!("upstream: {e}")).into_response(),
             }
         }
-        CatalogSource::Local { path } => match tokio::fs::read(path).await {
-            Ok(bytes) => {
-                use sha2::{Digest, Sha256};
-                let mut hasher = Sha256::new();
-                hasher.update(&bytes);
-                axum::Json(CatalogVersion {
-                    hash: hex::encode(hasher.finalize()),
-                    bytes: bytes.len() as u64,
-                })
-                .into_response()
-            }
-            Err(e) => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                format!("catalog unavailable: {e}"),
-            )
-                .into_response(),
-        },
     }
 }
 
@@ -402,29 +363,6 @@ async fn catalog_binary(State(state): State<AppState>) -> Response {
                 Err(e) => (StatusCode::BAD_GATEWAY, format!("upstream: {e}")).into_response(),
             }
         }
-        CatalogSource::Local { path } => match tokio::fs::read(path).await {
-            Ok(bytes) => {
-                let is_gzip = bytes.starts_with(&[0x1f, 0x8b]);
-                let mut response =
-                    Response::new(axum::body::Body::from(Bytes::from(bytes.clone())));
-                let h = response.headers_mut();
-                h.insert(
-                    header::CONTENT_TYPE,
-                    "application/octet-stream".parse().unwrap(),
-                );
-                h.insert(header::CONTENT_LENGTH, bytes.len().into());
-                h.insert(header::CACHE_CONTROL, "public, max-age=60".parse().unwrap());
-                if is_gzip {
-                    h.insert(header::CONTENT_ENCODING, "gzip".parse().unwrap());
-                }
-                response
-            }
-            Err(e) => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                format!("catalog unavailable: {e}"),
-            )
-                .into_response(),
-        },
     }
 }
 
