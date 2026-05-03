@@ -14,7 +14,11 @@ let
   catalogPath = "${config.devenv.root}/exported/catalog/binary";
 in
 {
-  imports = [ inputs.scottylabs.devenvModules.default ];
+  imports = [
+    inputs.scottylabs.devenvModules.default
+    # Pinned copy of github.com/cachix/devenv PR #2781 until it merges.
+    ./nix/garage-module.nix
+  ];
 
   scottylabs = {
     enable = true;
@@ -26,6 +30,11 @@ in
       services.courses-web-api = { };
       sites.docs = { };
     };
+  };
+
+  services.garage = {
+    enable = true;
+    buckets = [ "courses-catalog" ];
   };
 
   packages = (with pkgs; [
