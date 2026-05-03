@@ -52,3 +52,11 @@ The reader is generic over a `CatalogStorage` trait so the same code path works 
 ## Format versioning
 
 `FORMAT_VERSION` bumps any time the wire format changes (region layout, header, or any region body that is not strictly additive). The reader compares it on every load and returns an error rather than silently misreading a future version. The public `courses-api` exposes the active version under `/v1/version` so external consumers can pin against it.
+
+## Distribution
+
+The canonical copy of `catalog.bin` lives in a Garage S3 bucket. The forgejo `Scrape and Publish Catalog` workflow runs the scraper, builds the catalog, and uploads the binary to `s3://kennel-courses-main/catalog.bin`. Both `courses-api` and `courses-web-api` poll the object's S3 ETag (default every 300 seconds) and re-fetch when it changes; the in-memory catalog and index swap atomically via `ArcSwap`.
+
+`courses-web-api` exposes the binary back to the browser at `/catalog/binary` along with the current ETag at `/catalog/version`. The SPA's OPFS cache is keyed on that ETag, so a new scrape causes browsers to download once and serve every subsequent visit from local disk until the ETag changes again.
+
+PR and staging deploys point `courses-web-api` at `--catalog-upstream-url=https://main-deploy.example/` instead of giving them their own bucket. Their `/catalog/*` routes reverse-proxy to the main deploy, so all branches share one canonical catalog.
