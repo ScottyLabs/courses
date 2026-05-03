@@ -1,27 +1,43 @@
 //! Web-app backend serving the catalog binary at `/catalog/binary`, the
 //! catalog content hash at `/catalog/version`, the OpenAPI spec at
 //! `/openapi.json`, and (when `--static-dir` is set) the SPA bundle at `/`.
+//!
+//! The catalog comes from one of three sources:
+//!
+//! - **S3 mode** when `--s3-bucket` is set. The handler polls the object's
+//!   ETag every `--poll-interval` seconds; on change it pulls the body into
+//!   memory and serves it from there. The canonical mode used by the main
+//!   deploy.
+//! - **Upstream proxy mode** when `--catalog-upstream-url` is set. The
+//!   handler reverse-proxies `/catalog/version` and `/catalog/binary` to
+//!   the URL. Used by PR/staging deploys that piggyback on the main
+//!   deploy's catalog rather than getting their own scrape.
+//! - **Local file mode** when `--catalog-path` is set. The handler reads
+//!   the file from disk on every request, hashing the content for the
+//!   version response. Used by local devenv before S3 credentials are
+//!   wired through.
 
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{Context, Result, anyhow};
 use arc_swap::ArcSwap;
+use aws_sdk_s3::Client as S3Client;
 use axum::{
     extract::State,
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
+use bytes::Bytes;
 use clap::Parser;
 use serde::Serialize;
-use sha2::{Digest, Sha256};
-use tokio::{fs::File, net::TcpListener, sync::mpsc};
-use tokio_util::io::ReaderStream;
+use tokio::net::TcpListener;
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
 };
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 use utoipa::{OpenApi, ToSchema};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_swagger_ui::SwaggerUi;
@@ -31,6 +47,30 @@ struct Args {
     #[arg(long, env = "BIND_ADDR", default_value = "0.0.0.0:3002")]
     bind: String,
 
+    /// S3 bucket holding `catalog.bin`. Mutex with `--catalog-upstream-url`.
+    #[arg(long, env = "S3_BUCKET")]
+    s3_bucket: Option<String>,
+
+    /// S3 endpoint URL (e.g. `https://s3.scottylabs.org`). Defaults to AWS
+    /// public S3 if unset.
+    #[arg(long, env = "S3_ENDPOINT")]
+    s3_endpoint: Option<String>,
+
+    /// Object key inside the bucket.
+    #[arg(long, env = "S3_KEY", default_value = "catalog.bin")]
+    s3_key: String,
+
+    /// Seconds between S3 ETag checks. The scraper publishes manually so
+    /// the cadence can be coarse.
+    #[arg(long, env = "POLL_INTERVAL", default_value_t = 300)]
+    poll_interval: u64,
+
+    /// Reverse-proxy `/catalog/*` to this URL instead of reading S3 directly.
+    /// Mutex with `--s3-bucket`.
+    #[arg(long, env = "CATALOG_UPSTREAM_URL")]
+    catalog_upstream_url: Option<String>,
+
+    /// Read the catalog from this local file path. Mutex with the other two.
     #[arg(long, env = "CATALOG_PATH")]
     catalog_path: Option<PathBuf>,
 
@@ -45,15 +85,39 @@ struct Args {
 }
 
 #[derive(Clone)]
+enum CatalogSource {
+    S3 {
+        client: S3Client,
+        bucket: String,
+        key: String,
+        cache: Arc<ArcSwap<S3Cache>>,
+    },
+    Upstream {
+        client: reqwest::Client,
+        base: String,
+    },
+    Local {
+        path: PathBuf,
+    },
+}
+
+struct S3Cache {
+    etag: String,
+    bytes: Bytes,
+}
+
+#[derive(Clone)]
 struct AppState {
-    catalog_path: PathBuf,
-    version: Arc<ArcSwap<CatalogVersion>>,
+    source: CatalogSource,
 }
 
 /// Identity of the currently-served catalog file.
 #[derive(Serialize, Clone, ToSchema)]
 struct CatalogVersion {
-    /// SHA-256 of the catalog file as hex. Stable cache key for OPFS.
+    /// Opaque content identifier. In S3 mode this is the object ETag; in
+    /// upstream-proxy mode it is whatever the upstream returned. The OPFS
+    /// cache only needs it to be stable across re-fetches of identical
+    /// content.
     hash: String,
     /// File size in bytes.
     bytes: u64,
@@ -65,16 +129,6 @@ struct CatalogVersion {
     components(schemas(CatalogVersion))
 )]
 struct ApiDoc;
-
-fn hash_catalog(path: &std::path::Path) -> Result<CatalogVersion> {
-    let bytes = std::fs::read(path)?;
-    let mut hasher = Sha256::new();
-    hasher.update(&bytes);
-    Ok(CatalogVersion {
-        hash: hex::encode(hasher.finalize()),
-        bytes: bytes.len() as u64,
-    })
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -89,40 +143,77 @@ async fn main() -> Result<()> {
 
     if args.emit_openapi {
         let dummy = AppState {
-            catalog_path: PathBuf::new(),
-            version: Arc::new(ArcSwap::from_pointee(CatalogVersion {
-                hash: String::new(),
-                bytes: 0,
-            })),
+            source: CatalogSource::Upstream {
+                client: reqwest::Client::new(),
+                base: String::new(),
+            },
         };
         let (_, openapi) = build_router(dummy).split_for_parts();
         println!("{}", openapi.to_pretty_json()?);
         return Ok(());
     }
 
-    let catalog_path = args
-        .catalog_path
-        .clone()
-        .ok_or_else(|| anyhow::anyhow!("--catalog-path is required"))?;
+    let mode_count = [
+        args.s3_bucket.is_some(),
+        args.catalog_upstream_url.is_some(),
+        args.catalog_path.is_some(),
+    ]
+    .iter()
+    .filter(|x| **x)
+    .count();
+    if mode_count != 1 {
+        return Err(anyhow!(
+            "exactly one of --s3-bucket, --catalog-upstream-url, --catalog-path must be set"
+        ));
+    }
 
-    let initial = hash_catalog(&catalog_path).unwrap_or_else(|e| {
-        warn!(error = %e, "initial catalog hash failed, serving empty version");
-        CatalogVersion {
-            hash: String::new(),
-            bytes: 0,
+    let source = if let Some(bucket) = &args.s3_bucket {
+        let mut loader = aws_config::from_env();
+        if let Some(endpoint) = &args.s3_endpoint {
+            loader = loader.endpoint_url(endpoint.clone());
         }
-    });
-    info!(hash = %initial.hash, bytes = initial.bytes, "catalog version computed");
+        let conf = loader.load().await;
+        let s3 = aws_sdk_s3::config::Builder::from(&conf)
+            .force_path_style(true)
+            .build();
+        let client = S3Client::from_conf(s3);
 
-    let state = AppState {
-        catalog_path: catalog_path.clone(),
-        version: Arc::new(ArcSwap::from_pointee(initial)),
+        let initial = fetch_object(&client, bucket, &args.s3_key).await?;
+        info!(
+            bucket = %bucket,
+            key = %args.s3_key,
+            etag = %initial.etag,
+            bytes = initial.bytes.len(),
+            "initial catalog fetched"
+        );
+        let cache = Arc::new(ArcSwap::from_pointee(initial));
+        spawn_s3_poller(
+            client.clone(),
+            bucket.clone(),
+            args.s3_key.clone(),
+            Duration::from_secs(args.poll_interval),
+            cache.clone(),
+        );
+        CatalogSource::S3 {
+            client,
+            bucket: bucket.clone(),
+            key: args.s3_key.clone(),
+            cache,
+        }
+    } else if let Some(url) = &args.catalog_upstream_url {
+        info!(upstream = %url, "running in upstream-proxy mode");
+        CatalogSource::Upstream {
+            client: reqwest::Client::new(),
+            base: url.trim_end_matches('/').to_string(),
+        }
+    } else {
+        let path = args.catalog_path.clone().unwrap();
+        info!(path = %path.display(), "running in local-file mode");
+        CatalogSource::Local { path }
     };
 
-    spawn_watcher(catalog_path, state.clone());
-
+    let state = AppState { source };
     let (api_router, openapi) = build_router(state).split_for_parts();
-
     let mut app = api_router.merge(SwaggerUi::new("/swagger-ui").url("/openapi.json", openapi));
 
     if let Some(dir) = args.static_dir.as_ref() {
@@ -144,50 +235,65 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn spawn_watcher(path: PathBuf, state: AppState) {
-    use notify::{RecursiveMode, Watcher};
-    use std::time::Duration;
+async fn fetch_object(client: &S3Client, bucket: &str, key: &str) -> Result<S3Cache> {
+    let resp = client
+        .get_object()
+        .bucket(bucket)
+        .key(key)
+        .send()
+        .await
+        .with_context(|| format!("get_object s3://{bucket}/{key}"))?;
+    let etag = resp
+        .e_tag()
+        .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
+        .trim_matches('"')
+        .to_string();
+    let bytes = resp.body.collect().await?.into_bytes();
+    Ok(S3Cache { etag, bytes })
+}
 
-    let (tx, mut rx) = mpsc::channel::<()>(8);
+async fn fetch_etag(client: &S3Client, bucket: &str, key: &str) -> Result<String> {
+    let resp = client
+        .head_object()
+        .bucket(bucket)
+        .key(key)
+        .send()
+        .await
+        .with_context(|| format!("head_object s3://{bucket}/{key}"))?;
+    Ok(resp
+        .e_tag()
+        .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
+        .trim_matches('"')
+        .to_string())
+}
 
-    let watch_path = path.clone();
-    std::thread::spawn(move || {
-        let mut watcher = match notify::recommended_watcher(move |res: notify::Result<_>| {
-            if let Err(e) = res {
-                warn!(error = %e, "fs watcher error");
-                return;
-            }
-            let _ = tx.blocking_send(());
-        }) {
-            Ok(w) => w,
-            Err(e) => {
-                error!(error = %e, "failed to start fs watcher");
-                return;
-            }
-        };
-        if let Err(e) = watcher.watch(&watch_path, RecursiveMode::NonRecursive) {
-            error!(error = %e, path = %watch_path.display(), "watch failed");
-            return;
-        }
-        std::thread::park();
-    });
-
+fn spawn_s3_poller(
+    client: S3Client,
+    bucket: String,
+    key: String,
+    interval: Duration,
+    cache: Arc<ArcSwap<S3Cache>>,
+) {
     tokio::spawn(async move {
-        while rx.recv().await.is_some() {
-            tokio::time::sleep(Duration::from_millis(250)).await;
-            while rx.try_recv().is_ok() {}
-            match tokio::task::spawn_blocking({
-                let path = path.clone();
-                move || hash_catalog(&path)
-            })
-            .await
-            {
-                Ok(Ok(next)) => {
-                    info!(hash = %next.hash, bytes = next.bytes, "catalog version updated");
-                    state.version.store(Arc::new(next));
+        loop {
+            tokio::time::sleep(interval).await;
+            let current_etag = cache.load().etag.clone();
+            match fetch_etag(&client, &bucket, &key).await {
+                Ok(remote_etag) if remote_etag != current_etag => {
+                    match fetch_object(&client, &bucket, &key).await {
+                        Ok(next) => {
+                            info!(
+                                etag = %next.etag,
+                                bytes = next.bytes.len(),
+                                "catalog refreshed"
+                            );
+                            cache.store(Arc::new(next));
+                        }
+                        Err(e) => warn!(error = %e, "refetch failed"),
+                    }
                 }
-                Ok(Err(e)) => warn!(error = %e, "rehash failed"),
-                Err(e) => warn!(error = %e, "rehash task panicked"),
+                Ok(_) => {}
+                Err(e) => warn!(error = %e, "etag check failed"),
             }
         }
     });
@@ -204,8 +310,49 @@ async fn health() -> &'static str {
     responses((status = 200, body = CatalogVersion))
 )]
 async fn catalog_version(State(state): State<AppState>) -> Response {
-    let v = state.version.load_full();
-    axum::Json((*v).clone()).into_response()
+    match &state.source {
+        CatalogSource::S3 { cache, .. } => {
+            let cur = cache.load_full();
+            axum::Json(CatalogVersion {
+                hash: cur.etag.clone(),
+                bytes: cur.bytes.len() as u64,
+            })
+            .into_response()
+        }
+        CatalogSource::Upstream { client, base } => {
+            match client.get(format!("{base}/catalog/version")).send().await {
+                Ok(resp) => {
+                    let status =
+                        StatusCode::from_u16(resp.status().as_u16()).unwrap_or(StatusCode::OK);
+                    let bytes = resp.bytes().await.unwrap_or_default();
+                    let mut response = Response::new(axum::body::Body::from(bytes));
+                    *response.status_mut() = status;
+                    response
+                        .headers_mut()
+                        .insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
+                    response
+                }
+                Err(e) => (StatusCode::BAD_GATEWAY, format!("upstream: {e}")).into_response(),
+            }
+        }
+        CatalogSource::Local { path } => match tokio::fs::read(path).await {
+            Ok(bytes) => {
+                use sha2::{Digest, Sha256};
+                let mut hasher = Sha256::new();
+                hasher.update(&bytes);
+                axum::Json(CatalogVersion {
+                    hash: hex::encode(hasher.finalize()),
+                    bytes: bytes.len() as u64,
+                })
+                .into_response()
+            }
+            Err(e) => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                format!("catalog unavailable: {e}"),
+            )
+                .into_response(),
+        },
+    }
 }
 
 #[utoipa::path(
@@ -213,58 +360,72 @@ async fn catalog_version(State(state): State<AppState>) -> Response {
     path = "/catalog/binary",
     responses(
         (status = 200, description = "Catalog binary, gzipped (Content-Encoding: gzip)", content_type = "application/octet-stream"),
-        (status = 503, description = "Catalog file unavailable")
+        (status = 502, description = "Upstream proxy failure"),
+        (status = 503, description = "Catalog unavailable")
     )
 )]
 async fn catalog_binary(State(state): State<AppState>) -> Response {
-    use tokio::io::AsyncReadExt;
-
-    let mut peek = match File::open(&state.catalog_path).await {
-        Ok(f) => f,
-        Err(e) => {
-            return (
+    match &state.source {
+        CatalogSource::S3 { cache, .. } => {
+            let cur = cache.load_full();
+            let is_gzip = cur.bytes.starts_with(&[0x1f, 0x8b]);
+            let mut response = Response::new(axum::body::Body::from(cur.bytes.clone()));
+            let h = response.headers_mut();
+            h.insert(
+                header::CONTENT_TYPE,
+                "application/octet-stream".parse().unwrap(),
+            );
+            h.insert(header::CONTENT_LENGTH, cur.bytes.len().into());
+            h.insert(header::CACHE_CONTROL, "public, max-age=60".parse().unwrap());
+            if is_gzip {
+                h.insert(header::CONTENT_ENCODING, "gzip".parse().unwrap());
+            }
+            response
+        }
+        CatalogSource::Upstream { client, base } => {
+            match client.get(format!("{base}/catalog/binary")).send().await {
+                Ok(resp) => {
+                    let status =
+                        StatusCode::from_u16(resp.status().as_u16()).unwrap_or(StatusCode::OK);
+                    let mut response =
+                        Response::new(axum::body::Body::from_stream(resp.bytes_stream()));
+                    *response.status_mut() = status;
+                    response.headers_mut().insert(
+                        header::CONTENT_TYPE,
+                        "application/octet-stream".parse().unwrap(),
+                    );
+                    response
+                        .headers_mut()
+                        .insert(header::CONTENT_ENCODING, "gzip".parse().unwrap());
+                    response
+                }
+                Err(e) => (StatusCode::BAD_GATEWAY, format!("upstream: {e}")).into_response(),
+            }
+        }
+        CatalogSource::Local { path } => match tokio::fs::read(path).await {
+            Ok(bytes) => {
+                let is_gzip = bytes.starts_with(&[0x1f, 0x8b]);
+                let mut response =
+                    Response::new(axum::body::Body::from(Bytes::from(bytes.clone())));
+                let h = response.headers_mut();
+                h.insert(
+                    header::CONTENT_TYPE,
+                    "application/octet-stream".parse().unwrap(),
+                );
+                h.insert(header::CONTENT_LENGTH, bytes.len().into());
+                h.insert(header::CACHE_CONTROL, "public, max-age=60".parse().unwrap());
+                if is_gzip {
+                    h.insert(header::CONTENT_ENCODING, "gzip".parse().unwrap());
+                }
+                response
+            }
+            Err(e) => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 format!("catalog unavailable: {e}"),
             )
-                .into_response();
-        }
-    };
-    let mut head = [0u8; 2];
-    let is_gzip = peek.read_exact(&mut head).await.is_ok() && head == [0x1f, 0x8b];
-    drop(peek);
-
-    let file = match File::open(&state.catalog_path).await {
-        Ok(f) => f,
-        Err(e) => {
-            return (
-                StatusCode::SERVICE_UNAVAILABLE,
-                format!("catalog unavailable: {e}"),
-            )
-                .into_response();
-        }
-    };
-    let metadata = match file.metadata().await {
-        Ok(m) => m,
-        Err(e) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, format!("stat: {e}")).into_response();
-        }
-    };
-
-    let stream = ReaderStream::new(file);
-    let body = axum::body::Body::from_stream(stream);
-
-    let mut response = Response::new(body);
-    let h = response.headers_mut();
-    h.insert(
-        header::CONTENT_TYPE,
-        "application/octet-stream".parse().unwrap(),
-    );
-    h.insert(header::CONTENT_LENGTH, metadata.len().into());
-    h.insert(header::CACHE_CONTROL, "public, max-age=60".parse().unwrap());
-    if is_gzip {
-        h.insert(header::CONTENT_ENCODING, "gzip".parse().unwrap());
+                .into_response(),
+        },
     }
-    response
 }
 
 fn build_router(state: AppState) -> OpenApiRouter {
