@@ -1,0 +1,54 @@
+name: Scrape and Publish Catalog
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Scraper mode"
+        required: true
+        type: choice
+        options:
+          - courses
+          - programs
+          - syllabi
+          - all
+        default: all
+      cookie_header:
+        description: "Stellic `Cookie:` header value (required for courses, programs, all)"
+        required: false
+        type: string
+      canvas_token:
+        description: "Canvas API token (required for syllabi, all)"
+        required: false
+        type: string
+
+jobs:
+  scrape:
+    name: Scrape and upload
+    runs-on: docker
+    env:
+      COOKIE_HEADER: ${{ inputs.cookie_header }}
+      CANVAS_TOKEN: ${{ inputs.canvas_token }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.GARAGE_CATALOG_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.GARAGE_CATALOG_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v6
+
+      - uses: https://github.com/dtolnay/rust-toolchain@stable
+      - uses: https://github.com/Swatinem/rust-cache@v2
+
+      - name: Build scraper and indexer
+        run: cargo build --release -p courses-scraper -p courses-index
+
+      - name: Scrape
+        run: ./target/release/courses-scraper --mode ${{ inputs.mode }}
+
+      - name: Build catalog
+        run: ./target/release/courses-index --write-catalog catalog.bin
+
+      - name: Upload to garage
+        run: |
+          export AWS_DEFAULT_REGION=us-east-1
+          aws s3 cp catalog.bin s3://kennel-courses-main/catalog.bin \
+            --endpoint-url https://s3.scottylabs.org \
+            --content-type application/octet-stream \
+            --content-encoding gzip
