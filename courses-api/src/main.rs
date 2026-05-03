@@ -1,13 +1,13 @@
-//! Public-facing course catalog API. Loads the catalog binary into memory
-//! at startup, exposes versioned REST routes under `/v1/`, and reloads on
-//! changes to the catalog file.
+//! Public-facing course catalog API. Pulls the catalog binary from S3,
+//! builds an in-memory index, and exposes versioned REST routes under
+//! `/v1/`. Re-fetches and rebuilds on S3 ETag change.
 
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use arc_swap::ArcSwap;
+use aws_sdk_s3::Client as S3Client;
 use axum::{
     Router,
     extract::{Path, State},
@@ -17,23 +17,32 @@ use axum::{
 };
 use clap::Parser;
 use courses_index::{binary, index::Index};
-use notify::{RecursiveMode, Watcher};
 use serde::Serialize;
-use tokio::{net::TcpListener, sync::mpsc};
+use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(long, env = "BIND_ADDR", default_value = "0.0.0.0:3001")]
     bind: String,
 
-    #[arg(long, env = "CATALOG_PATH")]
-    catalog_path: PathBuf,
+    #[arg(long, env = "S3_BUCKET")]
+    s3_bucket: String,
+
+    #[arg(long, env = "S3_ENDPOINT")]
+    s3_endpoint: Option<String>,
+
+    #[arg(long, env = "S3_KEY", default_value = "catalog.bin")]
+    s3_key: String,
+
+    #[arg(long, env = "POLL_INTERVAL", default_value_t = 300)]
+    poll_interval: u64,
 }
 
 struct Catalog {
-    bytes: Vec<u8>,
+    etag: String,
+    bytes: bytes::Bytes,
     index: Index,
 }
 
@@ -42,14 +51,41 @@ struct AppState {
     catalog: Arc<ArcSwap<Catalog>>,
 }
 
-fn load_catalog(path: &std::path::Path) -> Result<Catalog> {
-    let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
+async fn fetch_and_build(client: &S3Client, bucket: &str, key: &str) -> Result<Catalog> {
+    let resp = client
+        .get_object()
+        .bucket(bucket)
+        .key(key)
+        .send()
+        .await
+        .with_context(|| format!("get_object s3://{bucket}/{key}"))?;
+    let etag = resp
+        .e_tag()
+        .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
+        .trim_matches('"')
+        .to_string();
+    let bytes = resp.body.collect().await?.into_bytes();
     let payload = binary::read_catalog_from_slice(&bytes)?;
     let index = match payload.prebuilt_text {
         Some(p) => Index::build_with_prebuilt_text(payload.corpus, p)?,
         None => Index::build(payload.corpus),
     };
-    Ok(Catalog { bytes, index })
+    Ok(Catalog { etag, bytes, index })
+}
+
+async fn fetch_etag(client: &S3Client, bucket: &str, key: &str) -> Result<String> {
+    let resp = client
+        .head_object()
+        .bucket(bucket)
+        .key(key)
+        .send()
+        .await
+        .with_context(|| format!("head_object s3://{bucket}/{key}"))?;
+    Ok(resp
+        .e_tag()
+        .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
+        .trim_matches('"')
+        .to_string())
 }
 
 #[tokio::main]
@@ -63,21 +99,36 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    let initial = load_catalog(&args.catalog_path)
-        .with_context(|| format!("initial load of {}", args.catalog_path.display()))?;
+    let mut loader = aws_config::from_env();
+    if let Some(endpoint) = &args.s3_endpoint {
+        loader = loader.endpoint_url(endpoint.clone());
+    }
+    let conf = loader.load().await;
+    let s3 = aws_sdk_s3::config::Builder::from(&conf)
+        .force_path_style(true)
+        .build();
+    let client = S3Client::from_conf(s3);
+
+    let initial = fetch_and_build(&client, &args.s3_bucket, &args.s3_key).await?;
     info!(
-        path = %args.catalog_path.display(),
+        bucket = %args.s3_bucket,
+        key = %args.s3_key,
+        etag = %initial.etag,
         bytes = initial.bytes.len(),
         courses = initial.index.n_docs,
         "catalog loaded"
     );
 
-    let state = AppState {
-        catalog: Arc::new(ArcSwap::from_pointee(initial)),
-    };
+    let catalog = Arc::new(ArcSwap::from_pointee(initial));
+    spawn_s3_poller(
+        client.clone(),
+        args.s3_bucket.clone(),
+        args.s3_key.clone(),
+        Duration::from_secs(args.poll_interval),
+        catalog.clone(),
+    );
 
-    spawn_watcher(args.catalog_path.clone(), state.clone());
-
+    let state = AppState { catalog };
     let app = Router::new()
         .route("/v1/health", get(health))
         .route("/v1/version", get(version))
@@ -92,51 +143,33 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn spawn_watcher(path: PathBuf, state: AppState) {
-    let (tx, mut rx) = mpsc::channel::<()>(8);
-
-    let watch_path = path.clone();
-    std::thread::spawn(move || {
-        let mut watcher = match notify::recommended_watcher(move |res: notify::Result<_>| {
-            if let Err(e) = res {
-                warn!(error = %e, "fs watcher error");
-                return;
-            }
-            let _ = tx.blocking_send(());
-        }) {
-            Ok(w) => w,
-            Err(e) => {
-                error!(error = %e, "failed to start fs watcher");
-                return;
-            }
-        };
-        if let Err(e) = watcher.watch(&watch_path, RecursiveMode::NonRecursive) {
-            error!(error = %e, path = %watch_path.display(), "watch failed");
-            return;
-        }
-        std::thread::park();
-    });
-
+fn spawn_s3_poller(
+    client: S3Client,
+    bucket: String,
+    key: String,
+    interval: Duration,
+    catalog: Arc<ArcSwap<Catalog>>,
+) {
     tokio::spawn(async move {
-        while rx.recv().await.is_some() {
-            tokio::time::sleep(Duration::from_millis(250)).await;
-            while rx.try_recv().is_ok() {}
-            match tokio::task::spawn_blocking({
-                let path = path.clone();
-                move || load_catalog(&path)
-            })
-            .await
-            {
-                Ok(Ok(next)) => {
-                    info!(
-                        bytes = next.bytes.len(),
-                        courses = next.index.n_docs,
-                        "catalog reloaded"
-                    );
-                    state.catalog.store(Arc::new(next));
+        loop {
+            tokio::time::sleep(interval).await;
+            let current_etag = catalog.load().etag.clone();
+            match fetch_etag(&client, &bucket, &key).await {
+                Ok(remote_etag) if remote_etag != current_etag => {
+                    match fetch_and_build(&client, &bucket, &key).await {
+                        Ok(next) => {
+                            info!(
+                                etag = %next.etag,
+                                courses = next.index.n_docs,
+                                "catalog rebuilt"
+                            );
+                            catalog.store(Arc::new(next));
+                        }
+                        Err(e) => warn!(error = %e, "rebuild failed"),
+                    }
                 }
-                Ok(Err(e)) => warn!(error = %e, "reload failed"),
-                Err(e) => warn!(error = %e, "reload task panicked"),
+                Ok(_) => {}
+                Err(e) => warn!(error = %e, "etag check failed"),
             }
         }
     });
@@ -151,6 +184,7 @@ struct VersionInfo {
     format_version: u32,
     course_count: u32,
     bytes: usize,
+    etag: String,
 }
 
 async fn version(State(state): State<AppState>) -> impl IntoResponse {
@@ -159,14 +193,14 @@ async fn version(State(state): State<AppState>) -> impl IntoResponse {
         format_version: binary::FORMAT_VERSION,
         course_count: cat.index.n_docs,
         bytes: cat.bytes.len(),
+        etag: cat.etag.clone(),
     })
 }
 
 async fn binary_handler(State(state): State<AppState>) -> Response {
     let cat = state.catalog.load_full();
     let is_gzip = cat.bytes.starts_with(&[0x1f, 0x8b]);
-    let bytes: bytes::Bytes = cat.bytes.clone().into();
-    let mut response = Response::new(axum::body::Body::from(bytes));
+    let mut response = Response::new(axum::body::Body::from(cat.bytes.clone()));
     let h = response.headers_mut();
     h.insert(
         header::CONTENT_TYPE,

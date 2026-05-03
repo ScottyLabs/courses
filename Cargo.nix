@@ -3314,6 +3314,14 @@ rec {
             packageId = "arc-swap";
           }
           {
+            name = "aws-config";
+            packageId = "aws-config";
+          }
+          {
+            name = "aws-sdk-s3";
+            packageId = "aws-sdk-s3";
+          }
+          {
             name = "axum";
             packageId = "axum";
           }
