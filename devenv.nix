@@ -56,10 +56,10 @@ in
     afterStart = ''
       mkdir -p "${config.env.DEVENV_STATE}/garage"
       if [ ! -f "${credentialsEnv}" ]; then
-        if garage key info dev-key >/dev/null 2>&1; then
-          garage key delete dev-key --yes >/dev/null 2>&1 || true
+        if $GARAGE key info dev-key >/dev/null 2>&1; then
+          $GARAGE key delete dev-key --yes >/dev/null 2>&1 || true
         fi
-        OUTPUT=$(garage key new --name dev-key)
+        OUTPUT=$($GARAGE key create dev-key)
         ACCESS=$(echo "$OUTPUT" | awk '/Key ID:/ {print $NF}')
         SECRET=$(echo "$OUTPUT" | awk '/Secret key:/ {print $NF}')
         {
@@ -67,7 +67,7 @@ in
           echo "AWS_SECRET_ACCESS_KEY=$SECRET"
         } > "${credentialsEnv}"
       fi
-      garage bucket allow --read --write --owner dev-key --key dev-key courses-catalog 2>/dev/null || true
+      $GARAGE bucket allow --read --write --key dev-key courses-catalog
     '';
   };
 
@@ -79,14 +79,10 @@ in
   ]) ++ [ bun2nixCli ];
 
   processes = {
-    courses-api = {
-      exec = apiExec "${courses-api}/bin/courses-api" "--bind 127.0.0.1:3001";
-      after = [ "devenv:garage:configure@completed" ];
-    };
-    courses-web-api = {
-      exec = apiExec "${courses-web-api}/bin/courses-web-api" ''--bind 127.0.0.1:3002 --static-dir ${courses-web}'';
-      after = [ "devenv:garage:configure@completed" ];
-    };
+    courses-api.exec =
+      apiExec "${courses-api}/bin/courses-api" "--bind 127.0.0.1:3001";
+    courses-web-api.exec =
+      apiExec "${courses-web-api}/bin/courses-web-api" ''--bind 127.0.0.1:3002 --static-dir ${courses-web}'';
   };
 
   outputs = { inherit courses-api courses-web-api courses-web docs; };
