@@ -233,11 +233,11 @@
     },
     "scottylabs": {
       "locked": {
-        "lastModified": 1777230827,
-        "narHash": "sha256-tZlKRrxaQoPNJgbw7smA6T/kkuguBFL8h3i7iCJQuSo=",
+        "lastModified": 1777868744,
+        "narHash": "sha256-ACFNQIlz3+3Ngj0cNe2p4+VsbuR1vrco99SKVzIyj7E=",
         "owner": "ScottyLabs",
         "repo": "devenv",
-        "rev": "bcae87776243f92da85a8c28104ab389a6d2e0f2",
+        "rev": "27ea61f23f4bb525a97f77f406c20bd4e1fadc51",
         "type": "github"
       },
       "original": {
