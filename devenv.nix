@@ -9,7 +9,7 @@ let
     rustOverlay = import inputs.rust-overlay;
     repoRoot = ./.;
   };
-  inherit (built) courses-api courses-web-api courses-web docs;
+  inherit (built) api web-api web docs;
 
   credentialsEnv = "${config.env.DEVENV_STATE}/garage/credentials.env";
 
@@ -37,8 +37,8 @@ in
     bun.enable = true;
     secrets.enable = true;
     kennel = {
-      services.courses-api.oidc.redirectPaths = [ "/oauth2/callback" ];
-      services.courses-web-api = { };
+      services.api.oidc.redirectPaths = [ "/oauth2/callback" ];
+      services.web-api = { };
       sites.docs = { };
     };
   };
@@ -73,16 +73,16 @@ in
   packages = (with pkgs; [
     wasm-pack
     wasm-bindgen-cli
-    courses-api
-    courses-web-api
+    api
+    web-api
   ]) ++ [ bun2nixCli ];
 
   processes = {
-    courses-api.exec =
-      apiExec "${courses-api}/bin/courses-api" "--bind 127.0.0.1:3001";
-    courses-web-api.exec =
-      apiExec "${courses-web-api}/bin/courses-web-api" ''--bind 127.0.0.1:3002 --static-dir ${courses-web}'';
+    api.exec =
+      apiExec "${api}/bin/courses-api" "--bind 127.0.0.1:3001";
+    web-api.exec =
+      apiExec "${web-api}/bin/courses-web-api" ''--bind 127.0.0.1:3002 --static-dir ${web}'';
   };
 
-  outputs = { inherit courses-api courses-web-api courses-web docs; };
+  outputs = { inherit api web-api web docs; };
 }

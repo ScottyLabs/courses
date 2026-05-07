@@ -86,20 +86,20 @@ let
     '';
 
   cargoNix = pkgs.callPackage "${repoRoot}/Cargo.nix" { };
-  courses-api = cargoNix.workspaceMembers.courses-api.build;
-  courses-web-api = cargoNix.workspaceMembers.courses-web-api.build;
+  api = cargoNix.workspaceMembers.courses-api.build;
+  web-api = cargoNix.workspaceMembers.courses-web-api.build;
 
-  courses-web-src = pkgs.runCommand "courses-web-src" { } ''
+  web-src = pkgs.runCommand "web-src" { } ''
     cp -r ${repoRoot}/courses-web $out
     chmod -R u+w $out
     mkdir -p $out/src/lib/courses-index
     cp -r ${courses-index-wasm-bindings}/. $out/src/lib/courses-index/
   '';
 
-  courses-web = pkgs.stdenv.mkDerivation {
-    pname = "courses-web";
+  web = pkgs.stdenv.mkDerivation {
+    pname = "web";
     version = "0.1.0";
-    src = courses-web-src;
+    src = web-src;
 
     nativeBuildInputs = [ pkgs'.bun pkgs'.bun2nix.hook ];
     bunDeps = pkgs'.bun2nix.fetchBunDeps {
@@ -137,9 +137,9 @@ let
 in
 {
   inherit
-    courses-api
-    courses-web-api
-    courses-web
+    api
+    web-api
+    web
     courses-index-wasm-bindings
     docs
     ;
