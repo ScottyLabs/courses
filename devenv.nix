@@ -28,8 +28,6 @@ in
 {
   imports = [
     inputs.scottylabs.devenvModules.default
-    # Pinned copy of github.com/cachix/devenv PR #2781 until it merges.
-    ./nix/garage-module.nix
   ];
 
   scottylabs = {
