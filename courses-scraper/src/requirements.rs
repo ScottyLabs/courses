@@ -59,7 +59,15 @@ pub fn build_tasks(stellic: &Stellic, programs: &[Program]) -> Vec<Task> {
         .collect()
 }
 
-pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task) -> Result<()> {
+pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task, incremental: bool) -> Result<()> {
+    if incremental
+        && dir
+            .join(task.program_id.to_string())
+            .join(format!("{}.json", task.audit_id))
+            .exists()
+    {
+        return Ok(());
+    }
     let resp = stellic.get_audit_data(task.audit_id)?;
     if resp.get("success").and_then(|s| s.as_bool()) == Some(false) {
         return Ok(());

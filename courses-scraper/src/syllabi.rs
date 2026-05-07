@@ -91,9 +91,9 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
     Ok(tasks)
 }
 
-pub fn save_task(canvas: &Canvas, dir: &Path, task: &Task) -> Result<()> {
+pub fn save_task(canvas: &Canvas, dir: &Path, task: &Task, incremental: bool) -> Result<()> {
     let prog_dir = dir.join(&task.term).join(&task.dept);
-    if already_saved(&prog_dir, &task.course_section) {
+    if incremental && already_saved(&prog_dir, &task.course_section) {
         return Ok(());
     }
     fs::create_dir_all(&prog_dir)?;

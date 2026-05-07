@@ -193,7 +193,16 @@ impl Stellic {
         Ok(())
     }
 
-    pub fn save_info(&self, course: &str) -> Result<()> {
+    pub fn save_info(&self, course: &str, incremental: bool) -> Result<()> {
+        if incremental
+            && self
+                .out_dir
+                .join(course.replace('-', ""))
+                .join("info.json")
+                .exists()
+        {
+            return Ok(());
+        }
         let body = self.get(&format!(
             "{BASE}/catalog/getcourseinfo/?campus_id=1&course_code={course}&physical_year=2026"
         ))?;
@@ -210,7 +219,22 @@ impl Stellic {
         self.write_course(course, "info.json", &serde_json::to_string(&json)?)
     }
 
-    pub fn save_sections(&self, course: &str, lyear: i32, sem_id: u8) -> Result<()> {
+    pub fn save_sections(
+        &self,
+        course: &str,
+        lyear: i32,
+        sem_id: u8,
+        incremental: bool,
+    ) -> Result<()> {
+        if incremental
+            && self
+                .out_dir
+                .join(course.replace('-', ""))
+                .join(format!("ly{lyear}_sm{sem_id}.json"))
+                .exists()
+        {
+            return Ok(());
+        }
         let body = self.get(&format!(
             "{BASE}/planner/getcoursesections/?campus_id=1&course_code={course}&physical_year=2026&plan_id={}&sem_id={sem_id}&year={lyear}",
             self.plan_id

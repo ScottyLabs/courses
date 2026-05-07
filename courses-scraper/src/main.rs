@@ -64,6 +64,9 @@ struct Args {
 
     #[arg(long, value_enum, default_value_t = Mode::Courses, env = "MODE")]
     mode: Mode,
+
+    #[arg(long, env = "INCREMENTAL")]
+    incremental: bool,
 }
 
 fn main() -> Result<()> {
@@ -155,7 +158,7 @@ fn scrape_syllabi(canvas: &Canvas, args: &Args, pool: &rayon::ThreadPool) -> Res
     let failed = AtomicUsize::new(0);
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
-            let result = syllabi::save_task(canvas, &args.syllabi_dir, &task);
+            let result = syllabi::save_task(canvas, &args.syllabi_dir, &task, args.incremental);
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
             if let Err(e) = result {
                 failed.fetch_add(1, Ordering::Relaxed);
@@ -231,12 +234,12 @@ fn scrape_courses(
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
             let result = match &task {
-                Task::Info(course) => stellic.save_info(course),
+                Task::Info(course) => stellic.save_info(course, args.incremental),
                 Task::Sections {
                     course,
                     lyear,
                     sem_id,
-                } => stellic.save_sections(course, *lyear, *sem_id),
+                } => stellic.save_sections(course, *lyear, *sem_id, args.incremental),
             };
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
             if let Err(e) = result {
@@ -282,7 +285,8 @@ fn scrape_programs(stellic: &Stellic, args: &Args, pool: &rayon::ThreadPool) -> 
     let failed = AtomicUsize::new(0);
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
-            let result = requirements::save_audit(stellic, &args.programs_dir, &task);
+            let result =
+                requirements::save_audit(stellic, &args.programs_dir, &task, args.incremental);
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
             if let Err(e) = result {
                 failed.fetch_add(1, Ordering::Relaxed);
