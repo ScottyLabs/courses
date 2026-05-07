@@ -35,6 +35,7 @@ in
     project.name = "courses";
     rust.enable = true;
     bun.enable = true;
+    secrets.enable = true;
     kennel = {
       services.courses-api = { };
       services.courses-web-api = { };
