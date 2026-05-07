@@ -37,7 +37,7 @@ in
     bun.enable = true;
     secrets.enable = true;
     kennel = {
-      services.courses-api = { };
+      services.courses-api.oidc.redirectPaths = [ "/oauth2/callback" ];
       services.courses-web-api = { };
       sites.docs = { };
     };
