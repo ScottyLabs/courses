@@ -19,6 +19,12 @@ use tracing::warn;
 
 const BASE: &str = "https://academicaudit.andrew.cmu.edu";
 
+const TIMEOUT_GLOBAL: Duration = Duration::from_secs(180);
+const TIMEOUT_PER_CALL: Duration = Duration::from_secs(180);
+const TIMEOUT_RECV_RESPONSE: Duration = Duration::from_secs(90);
+const TIMEOUT_RECV_BODY: Duration = Duration::from_secs(90);
+const MAX_ATTEMPTS: u32 = 5;
+
 #[derive(Debug, Deserialize)]
 pub struct TermJoined {
     pub semester: u8,
@@ -70,10 +76,10 @@ pub struct Stellic {
 impl Stellic {
     pub fn login(cookie: Option<String>, out_dir: PathBuf) -> Result<(Self, TermJoined)> {
         let agent: ureq::Agent = ureq::Agent::config_builder()
-            .timeout_global(Some(Duration::from_secs(60)))
-            .timeout_per_call(Some(Duration::from_secs(60)))
-            .timeout_recv_response(Some(Duration::from_secs(30)))
-            .timeout_recv_body(Some(Duration::from_secs(45)))
+            .timeout_global(Some(TIMEOUT_GLOBAL))
+            .timeout_per_call(Some(TIMEOUT_PER_CALL))
+            .timeout_recv_response(Some(TIMEOUT_RECV_RESPONSE))
+            .timeout_recv_body(Some(TIMEOUT_RECV_BODY))
             .build()
             .into();
         let mut cookie = cookie;
@@ -125,40 +131,21 @@ impl Stellic {
     }
 
     fn get(&self, url: &str) -> Result<String> {
-        const MAX_ATTEMPTS: u32 = 5;
-        let mut attempt: u32 = 0;
-        loop {
-            let result = self
-                .agent
+        let response = retry(|| {
+            self.agent
                 .get(url)
                 .header("Cookie", &self.cookie)
                 .header("X-CSRFToken", &self.csrf)
                 .header("X-Requested-With", "XMLHttpRequest")
                 .header("Referer", &format!("{BASE}/app/courses"))
-                .call();
-            match result {
-                Ok(r) => return Ok(r.into_body().read_to_string()?),
-                Err(e) => {
-                    if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
-                        return Err(e.into());
-                    }
-                    attempt += 1;
-                    if attempt >= MAX_ATTEMPTS {
-                        return Err(e.into());
-                    }
-                    let delay_ms = (200u64 << attempt.min(5)).min(5000);
-                    std::thread::sleep(Duration::from_millis(delay_ms));
-                }
-            }
-        }
+                .call()
+        })?;
+        Ok(response.into_body().read_to_string()?)
     }
 
     fn post_json(&self, url: &str, body: &str) -> Result<String> {
-        const MAX_ATTEMPTS: u32 = 5;
-        let mut attempt: u32 = 0;
-        loop {
-            let result = self
-                .agent
+        let response = retry(|| {
+            self.agent
                 .post(url)
                 .header("Cookie", &self.cookie)
                 .header("X-CSRFToken", &self.csrf)
@@ -166,22 +153,9 @@ impl Stellic {
                 .header("Content-Type", "application/json")
                 .header("Origin", BASE)
                 .header("Referer", &format!("{BASE}/app/home"))
-                .send(body);
-            match result {
-                Ok(r) => return Ok(r.into_body().read_to_string()?),
-                Err(e) => {
-                    if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
-                        return Err(e.into());
-                    }
-                    attempt += 1;
-                    if attempt >= MAX_ATTEMPTS {
-                        return Err(e.into());
-                    }
-                    let delay_ms = (200u64 << attempt.min(5)).min(5000);
-                    std::thread::sleep(Duration::from_millis(delay_ms));
-                }
-            }
-        }
+                .send(body)
+        })?;
+        Ok(response.into_body().read_to_string()?)
     }
 
     pub fn get_programs(&self) -> Result<Vec<Program>> {
@@ -261,6 +235,29 @@ impl Stellic {
             &format!("ly{lyear}_sm{sem_id}.json"),
             &serde_json::to_string(&json)?,
         )
+    }
+}
+
+fn retry<R, F>(mut call: F) -> Result<R>
+where
+    F: FnMut() -> std::result::Result<R, ureq::Error>,
+{
+    let mut attempt: u32 = 0;
+    loop {
+        match call() {
+            Ok(r) => return Ok(r),
+            Err(e) => {
+                if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
+                    return Err(e.into());
+                }
+                attempt += 1;
+                if attempt >= MAX_ATTEMPTS {
+                    return Err(e.into());
+                }
+                let delay_ms = (200u64 << attempt.min(5)).min(5000);
+                std::thread::sleep(Duration::from_millis(delay_ms));
+            }
+        }
     }
 }
 
