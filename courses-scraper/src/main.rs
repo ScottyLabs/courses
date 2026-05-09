@@ -44,14 +44,12 @@ struct Args {
     #[arg(long, default_value_t = 32, env = "CONCURRENCY")]
     concurrency: usize,
 
-    #[arg(long, default_value = "exported/courses_history", env = "OUT_DIR")]
-    out_dir: PathBuf,
-
-    #[arg(long, default_value = "exported/programs", env = "PROGRAMS_DIR")]
-    programs_dir: PathBuf,
-
-    #[arg(long, default_value = "exported/syllabi", env = "SYLLABI_DIR")]
-    syllabi_dir: PathBuf,
+    /// Root directory for scrape output. The scraper writes under
+    /// `<export_root>/<username>/{courses_history,programs,syllabi}/`,
+    /// where `<username>` is the Stellic-authed AndrewID. Multiple
+    /// students' scrapes coexist as sibling subdirectories.
+    #[arg(long, default_value = "exported", env = "EXPORT_ROOT")]
+    export_root: PathBuf,
 
     #[arg(long, env = "COOKIE_HEADER")]
     cookie_header: Option<String>,
@@ -81,26 +79,29 @@ fn main() -> Result<()> {
         .num_threads(args.concurrency)
         .build()?;
 
-    let needs_stellic = matches!(args.mode, Mode::Courses | Mode::Programs | Mode::All);
     let needs_canvas = matches!(args.mode, Mode::Syllabi | Mode::All);
 
-    let stellic_anchor = if needs_stellic {
-        let (stellic, term_joined) =
-            Stellic::login(args.cookie_header.clone(), args.out_dir.clone())?;
-        let joined_sem =
-            Sem::from_id(term_joined.semester).context("unknown joined semester id")?;
-        let anchor = joined_sem.ay_start(term_joined.year);
-        info!(
-            plan_id = %stellic.plan_id,
-            joined_year = term_joined.year,
-            joined_sem = ?joined_sem,
-            anchor,
-            "authed"
-        );
-        Some((stellic, anchor))
-    } else {
-        None
-    };
+    // Always authenticate against Stellic, even for syllabi-only runs:
+    // the AndrewID it returns names the per-student subdir under
+    // `export_root` for all output kinds.
+    let (stellic, term_joined) = Stellic::login(args.cookie_header.clone(), &args.export_root)?;
+
+    let joined_sem = Sem::from_id(term_joined.semester).context("unknown joined semester id")?;
+    let anchor = joined_sem.ay_start(term_joined.year);
+
+    let student_root = args.export_root.join(&stellic.username);
+    let programs_dir = student_root.join("programs");
+    let syllabi_dir = args.export_root.join("syllabi");
+
+    info!(
+        username = %stellic.username,
+        plan_id = %stellic.plan_id,
+        joined_year = term_joined.year,
+        joined_sem = ?joined_sem,
+        anchor,
+        student_root = %student_root.display(),
+        "authed"
+    );
 
     let canvas = if needs_canvas {
         let token = args
@@ -114,28 +115,25 @@ fn main() -> Result<()> {
 
     match args.mode {
         Mode::Courses => {
-            let (s, anchor) = stellic_anchor.as_ref().unwrap();
-            scrape_courses(s, &args, *anchor, &pool)?;
+            scrape_courses(&stellic, &args, anchor, &pool)?;
         }
         Mode::Programs => {
-            let (s, _) = stellic_anchor.as_ref().unwrap();
-            scrape_programs(s, &args, &pool)?;
+            scrape_programs(&stellic, &args, &programs_dir, &pool)?;
         }
         Mode::Syllabi => {
-            scrape_syllabi(canvas.as_ref().unwrap(), &args, &pool)?;
+            scrape_syllabi(canvas.as_ref().unwrap(), &args, &syllabi_dir, &pool)?;
         }
         Mode::All => {
-            let (s, anchor) = stellic_anchor.as_ref().unwrap();
             let c = canvas.as_ref().unwrap();
             let ((cr, pr), sr) = pool.install(|| {
                 rayon::join(
                     || {
                         rayon::join(
-                            || scrape_courses(s, &args, *anchor, &pool),
-                            || scrape_programs(s, &args, &pool),
+                            || scrape_courses(&stellic, &args, anchor, &pool),
+                            || scrape_programs(&stellic, &args, &programs_dir, &pool),
                         )
                     },
-                    || scrape_syllabi(c, &args, &pool),
+                    || scrape_syllabi(c, &args, &syllabi_dir, &pool),
                 )
             });
             cr?;
@@ -146,7 +144,12 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn scrape_syllabi(canvas: &Canvas, args: &Args, pool: &rayon::ThreadPool) -> Result<()> {
+fn scrape_syllabi(
+    canvas: &Canvas,
+    args: &Args,
+    syllabi_dir: &std::path::Path,
+    pool: &rayon::ThreadPool,
+) -> Result<()> {
     let mut tasks = pool.install(|| syllabi::build_tasks(canvas))?;
     if let Some(n) = args.limit {
         tasks.truncate(n);
@@ -158,7 +161,7 @@ fn scrape_syllabi(canvas: &Canvas, args: &Args, pool: &rayon::ThreadPool) -> Res
     let failed = AtomicUsize::new(0);
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
-            let result = syllabi::save_task(canvas, &args.syllabi_dir, &task, args.incremental);
+            let result = syllabi::save_task(canvas, syllabi_dir, &task, args.incremental);
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
             if let Err(e) = result {
                 failed.fetch_add(1, Ordering::Relaxed);
@@ -264,7 +267,12 @@ fn scrape_courses(
     Ok(())
 }
 
-fn scrape_programs(stellic: &Stellic, args: &Args, pool: &rayon::ThreadPool) -> Result<()> {
+fn scrape_programs(
+    stellic: &Stellic,
+    args: &Args,
+    programs_dir: &std::path::Path,
+    pool: &rayon::ThreadPool,
+) -> Result<()> {
     let mut programs = stellic.get_programs()?;
     info!(count = programs.len(), "fetched program catalog");
     if let Some(n) = args.limit {
@@ -285,8 +293,7 @@ fn scrape_programs(stellic: &Stellic, args: &Args, pool: &rayon::ThreadPool) -> 
     let failed = AtomicUsize::new(0);
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
-            let result =
-                requirements::save_audit(stellic, &args.programs_dir, &task, args.incremental);
+            let result = requirements::save_audit(stellic, programs_dir, &task, args.incremental);
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
             if let Err(e) = result {
                 failed.fetch_add(1, Ordering::Relaxed);

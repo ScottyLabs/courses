@@ -68,13 +68,19 @@ pub struct Stellic {
     agent: ureq::Agent,
     cookie: String,
     csrf: String,
-    username: String,
+    pub username: String,
     pub plan_id: String,
     out_dir: PathBuf,
 }
 
 impl Stellic {
-    pub fn login(cookie: Option<String>, out_dir: PathBuf) -> Result<(Self, TermJoined)> {
+    /// Authenticate against Stellic and return a client whose `out_dir` is
+    /// `<export_root>/<username>/courses_history`. The caller derives sibling
+    /// dirs (`programs`, `syllabi`) from the same `<export_root>/<username>`.
+    pub fn login(
+        cookie: Option<String>,
+        export_root: &std::path::Path,
+    ) -> Result<(Self, TermJoined)> {
         let agent: ureq::Agent = ureq::Agent::config_builder()
             .timeout_global(Some(TIMEOUT_GLOBAL))
             .timeout_per_call(Some(TIMEOUT_PER_CALL))
@@ -116,6 +122,9 @@ impl Stellic {
                 default_plan_id,
                 term_joined,
             } = serde_json::from_str(strip_xssi(&body))?;
+
+            let out_dir = export_root.join(&username).join("courses_history");
+
             return Ok((
                 Self {
                     agent,

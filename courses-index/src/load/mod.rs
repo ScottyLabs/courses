@@ -21,10 +21,11 @@ pub use programs::{ProgramLoad, load_programs};
 pub use sections::{SectionLoad, load_sections};
 pub use syllabi::{SyllabusLoad, load_syllabi};
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::Path;
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::doc::{Course, FceRow, Professor, SectionTime};
@@ -38,19 +39,40 @@ pub struct Corpus {
     pub fce_rows: Vec<FceRow>,
 }
 
-/// Run every loader pass against `exported_root` and `fce_csv`, returning the
-/// fully joined corpus.
+/// Walk every immediate subdirectory of `exported_root` (one per student,
+/// named by AndrewID) and consolidate the per-student scrapes into a single
+/// corpus. `info.json` (catalog data) is loaded from the first student's
+/// subdir since it is identical across students. Sections, programs, and
+/// syllabi are loaded from every subdir and deduped by `section_id` /
+/// natural keys.
 pub fn run(exported_root: &Path, fce_csv: &Path) -> Result<Corpus> {
-    let courses_root = exported_root.join("courses_history");
-    let programs_root = exported_root.join("programs");
-    let syllabi_root = exported_root.join("syllabi");
-    let CourseLoad { mut courses, .. } = load_courses(&courses_root)?;
-    let SectionLoad { sections, .. } = load_sections(&courses_root, &mut courses)?;
+    let student_roots = find_student_roots(exported_root)?;
+    let primary = student_roots
+        .first()
+        .ok_or_else(|| anyhow!("no student subdirs found under {}", exported_root.display()))?;
+
+    let CourseLoad { mut courses, .. } = load_courses(&primary.join("courses_history"))?;
+
+    let mut sections: Vec<SectionTime> = Vec::new();
+    for root in &student_roots {
+        let SectionLoad { sections: rs, .. } =
+            load_sections(&root.join("courses_history"), &mut courses)?;
+        sections.extend(rs);
+    }
+
+    // Same section can appear in multiple students' scrapes; dedup by section_id.
+    let mut seen: HashSet<_> = HashSet::new();
+    sections.retain(|s| seen.insert(s.section_id));
+
     let FceLoad {
         rows: mut fce_rows, ..
     } = load_fces(fce_csv, &mut courses)?;
-    let _ = load_programs(&programs_root, &mut courses)?;
-    let _ = load_syllabi(&syllabi_root, &mut courses)?;
+
+    for root in &student_roots {
+        let _ = load_programs(&root.join("programs"), &mut courses)?;
+    }
+
+    let _ = load_syllabi(&exported_root.join("syllabi"), &mut courses)?;
     let _ = compute_pagerank(&mut courses);
     let ProfessorBuild {
         professors,
@@ -148,4 +170,27 @@ impl StrInterner {
         self.table.insert(Arc::clone(&arc), Arc::clone(&arc));
         arc
     }
+}
+
+/// Enumerate the per-student subdirectories under `exported_root`.
+/// A subdir counts as a student dir if it has `courses_history/` or
+/// `programs/` directly underneath. (`syllabi/` lives at `exported_root`,
+/// not under a student.)
+fn find_student_roots(exported_root: &Path) -> Result<Vec<PathBuf>> {
+    let mut out = Vec::new();
+    for entry in fs::read_dir(exported_root)? {
+        let entry = entry?;
+        if !entry.file_type()?.is_dir() {
+            continue;
+        }
+        let path = entry.path();
+        let has_subtree = ["courses_history", "programs"]
+            .iter()
+            .any(|sub| path.join(sub).is_dir());
+        if has_subtree {
+            out.push(path);
+        }
+    }
+    out.sort();
+    Ok(out)
 }

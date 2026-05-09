@@ -19,8 +19,10 @@ use courses_index::{
 #[derive(Parser, Debug)]
 #[command(about = "Build the courses-index binary artifact")]
 struct Args {
-    /// Path to the scrape output root, containing `courses_history/`,
-    /// `programs/`, and `syllabi/`.
+    /// Path to the scrape output root. The directory should contain one
+    /// subdirectory per student (named by AndrewID), each with
+    /// `courses_history/`, `programs/`, and `syllabi/` underneath. The
+    /// loader walks every immediate subdirectory and consolidates.
     #[arg(long, env = "EXPORTED_ROOT", default_value = "exported")]
     exported_root: PathBuf,
 
