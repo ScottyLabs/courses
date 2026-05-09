@@ -45,7 +45,6 @@ in
 
   treefmt.config.settings.global.excludes = [
     "exported/**"
-    "exported_old/**"
     "data/**"
   ];
 

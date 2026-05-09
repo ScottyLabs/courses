@@ -25,7 +25,6 @@ courses-web/src/lib/courses-index/
 
 # Generated artifacts
 exported/
-exported_old/
 courses-web/static/catalog/
 docs/book/
 
