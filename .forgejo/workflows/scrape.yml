@@ -13,8 +13,8 @@ on:
           - all
         default: all
       cookie_header:
-        description: "Stellic `Cookie:` header value (required for courses, programs, all)"
-        required: false
+        description: "Stellic `Cookie:` header value"
+        required: true
         type: string
       canvas_token:
         description: "Canvas API token (required for syllabi, all)"
