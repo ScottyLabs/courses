@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
 use arc_swap::ArcSwap;
-use aws_config::BehaviorVersion;
+use aws_config::{BehaviorVersion, Region};
 use aws_sdk_s3::Client as S3Client;
 use axum::{
     Router,
@@ -103,7 +103,8 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    let mut loader = aws_config::defaults(BehaviorVersion::latest());
+    let region = std::env::var("AWS_REGION").unwrap_or_else(|_| "us-east-1".to_string());
+    let mut loader = aws_config::defaults(BehaviorVersion::latest()).region(Region::new(region));
     if let Some(endpoint) = &args.s3_endpoint {
         loader = loader.endpoint_url(endpoint.clone());
     }
