@@ -18,11 +18,10 @@ let
     while [ ! -f "${credentialsEnv}" ]; do sleep 0.5; done
     set -a
     source "${credentialsEnv}"
+    export S3_ENDPOINT="$GARAGE_S3_ENDPOINT"
+    export HOST=127.0.0.1
     set +a
-    exec ${bin} \
-      --s3-bucket courses-catalog \
-      --s3-endpoint "$GARAGE_S3_ENDPOINT" \
-      ${extraArgs}
+    exec ${bin} ${extraArgs}
   '';
 in
 {
@@ -78,9 +77,9 @@ in
 
   processes = {
     api.exec =
-      apiExec "${api}/bin/courses-api" "--bind 127.0.0.1:3001";
+      apiExec "${api}/bin/courses-api" "--port 3001";
     web-api.exec =
-      apiExec "${web-api}/bin/courses-web-api" ''--bind 127.0.0.1:3002 --static-dir ${web}'';
+      apiExec "${web-api}/bin/courses-web-api" ''--port 3002 --static-dir ${web}'';
   };
 
   outputs = { inherit api web-api web docs; };

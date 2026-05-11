@@ -19,6 +19,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
 use arc_swap::ArcSwap;
+use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client as S3Client;
 use axum::{
     extract::State,
@@ -40,8 +41,11 @@ use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(long, env = "BIND_ADDR", default_value = "0.0.0.0:3002")]
-    bind: String,
+    #[arg(long, env = "HOST", default_value = "0.0.0.0")]
+    host: String,
+
+    #[arg(long, env = "PORT", default_value_t = 3002)]
+    port: u16,
 
     /// S3 bucket holding `catalog.bin`. Mutex with `--catalog-upstream-url`.
     #[arg(long, env = "S3_BUCKET")]
@@ -79,9 +83,6 @@ struct Args {
 #[derive(Clone)]
 enum CatalogSource {
     S3 {
-        client: S3Client,
-        bucket: String,
-        key: String,
         cache: Arc<ArcSwap<S3Cache>>,
     },
     Upstream {
@@ -149,7 +150,7 @@ async fn main() -> Result<()> {
     }
 
     let source = if let Some(bucket) = &args.s3_bucket {
-        let mut loader = aws_config::from_env();
+        let mut loader = aws_config::defaults(BehaviorVersion::latest());
         if let Some(endpoint) = &args.s3_endpoint {
             loader = loader.endpoint_url(endpoint.clone());
         }
@@ -175,12 +176,7 @@ async fn main() -> Result<()> {
             Duration::from_secs(args.poll_interval),
             cache.clone(),
         );
-        CatalogSource::S3 {
-            client,
-            bucket: bucket.clone(),
-            key: args.s3_key.clone(),
-            cache,
-        }
+        CatalogSource::S3 { cache }
     } else {
         let url = args.catalog_upstream_url.as_ref().unwrap();
         info!(upstream = %url, "running in upstream-proxy mode");
@@ -203,9 +199,10 @@ async fn main() -> Result<()> {
 
     let app = app.layer(TraceLayer::new_for_http());
 
-    let listener = TcpListener::bind(&args.bind).await?;
+    let addr = format!("{}:{}", args.host, args.port);
+    let listener = TcpListener::bind(&addr).await?;
     info!(
-        addr = %args.bind,
+        addr = %addr,
         static_dir = ?args.static_dir.as_ref().map(|p| p.display().to_string()),
         "listening"
     );

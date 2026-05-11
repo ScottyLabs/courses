@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
 use arc_swap::ArcSwap;
+use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client as S3Client;
 use axum::{
     Router,
@@ -24,8 +25,11 @@ use tracing::{info, warn};
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(long, env = "BIND_ADDR", default_value = "0.0.0.0:3001")]
-    bind: String,
+    #[arg(long, env = "HOST", default_value = "0.0.0.0")]
+    host: String,
+
+    #[arg(long, env = "PORT", default_value_t = 3001)]
+    port: u16,
 
     #[arg(long, env = "S3_BUCKET")]
     s3_bucket: String,
@@ -99,7 +103,7 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    let mut loader = aws_config::from_env();
+    let mut loader = aws_config::defaults(BehaviorVersion::latest());
     if let Some(endpoint) = &args.s3_endpoint {
         loader = loader.endpoint_url(endpoint.clone());
     }
@@ -137,8 +141,9 @@ async fn main() -> Result<()> {
         .with_state(state)
         .layer(TraceLayer::new_for_http());
 
-    let listener = TcpListener::bind(&args.bind).await?;
-    info!(addr = %args.bind, "listening");
+    let addr = format!("{}:{}", args.host, args.port);
+    let listener = TcpListener::bind(&addr).await?;
+    info!(addr = %addr, "listening");
     axum::serve(listener, app).await?;
     Ok(())
 }
