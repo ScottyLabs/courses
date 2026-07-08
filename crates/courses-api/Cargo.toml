@@ -1,0 +1,23 @@
+[package]
+name = "courses-api"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = "1.0.102"
+arc-swap = "1.9.1"
+aws-sdk-s3 = "1.131.0"
+axum = "0.8.9"
+bytes = "1.11.1"
+courses-index = { version = "0.1.0", path = "../courses-index" }
+secrecy = "0.10.3"
+secretspec = { version = "0.13.0", default-features = false }
+secretspec-derive = "0.13.0"
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.52.1", features = ["full"] }
+tower-http = { version = "0.6.8", features = ["trace"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+utoipa = { version = "5.4.0", features = ["axum_extras"] }
+utoipa-axum = "0.2.0"
+utoipa-scalar = { version = "0.3.0", features = ["axum"] }

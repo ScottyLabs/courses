@@ -1,32 +1,35 @@
-# Rust
-target/
-.cargo/
-
 # Nix / devenv
 .devenv/
 .devenv.flake.nix
+devenv.local.yaml
 .pre-commit-config.yaml
 result
 result-*
 
+# AI
+.mcp.json
+.claude
+PLAN.md
+
 # direnv
 .direnv/
 
-# AI
-.claude/
-.mcp.json
-PLAN.md
+# Rust
+/target
+.cargo/
+rustc-ice-*.txt
 
-# Bun / Node
+# JS / deno
 node_modules/
-courses-web/.svelte-kit/
-courses-web/build/
-courses-web/src/lib/courses-index/
+sites/web/.svelte-kit/
+sites/web/build/
+sites/web/dist/
+sites/web/src/lib/courses-index/
 
 # Generated artifacts
 exported/
-courses-web/static/catalog/
-docs/book/
+sites/web/static/catalog/
+sites/docs/book/
 
 # OS
 .DS_Store

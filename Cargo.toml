@@ -1,5 +1,5 @@
 [workspace]
-members = ["courses-scraper", "courses-index", "courses-index-wasm", "courses-api", "courses-web-api"]
+members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]

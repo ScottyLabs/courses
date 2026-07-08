@@ -28,10 +28,10 @@ jobs:
     env:
       COOKIE_HEADER: ${{ inputs.cookie_header }}
       CANVAS_TOKEN: ${{ inputs.canvas_token }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.GARAGE_CATALOG_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.GARAGE_CATALOG_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.CDN_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.CDN_SECRET_ACCESS_KEY }}
     steps:
-      - uses: https://code.forgejo.org/actions/checkout@v6
+      - uses: https://code.forgejo.org/actions/checkout@v7
 
       - uses: https://github.com/dtolnay/rust-toolchain@stable
       - uses: https://github.com/Swatinem/rust-cache@v2
@@ -48,7 +48,7 @@ jobs:
       - name: Upload to garage
         run: |
           export AWS_DEFAULT_REGION=us-east-1
-          aws s3 cp catalog.bin s3://kennel-courses-main/catalog.bin \
+          aws s3 cp catalog.bin s3://cdn-courses/catalog.bin \
             --endpoint-url https://s3.scottylabs.org \
             --content-type application/octet-stream \
             --content-encoding gzip
