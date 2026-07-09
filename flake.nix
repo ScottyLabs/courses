@@ -9,8 +9,11 @@
   };
 
   inputs = {
-    scottylabs.url = "git+https://codeberg.org/ScottyLabs/devenv";
-    nixpkgs.follows = "scottylabs/nixpkgs";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    scottylabs = {
+      url = "git+https://codeberg.org/ScottyLabs/devenv";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -18,10 +21,11 @@
   };
 
   outputs =
-    { nixpkgs
-    , scottylabs
-    , rust-overlay
-    , ...
+    {
+      nixpkgs,
+      scottylabs,
+      rust-overlay,
+      ...
     }:
     let
       systems = [
