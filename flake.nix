@@ -64,6 +64,9 @@
             };
             nativeBuildInputs = [ pkgs.wasm-bindgen-cli_0_2_126 ];
             doCheck = false;
+            preConfigure = ''
+              export HOME="$TMPDIR"
+            '';
             buildPhase = ''
               runHook preBuild
               cargo build --release --offline --target wasm32-unknown-unknown -p courses-index-wasm
