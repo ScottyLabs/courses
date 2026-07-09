@@ -2,6 +2,12 @@ import type { components } from "$lib/api";
 
 type CatalogVersion = components["schemas"]["CatalogVersion"];
 
+function isCatalogVersion(value: unknown): value is CatalogVersion {
+  return (
+    typeof value === "object" && value !== null && "hash" in value && typeof value.hash === "string"
+  );
+}
+
 const CATALOG_PREFIX = "catalog-";
 
 export type CatalogLoad = {
@@ -22,7 +28,10 @@ export type CatalogLoad = {
  */
 export async function loadCatalog(): Promise<CatalogLoad> {
   const t0 = performance.now();
-  const version = (await (await fetch("/api/catalog/version")).json()) as CatalogVersion;
+  const version: unknown = await (await fetch("/api/catalog/version")).json();
+  if (!isCatalogVersion(version)) {
+    throw new Error("invalid /api/catalog/version response");
+  }
   const t1 = performance.now();
 
   const root = await navigator.storage.getDirectory();
@@ -39,13 +48,9 @@ export async function loadCatalog(): Promise<CatalogLoad> {
   }
   const t2 = performance.now();
 
-  const gzippedBuffer: ArrayBuffer = gzipped.buffer.slice(
-    gzipped.byteOffset,
-    gzipped.byteOffset + gzipped.byteLength,
-  ) as ArrayBuffer;
   const decompressed = new Uint8Array(
     await new Response(
-      new Blob([gzippedBuffer]).stream().pipeThrough(new DecompressionStream("gzip")),
+      new Blob([gzipped]).stream().pipeThrough(new DecompressionStream("gzip")),
     ).arrayBuffer(),
   );
   const t3 = performance.now();
@@ -60,13 +65,16 @@ export async function loadCatalog(): Promise<CatalogLoad> {
   };
 }
 
-async function readOpfs(root: FileSystemDirectoryHandle, name: string): Promise<Uint8Array | null> {
+async function readOpfs(
+  root: FileSystemDirectoryHandle,
+  name: string,
+): Promise<Uint8Array<ArrayBuffer> | null> {
   try {
     const handle = await root.getFileHandle(name);
     const file = await handle.getFile();
     return new Uint8Array(await file.arrayBuffer());
   } catch (e) {
-    if ((e as DOMException).name === "NotFoundError") return null;
+    if (e instanceof DOMException && e.name === "NotFoundError") return null;
     throw e;
   }
 }
@@ -74,18 +82,18 @@ async function readOpfs(root: FileSystemDirectoryHandle, name: string): Promise<
 async function writeOpfs(
   root: FileSystemDirectoryHandle,
   name: string,
-  bytes: Uint8Array,
+  bytes: Uint8Array<ArrayBuffer>,
 ): Promise<void> {
   const handle = await root.getFileHandle(name, { create: true });
   // FileSystemWritableFileStream is available on every browser that ships
   // OPFS (Chromium, Firefox, Safari 15.2+).
-  const stream = await (handle as any).createWritable();
+  const stream = await handle.createWritable();
   await stream.write(bytes);
   await stream.close();
 }
 
 async function pruneStale(root: FileSystemDirectoryHandle, keep: string): Promise<void> {
-  for await (const [name] of (root as any).entries()) {
+  for await (const [name] of root.entries()) {
     if (name.startsWith(CATALOG_PREFIX) && name !== keep) {
       try {
         await root.removeEntry(name);

@@ -13,6 +13,7 @@
     deno = {
       enable = true;
       svelte.enable = true;
+      svelte.dir = "sites/web";
     };
     secrets.enable = true;
     ricochet = {
@@ -36,12 +37,16 @@
 
   packages = with pkgs; [
     wasm-pack
-    wasm-bindgen-cli
+    wasm-bindgen-cli_0_2_126
   ];
 
   scripts.build-wasm.exec = ''
     env -u RUSTFLAGS cargo build --release --target wasm32-unknown-unknown -p courses-index-wasm
     wasm-bindgen --target web --out-dir sites/web/src/lib/courses-index \
       "''${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/courses_index_wasm.wasm"
+  '';
+
+  enterShell = ''
+    [ -f sites/web/src/lib/courses-index/courses_index_wasm.js ] || build-wasm
   '';
 }

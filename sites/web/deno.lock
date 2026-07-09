@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "npm:@sveltejs/adapter-static@^3.0.10": "3.0.10_@sveltejs+kit@2.69.1__@sveltejs+vite-plugin-svelte@7.1.4___svelte@5.56.4___vite@8.1.3____@types+node@24.13.2___@types+node@24.13.2__svelte@5.56.4__typescript@5.9.3__vite@8.1.3___@types+node@24.13.2__@types+node@24.13.2_@sveltejs+vite-plugin-svelte@7.1.4__svelte@5.56.4__vite@8.1.3___@types+node@24.13.2__@types+node@24.13.2_@types+node@24.13.2_svelte@5.56.4_typescript@5.9.3_vite@8.1.3__@types+node@24.13.2",
+    "npm:@sveltejs/kit@*": "2.69.1_@sveltejs+vite-plugin-svelte@7.1.4__svelte@5.56.4__vite@8.1.3___@types+node@24.13.2__@types+node@24.13.2_svelte@5.56.4_typescript@5.9.3_vite@8.1.3__@types+node@24.13.2_@types+node@24.13.2",
     "npm:@sveltejs/kit@^2.57.0": "2.69.1_@sveltejs+vite-plugin-svelte@7.1.4__svelte@5.56.4__vite@8.1.3___@types+node@24.13.2__@types+node@24.13.2_svelte@5.56.4_typescript@5.9.3_vite@8.1.3__@types+node@24.13.2_@types+node@24.13.2",
     "npm:@sveltejs/vite-plugin-svelte@7": "7.1.4_svelte@5.56.4_vite@8.1.3__@types+node@24.13.2_@types+node@24.13.2",
     "npm:@types/node@^24.12.0": "24.13.2",
