@@ -15,17 +15,25 @@
       svelte.enable = true;
       svelte.dir = "sites/web";
     };
+
     secrets.enable = true;
     postgres.enable = true;
+
     ricochet = {
       enable = true;
       appUrl = "http://localhost:5173";
     };
 
     kennel = {
-      services.api = { };
-      services.web-api = { };
-      sites.docs = { };
+      services.api = {
+        customDomain = "api.courses.scottylabs.org";
+      };
+      services.web-api = {
+        customDomain = "web-api.courses.scottylabs.org";
+      };
+      sites.docs = {
+        customDomain = "docs.cmu.courses";
+      };
     };
   };
 
