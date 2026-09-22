@@ -1,7 +1,11 @@
 [workspace]
 members = ["crates/*"]
+exclude = ["vendor/axum-oidc"]
 resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+
+[patch.crates-io]
+axum-oidc = { path = "vendor/axum-oidc" }

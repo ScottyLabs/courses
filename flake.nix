@@ -11,7 +11,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     scottylabs = {
-      url = "git+https://codeberg.org/ScottyLabs/devenv";
+      url = "git+https://git.cmu.dev/ScottyLabs/kennel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rust-overlay = {
@@ -56,12 +56,7 @@
             pname = "courses-index-wasm";
             version = "0.1.0";
             src = ./.;
-            cargoLock = {
-              lockFile = ./Cargo.lock;
-              outputHashes = {
-                "axum-oidc-1.0.0-dev-2" = "sha256-zCnb7XAbDORzblB3BcK+CCRXGXsJDTQk/BcfiiOkD/8=";
-              };
-            };
+            cargoLock.lockFile = ./Cargo.lock;
             nativeBuildInputs = [ pkgs.wasm-bindgen-cli_0_2_126 ];
             doCheck = false;
             preConfigure = ''

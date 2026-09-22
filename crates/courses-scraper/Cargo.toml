@@ -3,6 +3,9 @@ name = "courses-scraper"
 version.workspace = true
 edition.workspace = true
 
+[package.metadata.cargo-machete]
+ignored = ["secrecy"]
+
 [dependencies]
 anyhow = "1.0.102"
 clap = { version = "4.6.1", features = ["derive", "env"] }

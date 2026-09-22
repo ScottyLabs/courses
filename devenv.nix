@@ -16,6 +16,7 @@
       svelte.dir = "sites/web";
     };
     secrets.enable = true;
+    postgres.enable = true;
     ricochet = {
       enable = true;
       appUrl = "http://localhost:5173";
@@ -29,18 +30,24 @@
   };
 
   languages.rust.targets = [ "wasm32-unknown-unknown" ];
+  # SecretSpec's linkme provider registry needs linker sections Cranelift omits.
+  languages.rust.cranelift.excludePackages = [ "secretspec" ];
 
   treefmt.config.settings.global.excludes = [
+    ".devenv/**"
+    ".direnv/**"
     "exported/**"
     "data/**"
   ];
 
   packages = with pkgs; [
+    git
     wasm-pack
     wasm-bindgen-cli_0_2_126
   ];
 
   scripts.build-wasm.exec = ''
+    set -euo pipefail
     env -u RUSTFLAGS cargo build --release --target wasm32-unknown-unknown -p courses-index-wasm
     wasm-bindgen --target web --out-dir sites/web/src/lib/courses-index \
       "''${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/courses_index_wasm.wasm"

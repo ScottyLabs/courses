@@ -3,6 +3,9 @@ name = "courses-api"
 version.workspace = true
 edition.workspace = true
 
+[package.metadata.cargo-machete]
+ignored = ["secrecy"]
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1.9.1"

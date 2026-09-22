@@ -525,7 +525,6 @@ dependencies = [
 [[package]]
 name = "axum-oidc"
 version = "1.0.0-dev-2"
-source = "git+https://codeberg.org/anish/axum-oidc?rev=c8512b41557f902e061110e4068ec78a564eca80#c8512b41557f902e061110e4068ec78a564eca80"
 dependencies = [
  "arc-swap",
  "axum",
