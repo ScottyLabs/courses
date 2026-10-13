@@ -13,7 +13,7 @@
     deno = {
       enable = true;
       svelte.enable = true;
-      svelte.dir = "sites/web";
+      dirs = [ "sites/web" ];
     };
 
     secrets.enable = true;

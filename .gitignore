@@ -11,8 +11,8 @@ result-*
 .claude
 PLAN.md
 
-# direnv
-.direnv/
+# Secrets
+.env
 
 # Rust
 /target

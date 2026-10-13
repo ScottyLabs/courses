@@ -8,12 +8,12 @@ Each facet axis interns its values to dense `u16` ids at build time and stores a
 
 Axes the index currently exposes:
 
-- `dept` (string) — first segment of the course code, e.g. `15`, `21`
-- `level` (string) — `100`, `200`, ..., or `grad`
-- `school` (string) — SCS, CIT, MCS, etc.
+- `dept` (string): first segment of the course code, e.g. `15`, `21`
+- `level` (string): `100`, `200`, ..., or `grad`
+- `school` (string): SCS, CIT, MCS, etc.
 - `attribute_tags`, `gened_tags`, `skills` (string, multi-valued per course)
 - `has_syllabus_terms` (string, multi-valued)
-- `units_int` (integer) — discrete units bucket
+- `units_int` (integer): discrete units bucket
 
 Multi-valued axes simply OR together the per-value bitmaps within a single course before pushing into the postings layer.
 
@@ -25,9 +25,9 @@ When a query asks for facet counts (`Query.with_facet_counts(true)`), the index 
 
 `NumericIndex` keeps three flavors that match the catalog data:
 
-- `NumericFieldF32` — used for FCE-derived means (workload, instruction quality).
-- `NumericFieldU32` — used for `pagerank` (scaled), section IDs, etc.
-- `NumericFieldU16Optional` — used for `units` (some courses have variable/no units).
+- `NumericFieldF32`: used for FCE-derived means (workload, instruction quality).
+- `NumericFieldU32`: used for `pagerank` (scaled), section IDs, etc.
+- `NumericFieldU16Optional`: used for `units` (some courses have variable/no units).
 
 Each variant stores values in a flat `Vec` keyed by doc id, so a range filter is a linear scan with predicate, intersected with whatever bitmap the rest of the query produces.
 

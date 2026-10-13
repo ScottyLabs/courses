@@ -33,7 +33,7 @@ To list every file in the registry, we walk:
 1. For each term-module item, the `external_url` ends in `sis_course_id:<id>`. Hit `GET /api/v1/courses/sis_course_id:<id>/modules?include[]=items&per_page=20` for each.
 1. Within each sub-course's `Available Syllabi` module, every `File`-typed item has a `url` like `/api/v1/courses/<id>/files/<file_id>`. Fetch that to get the file metadata, including a `url` field that is the actual downloadable URL with a `verifier` query parameter.
 
-Pagination is via the standard Canvas `Link` header; modules and items use `per_page` up to 100. The `?per_page=100` parameter is a soft hint — Canvas may return fewer.
+Pagination is via the standard Canvas `Link` header; modules and items use `per_page` up to 100. The `?per_page=100` parameter is a soft hint, so Canvas may return fewer.
 
 Direct file listing on `/api/v1/courses/3769/files` returns 403, so the module-walk is the only way to enumerate syllabi from this course.
 
