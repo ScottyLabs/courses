@@ -190,6 +190,7 @@ fn normalize_code(raw: &str) -> Option<String> {
     if !without_prefix.chars().all(|c| c.is_ascii_digit()) {
         return None;
     }
+
     let padded = format!("{:0>5}", without_prefix);
     let (dept, num) = padded.split_at(2);
     Some(format!("{dept}-{num}"))
@@ -247,6 +248,7 @@ fn aggregate_recent(mut rows: Vec<&FceRow>) -> Option<FceAggregate> {
         }
         kept.push(row);
     }
+
     if kept.is_empty() {
         return None;
     }
@@ -255,6 +257,7 @@ fn aggregate_recent(mut rows: Vec<&FceRow>) -> Option<FceAggregate> {
     for row in &kept {
         acc.push(row);
     }
+
     acc.finish(seen_terms.len() as u32)
 }
 
@@ -297,6 +300,7 @@ impl Accumulator {
         if any == 0 {
             return None;
         }
+
         Some(FceAggregate {
             n_semesters,
             hrs_per_week: self.hrs.mean(),

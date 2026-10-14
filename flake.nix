@@ -14,17 +14,12 @@
       url = "git+https://git.cmu.dev/ScottyLabs/kennel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
     {
       nixpkgs,
       scottylabs,
-      rust-overlay,
       ...
     }:
     let
@@ -39,53 +34,10 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          inherit (nixpkgs) lib;
           helpers = scottylabs.mkLib pkgs;
 
-          # courses-index compiled to wasm, then run through wasm-bindgen to
-          # produce the browser bindings the frontend imports. wasm-bindgen-cli
-          # must match the pinned wasm-bindgen crate (0.2.126)
-          wasmToolchain = (pkgs.extend (import rust-overlay)).rust-bin.stable.latest.default.override {
-            targets = [ "wasm32-unknown-unknown" ];
-          };
-          wasmRustPlatform = pkgs.makeRustPlatform {
-            cargo = wasmToolchain;
-            rustc = wasmToolchain;
-          };
-          courses-index-wasm = wasmRustPlatform.buildRustPackage {
-            pname = "courses-index-wasm";
-            version = "0.1.0";
-            src = ./.;
-            cargoLock.lockFile = ./Cargo.lock;
-            nativeBuildInputs = [ pkgs.wasm-bindgen-cli_0_2_126 ];
-            doCheck = false;
-            preConfigure = ''
-              export HOME="$TMPDIR"
-            '';
-            buildPhase = ''
-              runHook preBuild
-              cargo build --release --offline --target wasm32-unknown-unknown -p courses-index-wasm
-              runHook postBuild
-            '';
-            installPhase = ''
-              runHook preInstall
-              mkdir -p $out
-              wasm-bindgen --target web --out-dir $out \
-                target/wasm32-unknown-unknown/release/courses_index_wasm.wasm
-              runHook postInstall
-            '';
-          };
-
-          # sites/web with the generated wasm bindings injected
-          webSrc = pkgs.runCommandLocal "courses-web-src" { } ''
-            cp -r ${lib.cleanSource ./sites/web} $out
-            chmod -R u+w $out
-            mkdir -p $out/src/lib/courses-index
-            cp ${courses-index-wasm}/* $out/src/lib/courses-index/
-          '';
-
           web = helpers.buildDenoTask {
-            src = webSrc;
+            src = ./sites/web;
             pname = "courses-web";
             version = "0.1.0";
             task = "build";

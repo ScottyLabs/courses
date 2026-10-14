@@ -16,8 +16,7 @@ cd courses
 devenv shell
 ```
 
-The environment provides Rust, Deno, Git, and the WebAssembly tooling. First
-startup downloads dependencies and builds the browser's WebAssembly module.
+The environment provides Rust and Deno. First startup downloads dependencies.
 
 ## Run locally
 
@@ -63,7 +62,6 @@ the generated `sites/web/build` directory through `courses-web-api` using `STATI
 | Command | Run from | Purpose |
 | --- | --- | --- |
 | `deno task check` | `sites/web` | Check Svelte and TypeScript |
-| `build-wasm` | Repository root | Rebuild browser bindings after Rust index changes |
 | `devenv --no-tui shell` | Repository root | Show plain startup logs when troubleshooting |
 
 More details: [architecture](sites/docs/src/overview.md) and

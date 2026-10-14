@@ -10,7 +10,7 @@ The course set is the union of two feeds.
 
 1. Schedule of Classes dumps at `https://enr-apps.as.cmu.edu/assets/SOC/sched_layout_{season}.dat`, where `season` is one of `fall`, `spring`, `summer_1`, `summer_2`. Tab-delimited; the term comes from a `Semester: <Fall|Spring|Summer> <year>` header line, course codes from rows starting with a tab.
 
-A failed fetch (404 or parse failure) on a season means the season has not been published yet. That season contributes no codes or tuples.
+A season whose file fails to fetch or parse contributes no codes or tuples.
 
 5-digit `Num` values are normalized to `DD-DDD`. Rows that don't match the 5-digit pattern are dropped.
 
@@ -26,7 +26,7 @@ Section tasks come from the (year, sem) tuples we know the course was offered in
 
 ## `lyear`
 
-Stellic's `getcoursesections/` URL parameter is named `year`, but the value is not a calendar year. It is an academic-year offset, 0-indexed from the student's `term_joined`. Internally we call the variable `lyear` so it doesn't collide with calendar `year`. On the wire it is still `year=<n>`.
+Stellic's `getcoursesections/` URL parameter is named `year`, but the value is not a calendar year. It is an academic-year offset from the student's `term_joined`, where the academic year they joined is 1. Internally we call the variable `lyear` so it doesn't collide with calendar `year`. On the wire it is still `year=<n>`.
 
 Computation:
 

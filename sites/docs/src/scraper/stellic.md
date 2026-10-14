@@ -4,7 +4,7 @@ CMU's Stellic deployment lives at `academicaudit.andrew.cmu.edu`. None of this A
 
 ## Auth
 
-The user authenticates in a browser via Shibboleth, then copies the full `Cookie:` header from a network request to the site and pastes it on first run. From that cookie we extract the value of `csrftoken=` and send it as the `X-CSRFToken` request header, while the `_shibsession_*` and `sessionid` cookies are passed through verbatim. There is no API token or refresh flow, so once Shibboleth expires the session the scraper re-prompts.
+The user authenticates in a browser via Shibboleth, then copies the full `Cookie:` header from a network request to the site and pastes it on first run. From that cookie we extract the value of `csrftoken=` and send it as the `X-CSRFToken` request header, while the `_shibsession_*` and `sessionid` cookies are passed through verbatim. There is no API token or refresh flow. The scraper checks the cookie once at startup and re-prompts if it is incomplete or expired; if the session expires mid-run, the remaining requests fail.
 
 ## XSSI prefix
 
@@ -35,11 +35,13 @@ Query: `campus_id=1&course_code=21-122&physical_year=2026`. Returns metadata for
 
 Query: `campus_id=1&course_code=21-122&physical_year=2026&plan_id=<uuid>&sem_id=<1|2|3>&year=<lyear>`. Returns sections for one course in one (lyear, sem). `plan_id` is required even though the data is not plan-specific, so we pass the user's `default_plan_id`, and an empty `data_list` is the normal response for a course that was not offered (the scraper writes nothing in that case).
 
+When the requesting student was registered in the course during that (lyear, sem), one `data_list` entry's `course` object carries `is_registered: true` alongside `registration_status`, `semester`, `year`, `start_usem`, and `sub_semester`; the scraper strips all six before saving, since they reflect the caller's own registration rather than catalog data (the `semester`/`year` values are also just the `lyear`/`sem_id` query parameters echoed back, already present in the filename).
+
 The `year` URL parameter is the `lyear` offset (see `discovery.md`), not a calendar year, and `sem_id` maps 1 to Fall, 2 to Spring, 3 to Summer.
 
 ### GET /catalog/getprograms/
 
-Query: `campus_id=1`. Returns the flat list of all programs in the catalog (currently 2129), where each entry is `{id, name, type}`. The `type` integer is only exposed here, and once a program is added to a plan the label is gone. See `programs.md` for what the type values mean.
+Query: `campus_id=1`. Returns the flat list of all programs in the catalog, where each entry is `{id, name, type}`. The `type` integer is only exposed here, and once a program is added to a plan the label is gone. See `programs.md` for what the type values mean.
 
 ### POST /planner/createplan/
 
@@ -98,8 +100,8 @@ The plan and major caps only matter for the plan-based audit flow. The requireme
 
 ## Retries
 
-The scraper retries 5xx responses with exponential backoff capped at 5 seconds, while 4xx fails immediately. No explicit rate limit has been observed, but high concurrency occasionally produces transient 502/504 from the upstream proxy and the retry handles those.
+The scraper retries any error other than a 4xx response, including timeouts and connection failures, up to 5 attempts with exponential backoff, while 4xx fails immediately. No explicit rate limit has been observed, but high concurrency occasionally produces transient 502/504 from the upstream proxy and the retry handles those.
 
 ## Auto-attached programs
 
-Adding a major (catalog type 1) to a plan auto-attaches that major's college gen-ed and degree-check programs (catalog type 4) into the audit. They surface in the `getauditinfo` response with `is_uni_req: true` and `is_shared: true` and contribute their full requirement trees, so the scraper does not need a separate `add-program` call for those.
+Adding a major (catalog type 1) to a plan auto-attaches that major's college gen-ed and degree-check programs (catalog type 4) into the audit. They surface in the `getauditinfo` response with `is_uni_req: true` and `is_shared: true` and contribute their full requirement trees.

@@ -1,6 +1,6 @@
 # Programs
 
-The Stellic catalog exposes 2129 programs through `GET /catalog/getprograms/`. This doc covers the type vocabulary, the two ID spaces a program lives in, and the shape of the requirement tree.
+The Stellic catalog exposes programs through `GET /catalog/getprograms/`. This doc covers the type vocabulary, the two ID spaces a program lives in, and the shape of the requirement tree.
 
 ## Catalog vs audit-version IDs
 
@@ -17,33 +17,23 @@ A single catalog program resolves to one audit version at a time, the one matchi
 
 The `type` integer is only exposed by `getprograms/`, and once a program is added to a plan the label disappears. The five values:
 
-| type | name | count | examples |
-| ---- | ---------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | Major | 1139 | "BS in Mathematical Sciences", "BFA in Music Performance (Tuba)", "PHD in Architecture-Engineering-Construction Management", "MS in Software Engineering" |
-| 2 | Minor | 211 | "Minor in Computer Science", "Minor in Decision Making and Intelligent Systems", "Minor in Music Theory" |
-| 3 | Additional Major | 144 | "Additional Major in Computer Science", "Additional Major in International Relations and Politics" |
-| 4 | Sub-requirement bundle | 633 | "Mellon College of Science - General Education - EY2021+", "EY2019 - SCS General Education - Cognitive Studies Requirement (AI)", "Health Information Systems Concentration - BS in Information Systems", "EY2017 Drama - MFA PTM Requirements" |
-| 5 | Eligibility track | 2 | "Undergraduate Pre-Health", "Sigma Tau Delta Eligibility" |
+| type | name | examples |
+| ---- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Major | "BS in Mathematical Sciences", "BFA in Music Performance (Tuba)", "PHD in Architecture-Engineering-Construction Management", "MS in Software Engineering" |
+| 2 | Minor | "Minor in Computer Science", "Minor in Decision Making and Intelligent Systems", "Minor in Music Theory" |
+| 3 | Additional Major | "Additional Major in Computer Science", "Additional Major in International Relations and Politics" |
+| 4 | Sub-requirement bundle | "Mellon College of Science - General Education - EY2021+", "EY2019 - SCS General Education - Cognitive Studies Requirement (AI)", "Health Information Systems Concentration - BS in Information Systems", "EY2017 Drama - MFA PTM Requirements" |
+| 5 | Eligibility track | "Undergraduate Pre-Health", "Sigma Tau Delta Eligibility" |
 
 Type 1 is the actual degree program a student majors in. Type 3 is a way to declare a second major and is typically a slimmer requirement set than the equivalent type 1. Type 4 is a partial requirement set intended to combine with a major: per-college and per-AY-version gen-ed, concentration tracks within a major, and college-wide degree checks. Type 5 is a reusable eligibility track that lives alongside a major.
 
 ## Auto-attach
 
-Adding a major (type 1) to a plan does not just include the major's own requirements: the server also auto-attaches the relevant college gen-ed and degree-check programs (both type 4) into the audit. They appear in `getauditinfo.programs[]` with `is_uni_req: true` and `is_shared: true`, and their requirement trees show up under `req_tree.programs[]` like any other added program.
-
-Concentration-specific type 4 bundles (e.g. "Health Information Systems Concentration ...") do not auto-attach into a plan-based audit; they only enter that audit if explicitly added or selected as the major's concentration. The requirement scraper avoids this entirely by using the test-apply audit path against each catalog program's published audit version directly (see `stellic.md`'s `getauditinfo` section), which works for every type uniformly.
+Adding a major to a plan auto-attaches its college gen-ed and degree-check programs (see `stellic.md`). Concentration-specific type 4 bundles (e.g. "Health Information Systems Concentration ...") do not auto-attach into a plan-based audit; they only enter that audit if explicitly added or selected as the major's concentration. The requirement scraper avoids this entirely by using the test-apply audit path against each catalog program's published audit version directly (see `stellic.md`'s `getauditinfo` section), which works for every type uniformly.
 
 ## Coverage ceiling
 
-Of the 2129 catalog programs, 1291 are reachable from a student-role account via the test-apply audit path. The remaining 838 return zero audit versions at every status (`published`, `draft`, `archived`, `unpublished`, `obsolete`). Two separate undergraduate accounts produced identical coverage sets, so visibility on this Stellic deployment does not appear to depend on the student's college or declared major within the undergraduate role.
-
-Among the 838 unreachable:
-
-- 130 are "Student Defined" programs, which are per-student custom degrees with no shared audit by design.
-- 22 type-4 entries return a skeleton (no course satisfiers) via `getprogramsrequirements/` even though `getauditversions/` returns nothing. These are mostly older BSA/BHA/BEA gen-ed and concentration requirement bundles.
-- 686 return nothing on either endpoint. These are typically MS/PHD programs (`MS in Economics`, `PHD in Applied Physics`, `MS in Computer Science`, etc.), combined-degree programs (`BSA in Mathematical Sciences and Music Performance`), and a small set of older sub-requirement bundles.
-
-It is not yet confirmed whether graduate-role accounts see additional audits for graduate programs that are unreachable from undergrad accounts. If they do, a multi-account scrape would broaden coverage. If they don't, the remaining 838 require an admin/registrar role and are out of reach from any student-role account.
+Not every catalog program is reachable from a student-role account via the test-apply audit path. The rest return zero audit versions at every status (`published`, `draft`, `archived`, `unpublished`, `obsolete`). These are mostly "Student Defined" programs, MS/PHD programs, combined-degree programs, and older sub-requirement bundles.
 
 ## Requirement tree shape
 

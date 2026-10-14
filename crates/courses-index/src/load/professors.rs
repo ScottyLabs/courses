@@ -70,11 +70,13 @@ pub fn build_professors(
                 continue;
             }
         };
+
         match by_fce_key.get(&key) {
             Some(ids) if ids.len() == 1 => {
                 let id = ids[0];
                 row.instructor_id = Some(id);
                 out.fce_rows_matched += 1;
+
                 if let Some(builder) = stellic.get_mut(&id) {
                     builder.fce_key.get_or_insert_with(|| key.clone());
                 }
@@ -84,6 +86,7 @@ pub fn build_professors(
             }
             None => {
                 out.fce_rows_unmatched += 1;
+
                 fce_only_keys
                     .entry(key)
                     .or_insert_with(FceOnlyBuilder::new)
@@ -129,6 +132,14 @@ pub fn build_professors(
             courses_taught,
             fce_aggregates,
             n_sections_taught: n_sections,
+            email: None,
+            title: None,
+            directory_departments: Vec::new(),
+            affiliation: None,
+            colleges: Vec::new(),
+            office: None,
+            phone: None,
+            orcid: None,
         });
     }
 
@@ -170,6 +181,14 @@ pub fn build_professors(
             courses_taught,
             fce_aggregates,
             n_sections_taught: 0,
+            email: None,
+            title: None,
+            directory_departments: Vec::new(),
+            affiliation: None,
+            colleges: Vec::new(),
+            office: None,
+            phone: None,
+            orcid: None,
         });
         out.fce_only_professors += 1;
     }
@@ -264,6 +283,7 @@ impl FceOnlyBuilder {
                 .or_default()
                 .insert((row.year, row.sem));
         }
+
         // FceRow only has course_id, not code; without a back-reference here we
         // emit empty `course_code` for fce-only profs and let the index step
         // resolve it from the courses table.
@@ -290,6 +310,7 @@ fn humanize_fce_name(raw: &str) -> String {
     let Some((last, first)) = trimmed.split_once(',') else {
         return trimmed.to_string();
     };
+
     let last = title_word(last.trim());
     let first = first.trim();
     if first.is_empty() {
@@ -322,6 +343,7 @@ fn first_initial_key(raw: &str) -> Option<String> {
     if s.is_empty() {
         return None;
     }
+
     let (last, first_initial) = if let Some((last, first)) = s.split_once(',') {
         let last = last.trim();
         let first = first.trim();
@@ -334,9 +356,11 @@ fn first_initial_key(raw: &str) -> Option<String> {
         let initial = first.chars().find(|c| c.is_alphabetic())?;
         (last.to_string(), initial)
     };
+
     if last.is_empty() {
         return None;
     }
+
     Some(format!(
         "{}, {}",
         last.to_ascii_uppercase(),
@@ -355,9 +379,11 @@ fn aggregate_all(rows: &[&FceRow]) -> Option<FceAggregate> {
         terms.insert((row.year, row.sem));
         acc.push(row);
     }
+
     if acc.any() == 0 {
         return None;
     }
+
     Some(FceAggregate {
         n_semesters: terms.len() as u32,
         hrs_per_week: acc.hrs.mean(),

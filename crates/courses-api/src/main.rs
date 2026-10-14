@@ -1,6 +1,6 @@
-//! Public-facing course catalog API. Pulls the catalog binary from the CDN
-//! S3 bucket, builds an in-memory index, and exposes REST routes under
-//! `/api`. Re-fetches and rebuilds on S3 ETag change.
+//! Public-facing course catalog API. Pulls the catalog from the CDN S3
+//! bucket and exposes REST routes under `/api`. Re-fetches on S3 ETag
+//! change.
 //!
 //! S3 credentials come from the typed secretspec SDK (`CDN_*`).
 
@@ -13,11 +13,10 @@ use aws_sdk_s3::Client as S3Client;
 use aws_sdk_s3::config::{BehaviorVersion, Credentials, Region};
 use axum::{
     extract::{Path, State},
-    http::{StatusCode, header},
+    http::header,
     response::{IntoResponse, Response},
     routing::get,
 };
-use courses_index::{binary, index::Index};
 use serde::Serialize;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
@@ -31,7 +30,6 @@ secretspec_derive::declare_secrets!("../../secretspec.toml");
 struct Catalog {
     etag: String,
     bytes: bytes::Bytes,
-    index: Index,
 }
 
 #[derive(Clone)]
@@ -62,7 +60,7 @@ fn build_s3_client(endpoint: String, access_key_id: String, secret_access_key: S
     S3Client::from_conf(config)
 }
 
-async fn fetch_and_build(client: &S3Client, bucket: &str, key: &str) -> Result<Catalog> {
+async fn fetch_catalog(client: &S3Client, bucket: &str, key: &str) -> Result<Catalog> {
     let resp = client
         .get_object()
         .bucket(bucket)
@@ -70,18 +68,14 @@ async fn fetch_and_build(client: &S3Client, bucket: &str, key: &str) -> Result<C
         .send()
         .await
         .with_context(|| format!("get_object s3://{bucket}/{key}"))?;
+
     let etag = resp
         .e_tag()
         .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
         .trim_matches('"')
         .to_string();
     let bytes = resp.body.collect().await?.into_bytes();
-    let payload = binary::read_catalog_from_slice(&bytes)?;
-    let index = match payload.prebuilt_text {
-        Some(p) => Index::build_with_prebuilt_text(payload.corpus, p)?,
-        None => Index::build(payload.corpus),
-    };
-    Ok(Catalog { etag, bytes, index })
+    Ok(Catalog { etag, bytes })
 }
 
 async fn fetch_etag(client: &S3Client, bucket: &str, key: &str) -> Result<String> {
@@ -92,6 +86,7 @@ async fn fetch_etag(client: &S3Client, bucket: &str, key: &str) -> Result<String
         .send()
         .await
         .with_context(|| format!("head_object s3://{bucket}/{key}"))?;
+
     Ok(resp
         .e_tag()
         .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
@@ -134,13 +129,12 @@ async fn main() -> Result<()> {
 
     let client = build_s3_client(endpoint, access_key_id, secret_access_key);
 
-    let initial = fetch_and_build(&client, &bucket, &s3_key).await?;
+    let initial = fetch_catalog(&client, &bucket, &s3_key).await?;
     info!(
         bucket = %bucket,
         key = %s3_key,
         etag = %initial.etag,
         bytes = initial.bytes.len(),
-        courses = initial.index.n_docs,
         "catalog loaded"
     );
 
@@ -175,6 +169,7 @@ async fn main() -> Result<()> {
 
     let addr = format!("0.0.0.0:{port}");
     let listener = TcpListener::bind(&addr).await?;
+
     info!(addr = %addr, "listening");
     axum::serve(listener, app).await?;
     Ok(())
@@ -190,19 +185,16 @@ fn spawn_s3_poller(
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(interval).await;
+
             let current_etag = catalog.load().etag.clone();
             match fetch_etag(&client, &bucket, &key).await {
                 Ok(remote_etag) if remote_etag != current_etag => {
-                    match fetch_and_build(&client, &bucket, &key).await {
+                    match fetch_catalog(&client, &bucket, &key).await {
                         Ok(next) => {
-                            info!(
-                                etag = %next.etag,
-                                courses = next.index.n_docs,
-                                "catalog rebuilt"
-                            );
+                            info!(etag = %next.etag, "catalog reloaded");
                             catalog.store(Arc::new(next));
                         }
-                        Err(e) => warn!(error = %e, "rebuild failed"),
+                        Err(e) => warn!(error = %e, "reload failed"),
                     }
                 }
                 Ok(_) => {}
@@ -219,8 +211,6 @@ async fn health() -> &'static str {
 
 #[derive(Serialize, ToSchema)]
 struct VersionInfo {
-    format_version: u32,
-    course_count: u32,
     bytes: usize,
     etag: String,
 }
@@ -229,8 +219,6 @@ struct VersionInfo {
 async fn version(State(state): State<AppState>) -> impl IntoResponse {
     let cat = state.catalog.load();
     axum::Json(VersionInfo {
-        format_version: binary::FORMAT_VERSION,
-        course_count: cat.index.n_docs,
         bytes: cat.bytes.len(),
         etag: cat.etag.clone(),
     })
@@ -245,6 +233,7 @@ async fn version(State(state): State<AppState>) -> impl IntoResponse {
 async fn binary_handler(State(state): State<AppState>) -> Response {
     let cat = state.catalog.load_full();
     let is_gzip = cat.bytes.starts_with(&[0x1f, 0x8b]);
+
     let mut response = Response::new(axum::body::Body::from(cat.bytes.clone()));
     let h = response.headers_mut();
     h.insert(
@@ -265,11 +254,6 @@ async fn binary_handler(State(state): State<AppState>) -> Response {
     params(("code" = String, Path, description = "Course code, e.g. 15-122")),
     responses((status = OK, description = "Course JSON"), (status = NOT_FOUND, description = "Unknown course code"))
 )]
-async fn course_by_code(State(state): State<AppState>, Path(code): Path<String>) -> Response {
-    let cat = state.catalog.load();
-    let Some(&id) = cat.index.code_to_id.get(&code) else {
-        return (StatusCode::NOT_FOUND, "course not found").into_response();
-    };
-    let course = &cat.index.courses[id as usize];
-    axum::Json(course).into_response()
+async fn course_by_code(State(_state): State<AppState>, Path(_code): Path<String>) -> Response {
+    unimplemented!()
 }

@@ -70,6 +70,7 @@ pub fn load_programs(programs_root: &Path, courses: &mut [Course]) -> Result<Pro
                 out.orphan_codes.insert(code.clone());
                 continue;
             };
+
             by_course
                 .entry(course_id)
                 .or_default()
@@ -139,6 +140,7 @@ fn parse_one(path: &Path) -> Option<ParsedAudit> {
             return None;
         }
     };
+
     let env: AuditEnvelope = match serde_json::from_slice(&bytes) {
         Ok(v) => v,
         Err(err) => {
@@ -170,6 +172,7 @@ fn collect_course_codes(node: &Value, out: &mut HashSet<String>) {
             {
                 out.insert(code.to_string());
             }
+
             for v in map.values() {
                 collect_course_codes(v, out);
             }

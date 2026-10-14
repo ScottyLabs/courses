@@ -10,6 +10,7 @@ on:
           - courses
           - programs
           - syllabi
+          - ldap
           - all
         default: all
       cookie_header:
@@ -24,31 +25,30 @@ on:
 jobs:
   scrape:
     name: Scrape and upload
-    runs-on: docker
+    runs-on: native
+    enable-openid-connect: true
     env:
+      SECRETSPEC_PROFILE: ci
       COOKIE_HEADER: ${{ inputs.cookie_header }}
       CANVAS_TOKEN: ${{ inputs.canvas_token }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.CDN_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.CDN_SECRET_ACCESS_KEY }}
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v7
-
-      - uses: https://github.com/dtolnay/rust-toolchain@stable
-      - uses: https://github.com/Swatinem/rust-cache@v2
-
-      - name: Build scraper and indexer
-        run: cargo build --release -p courses-scraper -p courses-index
+      - uses: https://git.cmu.dev/ScottyLabs/kennel/.forgejo/actions/prepare@main
 
       - name: Scrape
-        run: ./target/release/courses-scraper --mode ${{ inputs.mode }}
+        run: devenv shell -- cargo run --release -p courses-scraper -- --mode ${{ inputs.mode }}
 
       - name: Build catalog
-        run: ./target/release/courses-index --write-catalog catalog.bin
+        run: devenv shell -- cargo run --release -p courses-index -- --write-catalog catalog.bin
 
       - name: Upload to garage
         run: |
-          export AWS_DEFAULT_REGION=us-east-1
-          aws s3 cp catalog.bin s3://cdn-courses/catalog.bin \
-            --endpoint-url https://s3.scottylabs.org \
+          devenv shell -- cdn-s3 cp catalog.bin s3://cdn-courses/catalog.bin \
             --content-type application/octet-stream \
             --content-encoding gzip
+
+      - name: Upload syllabi to garage
+        run: |
+          if [ -d exported/syllabi ]; then
+            devenv shell -- cdn-s3 sync exported/syllabi/ s3://cdn-courses/syllabi/
+          fi

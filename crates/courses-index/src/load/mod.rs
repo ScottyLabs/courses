@@ -6,6 +6,7 @@
 //! [`run`].
 
 pub mod courses;
+pub mod directory;
 pub mod fce;
 pub mod pagerank;
 pub mod professors;
@@ -14,6 +15,7 @@ pub mod sections;
 pub mod syllabi;
 
 pub use courses::{CourseLoad, load_courses};
+pub use directory::{DirectoryLoad, load_directory};
 pub use fce::{FceLoad, load_fces};
 pub use pagerank::{PageRankResult, compute_pagerank};
 pub use professors::{ProfessorBuild, build_professors};
@@ -73,14 +75,17 @@ pub fn run(exported_root: &Path, fce_csv: &Path) -> Result<Corpus> {
     }
 
     let _ = load_syllabi(&exported_root.join("syllabi"), &mut courses)?;
+
     let _ = compute_pagerank(&mut courses);
+
     let ProfessorBuild {
-        professors,
+        mut professors,
         fce_rows_matched,
         fce_rows_ambiguous,
         fce_rows_unmatched,
         fce_only_professors,
     } = build_professors(&courses, &sections, &mut fce_rows);
+
     tracing::debug!(
         professors = professors.len(),
         fce_rows_matched,
@@ -89,13 +94,18 @@ pub fn run(exported_root: &Path, fce_csv: &Path) -> Result<Corpus> {
         fce_only_professors,
         "professor merge complete"
     );
+
+    let _ = load_directory(exported_root, &mut professors)?;
+
     let mut corpus = Corpus {
         courses,
         professors,
         sections,
         fce_rows,
     };
+
     dedup_descriptions(&mut corpus);
+
     Ok(corpus)
 }
 
@@ -104,8 +114,8 @@ pub fn run(exported_root: &Path, fce_csv: &Path) -> Result<Corpus> {
 /// `description` (boilerplate text repeats across thousands of courses),
 /// `level` and `school` (handful of distinct values total),
 /// `attribute_tags` and `gened_tags` (a few dozen each), `skills` (a few
-/// hundred), and `has_syllabus_terms` (~30 short term codes). Pure heap
-/// optimization with no on-disk format change.
+/// hundred), and syllabus `term`/`dept` codes (a few dozen each). Pure
+/// heap optimization with no on-disk format change.
 pub fn dedup_descriptions(corpus: &mut Corpus) {
     let mut interner = StrInterner::default();
     let mut bytes_before_desc: usize = 0;
@@ -131,8 +141,9 @@ pub fn dedup_descriptions(corpus: &mut Corpus) {
         for skill in &mut course.skills {
             *skill = interner.intern(skill, &mut 0);
         }
-        for term in &mut course.has_syllabus_terms {
-            *term = interner.intern(term, &mut 0);
+        for s in &mut course.syllabi {
+            s.term = interner.intern(&s.term, &mut 0);
+            s.dept = interner.intern(&s.dept, &mut 0);
         }
     }
 
@@ -165,6 +176,7 @@ impl StrInterner {
         if let Some(existing) = self.table.get(value) {
             return Arc::clone(existing);
         }
+
         *unique_counter += 1;
         let arc = Arc::clone(value);
         self.table.insert(Arc::clone(&arc), Arc::clone(&arc));
@@ -183,14 +195,18 @@ fn find_student_roots(exported_root: &Path) -> Result<Vec<PathBuf>> {
         if !entry.file_type()?.is_dir() {
             continue;
         }
+
         let path = entry.path();
         let has_subtree = ["courses_history", "programs"]
             .iter()
             .any(|sub| path.join(sub).is_dir());
+
         if has_subtree {
             out.push(path);
         }
     }
+
     out.sort();
+
     Ok(out)
 }

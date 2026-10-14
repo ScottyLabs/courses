@@ -1,6 +1,4 @@
-//! In-memory document shapes produced by the loader and consumed by the
-//! index builder. The on-disk wire format lives in [`crate::binary`], which
-//! encodes these structs with bincode and frames them into named regions.
+//! In-memory document shapes produced by the loader.
 
 use std::sync::Arc;
 
@@ -96,7 +94,8 @@ pub struct Course {
     pub instructors_recent: Vec<InstructorRef>,
     pub programs: Vec<ProgramMembership>,
     pub fce_aggregates: Option<FceAggregate>,
-    pub has_syllabus_terms: Vec<Arc<str>>,
+    /// Per-section syllabus objects on the CDN, sorted newest term first.
+    pub syllabi: Vec<SyllabusRef>,
     /// PageRank over the prereq graph. Populated in a later pipeline stage;
     /// zero at load time.
     pub pagerank: f32,
@@ -106,6 +105,20 @@ pub struct Course {
 pub struct GenEdTag {
     pub name: Arc<str>,
     pub sem: u8,
+}
+
+/// One syllabus object on the CDN, scoped to a (term, section) of this
+/// course. The object key is
+/// `syllabi/<term>/<dept>/<code_nodash>[-<section>].<ext>`, where `dept`
+/// is the Canvas registry's department code (e.g. `CS`), not the
+/// course's numeric prefix.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SyllabusRef {
+    pub term: Arc<str>,
+    pub dept: Arc<str>,
+    /// Empty when the registry item had no section suffix.
+    pub section: String,
+    pub ext: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
@@ -158,6 +171,16 @@ pub struct Professor {
     pub courses_taught: Vec<CourseTaught>,
     pub fce_aggregates: Option<FceAggregate>,
     pub n_sections_taught: u32,
+    /// Directory (LDAP) enrichment. Defaults when the scrape has no
+    /// `ldap.json` or the AndrewID wasn't found in the directory.
+    pub email: Option<String>,
+    pub title: Option<String>,
+    pub directory_departments: Vec<String>,
+    pub affiliation: Option<String>,
+    pub colleges: Vec<String>,
+    pub office: Option<String>,
+    pub phone: Option<String>,
+    pub orcid: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

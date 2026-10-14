@@ -12,8 +12,10 @@ use anyhow::Result;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::time::Duration;
 
 const MAX_LYEAR: i32 = 3;
+const SOC_TIMEOUT: Duration = Duration::from_secs(120);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Sem {
@@ -99,17 +101,24 @@ fn parse_soc(text: &str) -> Option<Soc> {
         let year: u32 = words.find_map(|w| w.parse().ok())?;
         Some((year, sem))
     })?;
+
     let codes = text
         .lines()
         .filter_map(|l| l.strip_prefix('\t')?.split_once('\t').map(|(n, _)| n))
         .filter_map(dashed)
         .collect();
+
     Some(Soc { term, codes })
 }
 
 pub fn fetch_soc(season: &str) -> Result<Option<Soc>> {
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(SOC_TIMEOUT))
+        .build()
+        .into();
     let url = format!("https://enr-apps.as.cmu.edu/assets/SOC/sched_layout_{season}.dat");
-    let body = ureq::get(&url).call()?.into_body().read_to_string()?;
+
+    let body = agent.get(&url).call()?.into_body().read_to_string()?;
     Ok(parse_soc(&body))
 }
 
@@ -124,6 +133,7 @@ pub fn parse_fce(path: &Path) -> Result<HashMap<String, HashSet<(u32, Sem)>>> {
             continue;
         };
         let Ok(year) = row.year.parse() else { continue };
+
         out.entry(code).or_default().insert((year, sem));
     }
     Ok(out)
@@ -163,6 +173,7 @@ pub fn course_tasks(
                 .filter(|s| s.codes.contains(course))
                 .map(|s| s.term),
         );
+
         for (y, s) in tuples {
             let lyear = s.ay_start(y) - anchor + 1;
             if (0..=MAX_LYEAR).contains(&lyear) {

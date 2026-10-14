@@ -11,7 +11,10 @@
 //! on purpose because their items have no retrievable content.
 
 use anyhow::{Context, Result};
+use aws_sdk_s3::config::{BehaviorVersion, Credentials, Region};
 use rayon::prelude::*;
+use std::collections::HashSet;
+use std::env;
 use std::fs;
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -52,6 +55,7 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
 
     let done = AtomicUsize::new(0);
     let total = dept_refs.len();
+
     let tasks: Vec<Task> = dept_refs
         .par_iter()
         .flat_map_iter(|(term, dept, sis)| {
@@ -59,6 +63,7 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
             if n.is_multiple_of(200) {
                 info!(done = n, total, "sub-course discovery");
             }
+
             match canvas.list_subcourse_modules(sis) {
                 Ok(mods) => extract_available(&mods)
                     .into_iter()
@@ -72,6 +77,7 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
                         if url.is_empty() {
                             return None;
                         }
+
                         Some(Task {
                             term: term.clone(),
                             dept: dept.clone(),
@@ -91,15 +97,77 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
     Ok(tasks)
 }
 
-pub fn save_task(canvas: &Canvas, dir: &Path, task: &Task, incremental: bool) -> Result<()> {
+/// List the syllabus objects already in the CDN bucket as ext-stripped
+/// `<term>/<dept>/<course_section>` keys for the cumulative skip check.
+pub fn load_existing_keys() -> Result<HashSet<String>> {
+    let endpoint = env::var("CDN_S3_ENDPOINT").context("CDN_S3_ENDPOINT must be set")?;
+    let bucket = env::var("CDN_S3_BUCKET").context("CDN_S3_BUCKET must be set")?;
+    let access_key_id = env::var("CDN_ACCESS_KEY_ID").context("CDN_ACCESS_KEY_ID must be set")?;
+    let secret_access_key =
+        env::var("CDN_SECRET_ACCESS_KEY").context("CDN_SECRET_ACCESS_KEY must be set")?;
+
+    let credentials = Credentials::new(access_key_id, secret_access_key, None, None, "courses-cdn");
+    let config = aws_sdk_s3::config::Builder::new()
+        .behavior_version(BehaviorVersion::latest())
+        .region(Region::new("us-east-1"))
+        .endpoint_url(endpoint)
+        .credentials_provider(credentials)
+        .force_path_style(true)
+        .build();
+    let client = aws_sdk_s3::Client::from_conf(config);
+
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    runtime.block_on(async {
+        let mut pages = client
+            .list_objects_v2()
+            .bucket(&bucket)
+            .prefix("syllabi/")
+            .into_paginator()
+            .send();
+
+        let mut keys = HashSet::new();
+        while let Some(page) = pages.next().await {
+            for object in page?.contents() {
+                if let Some(key) = object.key().and_then(|k| k.strip_prefix("syllabi/")) {
+                    let stem = key.rsplit_once('.').map_or(key, |(stem, _)| stem);
+                    keys.insert(stem.to_string());
+                }
+            }
+        }
+
+        Ok(keys)
+    })
+}
+
+pub fn save_task(
+    canvas: &Canvas,
+    dir: &Path,
+    task: &Task,
+    incremental: bool,
+    existing: &HashSet<String>,
+) -> Result<()> {
+    // Cumulative cross-run skip: the CDN already has this one. Absence
+    // never gets cached, so a syllabus uploaded later is still picked up
+    if existing.contains(&format!(
+        "{}/{}/{}",
+        task.term, task.dept, task.course_section
+    )) {
+        return Ok(());
+    }
+
     let prog_dir = dir.join(&task.term).join(&task.dept);
     if incremental && already_saved(&prog_dir, &task.course_section) {
         return Ok(());
     }
+
     fs::create_dir_all(&prog_dir)?;
+
     match task.item_type.as_str() {
         "File" => {
             let meta = canvas.get_file_meta(&task.url)?;
+
             let ext = std::path::Path::new(&meta.filename)
                 .extension()
                 .and_then(|s| s.to_str())
@@ -109,7 +177,9 @@ pub fn save_task(canvas: &Canvas, dir: &Path, task: &Task, incremental: bool) ->
                         .and_then(|s| s.to_str())
                 })
                 .unwrap_or("bin");
+
             let bytes = canvas.download_bytes(&meta.url)?;
+
             fs::write(
                 prog_dir.join(format!("{}.{ext}", task.course_section)),
                 bytes,
@@ -164,6 +234,7 @@ fn course_section(title: &str) -> Option<String> {
     if prefix.is_empty() {
         return None;
     }
+
     let safe: String = prefix
         .chars()
         .map(|c| {
@@ -186,6 +257,7 @@ fn already_saved(prog_dir: &Path, course_section: &str) -> bool {
     let Ok(entries) = fs::read_dir(prog_dir) else {
         return false;
     };
+
     entries.flatten().any(|e| {
         e.file_name()
             .to_str()

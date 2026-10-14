@@ -80,20 +80,25 @@ impl Stellic {
     pub fn login(
         cookie: Option<String>,
         export_root: &std::path::Path,
+        concurrency: usize,
     ) -> Result<(Self, TermJoined)> {
         let agent: ureq::Agent = ureq::Agent::config_builder()
             .timeout_global(Some(TIMEOUT_GLOBAL))
             .timeout_per_call(Some(TIMEOUT_PER_CALL))
             .timeout_recv_response(Some(TIMEOUT_RECV_RESPONSE))
             .timeout_recv_body(Some(TIMEOUT_RECV_BODY))
+            .max_idle_connections(concurrency)
+            .max_idle_connections_per_host(concurrency)
             .build()
             .into();
+
         let mut cookie = cookie;
         loop {
             let c = match cookie.take() {
                 Some(c) => c,
                 None => obtain_cookie()?,
             };
+
             let Some(csrf) = c
                 .split(';')
                 .find_map(|p| p.trim().strip_prefix("csrftoken="))
@@ -102,6 +107,7 @@ impl Stellic {
                 warn!("cookie missing csrftoken; re-prompting");
                 continue;
             };
+
             let body = agent
                 .post(&format!("{BASE}/planner/getstudentprofile/"))
                 .header("Cookie", &c)
@@ -113,10 +119,12 @@ impl Stellic {
                 .send("")?
                 .into_body()
                 .read_to_string()?;
+
             if !body.starts_with(")]}'") {
                 warn!("auth response was not JSON (cookie expired or incomplete); re-prompting");
                 continue;
             }
+
             let Profile {
                 username,
                 default_plan_id,
@@ -149,6 +157,7 @@ impl Stellic {
                 .header("Referer", &format!("{BASE}/app/courses"))
                 .call()
         })?;
+
         Ok(response.into_body().read_to_string()?)
     }
 
@@ -164,11 +173,13 @@ impl Stellic {
                 .header("Referer", &format!("{BASE}/app/home"))
                 .send(body)
         })?;
+
         Ok(response.into_body().read_to_string()?)
     }
 
     pub fn get_programs(&self) -> Result<Vec<Program>> {
         let body = self.get(&format!("{BASE}/catalog/getprograms/?campus_id=1"))?;
+
         let resp: ProgramsResp = serde_json::from_str(strip_xssi(&body))?;
         Ok(resp.programs)
     }
@@ -177,6 +188,7 @@ impl Stellic {
         let body = self.get(&format!(
             "{BASE}/planner/getauditversions/?program={program_id}&status=published"
         ))?;
+
         let resp: AuditVersionsResp = serde_json::from_str(strip_xssi(&body))?;
         Ok(resp.audits)
     }
@@ -188,16 +200,19 @@ impl Stellic {
             "default_audit_version": {"id": audit_id},
             "official": true,
         });
+
         let body = self.post_json(
             &format!("{BASE}/planner/getauditinfo/"),
             &body_obj.to_string(),
         )?;
+
         Ok(serde_json::from_str(strip_xssi(&body))?)
     }
 
     fn write_course(&self, course: &str, file: &str, contents: &str) -> Result<()> {
         let dir = self.out_dir.join(course.replace('-', ""));
         fs::create_dir_all(&dir)?;
+
         fs::write(dir.join(file), contents)?;
         Ok(())
     }
@@ -212,19 +227,23 @@ impl Stellic {
         {
             return Ok(());
         }
+
         let body = self.get(&format!(
             "{BASE}/catalog/getcourseinfo/?campus_id=1&course_code={course}&physical_year=2026"
         ))?;
+
         let mut json: serde_json::Value = serde_json::from_str(strip_xssi(&body))?;
         if json.get("success").and_then(|s| s.as_bool()) == Some(false) {
             return Ok(());
         }
+
         if let Some(obj) = json.as_object_mut() {
             // This is personal information
             obj.remove("student_context");
             obj.remove("enrollment_action_windows");
             obj.remove("alerts");
         }
+
         self.write_course(course, "info.json", &serde_json::to_string(&json)?)
     }
 
@@ -244,10 +263,12 @@ impl Stellic {
         {
             return Ok(());
         }
+
         let body = self.get(&format!(
             "{BASE}/planner/getcoursesections/?campus_id=1&course_code={course}&physical_year=2026&plan_id={}&sem_id={sem_id}&year={lyear}",
             self.plan_id
         ))?;
+
         let mut json: serde_json::Value = serde_json::from_str(strip_xssi(&body))?;
         let nonempty = json
             .get("data_list")
@@ -256,13 +277,24 @@ impl Stellic {
         if !nonempty {
             return Ok(());
         }
+
         if let Some(arr) = json.get_mut("data_list").and_then(|d| d.as_array_mut()) {
             for entry in arr {
                 if let Some(obj) = entry.as_object_mut() {
                     obj.remove("current");
+                    if let Some(course) = obj.get_mut("course").and_then(|c| c.as_object_mut()) {
+                        // This is personal information
+                        course.remove("is_registered");
+                        course.remove("registration_status");
+                        course.remove("semester");
+                        course.remove("year");
+                        course.remove("start_usem");
+                        course.remove("sub_semester");
+                    }
                 }
             }
         }
+
         self.write_course(
             course,
             &format!("ly{lyear}_sm{sem_id}.json"),
@@ -283,10 +315,12 @@ where
                 if matches!(&e, ureq::Error::StatusCode(c) if (400..500).contains(c)) {
                     return Err(e.into());
                 }
+
                 attempt += 1;
                 if attempt >= MAX_ATTEMPTS {
                     return Err(e.into());
                 }
+
                 let delay_ms = (200u64 << attempt.min(5)).min(5000);
                 std::thread::sleep(Duration::from_millis(delay_ms));
             }
@@ -305,10 +339,12 @@ fn obtain_cookie() -> Result<String> {
          https://academicaudit.andrew.cmu.edu/planner/getstudentprofile/,\n\
          copy the entire 'Cookie' request header value, and paste it below.\n"
     );
+
     eprint!("> ");
     std::io::stderr().flush()?;
     let mut line = String::new();
     std::io::stdin().read_line(&mut line)?;
+
     let cookie = line.trim().to_string();
     if cookie.is_empty() {
         anyhow::bail!("empty cookie");

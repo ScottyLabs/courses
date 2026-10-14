@@ -9,10 +9,8 @@
 - [Stellic](./scraper/stellic.md)
 - [Programs](./scraper/programs.md)
 - [Syllabi](./scraper/syllabi.md)
+- [Directory (LDAP)](./scraper/ldap.md)
 
 # Courses index
 
-- [Catalog binary format](./courses-index/catalog-format.md)
-- [Text search](./courses-index/text-search.md)
-- [Facets and numeric filters](./courses-index/facets.md)
-- [Query engine](./courses-index/query.md)
+- [Catalog distribution](./courses-index/distribution.md)

@@ -1,0 +1,7 @@
+[[IgnoredVulns]]
+id = "RUSTSEC-2023-0071"
+reason = "Marvin timing attack needs RSA private-key operations; rsa sits under openidconnect for JWT verification only, which is public-key, and under secretspec"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0436"
+reason = "unmaintained advisory for paste, a compile-time proc macro under utoipa-axum with no runtime exposure"

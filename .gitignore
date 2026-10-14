@@ -1,18 +1,11 @@
 # Nix / devenv
 .devenv/
-.devenv.flake.nix
-devenv.local.yaml
 .pre-commit-config.yaml
-result
-result-*
 
 # AI
 .mcp.json
 .claude
 PLAN.md
-
-# Secrets
-.env
 
 # Rust
 /target
@@ -24,7 +17,9 @@ node_modules/
 sites/web/.svelte-kit/
 sites/web/build/
 sites/web/dist/
-sites/web/src/lib/courses-index/
+
+# Secrets
+.env
 
 # Generated artifacts
 exported/

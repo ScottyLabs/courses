@@ -31,6 +31,7 @@ pub struct Task {
 pub fn build_tasks(stellic: &Stellic, programs: &[Program]) -> Vec<Task> {
     let done = AtomicUsize::new(0);
     let total = programs.len();
+
     programs
         .par_iter()
         .flat_map_iter(|p| {
@@ -38,6 +39,7 @@ pub fn build_tasks(stellic: &Stellic, programs: &[Program]) -> Vec<Task> {
             if n.is_multiple_of(200) {
                 info!(done = n, total, "audit version discovery");
             }
+
             match stellic.get_audit_versions(p.id) {
                 Ok(avs) => avs
                     .into_iter()
@@ -68,7 +70,9 @@ pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task, incremental: bool)
     {
         return Ok(());
     }
+
     let resp = stellic.get_audit_data(task.audit_id)?;
+
     if resp.get("success").and_then(|s| s.as_bool()) == Some(false) {
         return Ok(());
     }
@@ -92,10 +96,12 @@ pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task, incremental: bool)
         );
         return Ok(());
     };
+
     let mut matching = matching.clone();
     if let Some(obj) = matching.as_object_mut() {
         obj.remove("uid");
     }
+
     let mut filtered_ucpm = serde_json::Map::new();
     if let Some(ucpm) = resp
         .get("unique_course_parents_mapping")
@@ -111,6 +117,7 @@ pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task, incremental: bool)
             }
         }
     }
+
     let program_reqs = resp
         .get("program_reqs")
         .and_then(|v| v.as_object())
@@ -129,8 +136,10 @@ pub fn save_audit(stellic: &Stellic, dir: &Path, task: &Task, incremental: bool)
         "unique_course_parents_mapping": filtered_ucpm,
         "tree": matching,
     });
+
     let prog_dir = dir.join(task.program_id.to_string());
     fs::create_dir_all(&prog_dir)?;
+
     fs::write(
         prog_dir.join(format!("{}.json", task.audit_id)),
         serde_json::to_string(&wrapped)?,

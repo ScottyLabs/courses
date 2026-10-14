@@ -37,10 +37,6 @@
     };
   };
 
-  languages.rust.targets = [ "wasm32-unknown-unknown" ];
-  # SecretSpec's linkme provider registry needs linker sections Cranelift omits.
-  languages.rust.cranelift.excludePackages = [ "secretspec" ];
-
   treefmt.config.settings.global.excludes = [
     ".devenv/**"
     ".direnv/**"
@@ -48,20 +44,12 @@
     "data/**"
   ];
 
-  packages = with pkgs; [
-    git
-    wasm-pack
-    wasm-bindgen-cli_0_2_126
-  ];
-
-  scripts.build-wasm.exec = ''
-    set -euo pipefail
-    env -u RUSTFLAGS cargo build --release --target wasm32-unknown-unknown -p courses-index-wasm
-    wasm-bindgen --target web --out-dir sites/web/src/lib/courses-index \
-      "''${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/courses_index_wasm.wasm"
-  '';
-
-  enterShell = ''
-    [ -f sites/web/src/lib/courses-index/courses_index_wasm.js ] || build-wasm
-  '';
+  # aws s3 against the CDN bucket, shadowing the sccache AWS_* keys
+  scripts.cdn-s3 = {
+    packages = [ pkgs.awscli2 ];
+    exec = ''
+      AWS_ACCESS_KEY_ID="$CDN_ACCESS_KEY_ID" AWS_SECRET_ACCESS_KEY="$CDN_SECRET_ACCESS_KEY" AWS_DEFAULT_REGION=us-east-1 \
+        exec aws s3 "$@" --endpoint-url https://s3.scottylabs.org
+    '';
+  };
 }

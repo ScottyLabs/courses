@@ -44,19 +44,23 @@ pub fn compute_pagerank(courses: &mut [Course]) -> PageRankResult {
         let Some(text) = course.prereqs_text.as_deref() else {
             continue;
         };
+
         let mut seen: Vec<usize> = Vec::new();
         for cap in re.find_iter(text) {
             let code = cap.as_str();
             let Some(&j) = code_to_idx.get(code) else {
                 continue;
             };
+
             if i == j {
                 continue;
             }
+
             if !seen.contains(&j) {
                 seen.push(j);
             }
         }
+
         n_edges += seen.len();
         out_edges[i] = seen;
     }
@@ -83,6 +87,7 @@ pub fn compute_pagerank(courses: &mut [Course]) -> PageRankResult {
                 }
             }
         }
+
         let dangling_share = DAMPING * dangling_sum / n as f32;
         for v in next.iter_mut() {
             *v += dangling_share;
@@ -95,6 +100,7 @@ pub fn compute_pagerank(courses: &mut [Course]) -> PageRankResult {
             .sum();
         final_delta = delta;
         rank = next;
+
         if delta < CONVERGENCE {
             break;
         }
@@ -110,6 +116,7 @@ pub fn compute_pagerank(courses: &mut [Course]) -> PageRankResult {
         iterations_run,
         final_delta,
     };
+
     debug!(
         n_nodes = result.n_nodes,
         n_edges = result.n_edges,

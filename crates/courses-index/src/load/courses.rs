@@ -183,6 +183,7 @@ pub fn load_courses(courses_history_root: &Path) -> Result<CourseLoad> {
 
 fn parse_all(dirs: &[walkdir::DirEntry]) -> (Vec<Course>, usize, usize, usize) {
     let results: Vec<ParsedRow> = dirs.par_iter().map(parse_one).collect();
+
     let mut rows = Vec::with_capacity(results.len());
     let (mut malformed, mut missing, mut parse_err) = (0, 0, 0);
     for row in results {
@@ -193,6 +194,7 @@ fn parse_all(dirs: &[walkdir::DirEntry]) -> (Vec<Course>, usize, usize, usize) {
             ParsedRow::ParseError => parse_err += 1,
         }
     }
+
     (rows, malformed, missing, parse_err)
 }
 
@@ -208,13 +210,16 @@ fn parse_one(entry: &walkdir::DirEntry) -> ParsedRow {
         Some(s) => s.to_string(),
         None => return ParsedRow::MalformedDirname,
     };
+
     if dir_name.len() < 3 {
         return ParsedRow::MalformedDirname;
     }
+
     let info_path = entry.path().join("info.json");
     if !info_path.exists() {
         return ParsedRow::MissingInfo;
     }
+
     let bytes =
         match fs::read(&info_path).with_context(|| format!("reading {}", info_path.display())) {
             Ok(b) => b,
@@ -223,6 +228,7 @@ fn parse_one(entry: &walkdir::DirEntry) -> ParsedRow {
                 return ParsedRow::ParseError;
             }
         };
+
     let info: InfoJson = match serde_json::from_slice(&bytes) {
         Ok(v) => v,
         Err(err) => {
@@ -366,7 +372,7 @@ fn assemble(info: InfoJson, code: String, dept: String, course_num: u32) -> Cour
         instructors_recent,
         programs: Vec::new(),
         fce_aggregates: None,
-        has_syllabus_terms: Vec::new(),
+        syllabi: Vec::new(),
         pagerank: 0.0,
     }
 }

@@ -165,7 +165,7 @@
         "nix": "nix",
         "nixd": "nixd",
         "nixpkgs": "nixpkgs_2",
-        "rust-overlay": "rust-overlay_2"
+        "rust-overlay": "rust-overlay"
       },
       "locked": {
         "lastModified": 1790381990,
@@ -192,7 +192,7 @@
         "nix": "nix_2",
         "nixd": "nixd_2",
         "nixpkgs": "nixpkgs_3",
-        "rust-overlay": "rust-overlay_3"
+        "rust-overlay": "rust-overlay_2"
       },
       "locked": {
         "lastModified": 1781627264,
@@ -719,31 +719,10 @@
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "rust-overlay": "rust-overlay",
         "scottylabs": "scottylabs"
       }
     },
     "rust-overlay": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1791795448,
-        "narHash": "sha256-12C5ef8a3endLXBvLOVR/jynM9EHGgP1t+y5uBorwx4=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "404b7a5537f0adc6e5c558a1b94612e683dec504",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
-    "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
           "scottylabs",
@@ -765,7 +744,7 @@
         "type": "github"
       }
     },
-    "rust-overlay_3": {
+    "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
           "scottylabs",
@@ -803,11 +782,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1791873165,
-        "narHash": "sha256-qZ4jPV/BjGPqEjQL1i+xRHBHS0XT+FhJ1J0fkLGpn3g=",
+        "lastModified": 1791910684,
+        "narHash": "sha256-Psh21/kWm7F2gvHLucR0pQp+cG5nX7Fz7rVRn8Xgs8o=",
         "ref": "refs/heads/main",
-        "rev": "c43e90ad28e5a1607194abc23b9db2045ca15373",
-        "revCount": 386,
+        "rev": "f2fc3c04a1650c057c4f9731599bf0989ab7b0e1",
+        "revCount": 389,
         "type": "git",
         "url": "https://git.cmu.dev/ScottyLabs/kennel"
       },

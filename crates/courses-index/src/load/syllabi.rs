@@ -1,16 +1,18 @@
-//! Walk `exported/syllabi/<term>/<dept>/<dashless>-<section>.<ext>` and set
-//! `Course.has_syllabus_terms` to the sorted list of short term codes
-//! (`F19`, `S22`, `M25`, ...) for which any syllabus file exists. The file
-//! contents themselves are not opened; this pass is just a presence map.
+//! Walk `exported/syllabi/<term>/<dept>/<code_nodash>[-<section>].<ext>`
+//! and attach one [`SyllabusRef`] per file to its course, so "does this
+//! specific section in this specific term have a syllabus" is answerable
+//! downstream. The file contents themselves are not opened; refs point at
+//! the CDN copies of the same tree.
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::Result;
 use tracing::debug;
 use walkdir::WalkDir;
 
-use crate::doc::{Course, CourseId};
+use crate::doc::{Course, CourseId, SyllabusRef};
 
 #[derive(Debug, Default)]
 pub struct SyllabusLoad {
@@ -20,12 +22,12 @@ pub struct SyllabusLoad {
     pub courses_with_any_syllabus: usize,
 }
 
-/// Scan `syllabi_root` and populate `has_syllabus_terms` on each course.
+/// Scan `syllabi_root` and populate `syllabi` on each course.
 pub fn load_syllabi(syllabi_root: &Path, courses: &mut [Course]) -> Result<SyllabusLoad> {
     let code_to_id: HashMap<String, CourseId> =
         courses.iter().map(|c| (c.code.clone(), c.id)).collect();
 
-    let mut by_course: HashMap<CourseId, HashSet<String>> = HashMap::new();
+    let mut by_course: HashMap<CourseId, Vec<SyllabusRef>> = HashMap::new();
     let mut out = SyllabusLoad::default();
 
     for entry in WalkDir::new(syllabi_root).min_depth(3).max_depth(3) {
@@ -35,33 +37,22 @@ pub fn load_syllabi(syllabi_root: &Path, courses: &mut [Course]) -> Result<Sylla
         if !entry.file_type().is_file() {
             continue;
         }
+
         out.files_scanned += 1;
 
-        let term = match entry
-            .path()
-            .components()
-            .rev()
-            .nth(2)
-            .and_then(|c| c.as_os_str().to_str())
-        {
-            Some(t) => t.to_string(),
-            None => {
-                out.files_unparsable += 1;
-                continue;
-            }
+        let mut rev = entry.path().components().rev();
+        let dept = rev.nth(1).and_then(|c| c.as_os_str().to_str());
+        let term = rev.next().and_then(|c| c.as_os_str().to_str());
+        let stem = entry.path().file_stem().and_then(|s| s.to_str());
+        let ext = entry.path().extension().and_then(|s| s.to_str());
+        let (Some(dept), Some(term), Some(stem), Some(ext)) = (dept, term, stem, ext) else {
+            out.files_unparsable += 1;
+            continue;
         };
 
-        let stem = match entry.path().file_stem().and_then(|s| s.to_str()) {
-            Some(s) => s,
-            None => {
-                out.files_unparsable += 1;
-                continue;
-            }
-        };
-
-        let dashless = match stem.split_once('-') {
-            Some((d, _)) => d,
-            None => stem,
+        let (dashless, section) = match stem.split_once('-') {
+            Some((d, s)) => (d, s),
+            None => (stem, ""),
         };
         let Some(code) = normalize_code(dashless) else {
             out.files_unparsable += 1;
@@ -71,18 +62,25 @@ pub fn load_syllabi(syllabi_root: &Path, courses: &mut [Course]) -> Result<Sylla
             out.orphan_codes.insert(code);
             continue;
         };
-        by_course.entry(course_id).or_default().insert(term);
+
+        by_course.entry(course_id).or_default().push(SyllabusRef {
+            term: Arc::from(term),
+            dept: Arc::from(dept),
+            section: section.to_string(),
+            ext: ext.to_string(),
+        });
     }
 
     for course in courses.iter_mut() {
-        if let Some(terms) = by_course.remove(&course.id) {
-            let mut sorted: Vec<String> = terms.into_iter().collect();
-            sorted.sort_by(|a, b| {
-                term_sort_key(a)
-                    .cmp(&term_sort_key(b))
-                    .then_with(|| a.cmp(b))
+        if let Some(mut refs) = by_course.remove(&course.id) {
+            refs.sort_by(|a, b| {
+                term_sort_key(&a.term)
+                    .cmp(&term_sort_key(&b.term))
+                    .then_with(|| a.term.cmp(&b.term))
+                    .then_with(|| a.section.cmp(&b.section))
             });
-            course.has_syllabus_terms = sorted.into_iter().map(std::sync::Arc::from).collect();
+
+            course.syllabi = refs;
             out.courses_with_any_syllabus += 1;
         }
     }
@@ -101,6 +99,7 @@ fn normalize_code(raw: &str) -> Option<String> {
     if !raw.chars().all(|c| c.is_ascii_digit()) || raw.len() < 3 {
         return None;
     }
+
     let padded = format!("{:0>5}", raw);
     let (dept, num) = padded.split_at(2);
     Some(format!("{dept}-{num}"))
@@ -108,20 +107,15 @@ fn normalize_code(raw: &str) -> Option<String> {
 
 /// Sort terms newest-first. F26 > S26 > M25 > F25 > ...
 fn term_sort_key(term: &str) -> (i32, u8) {
-    let bytes = term.as_bytes();
-    if bytes.len() != 3 {
-        return (0, 0);
-    }
-    let letter = bytes[0];
-    let yy: i32 = std::str::from_utf8(&bytes[1..])
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0);
-    let sem_rank: u8 = match letter {
-        b'F' => 0,
-        b'S' => 1,
-        b'M' | b'N' => 2,
-        _ => 3,
+    let (season, year) = term.split_at(1);
+    let year: i32 = year.parse().unwrap_or(0);
+
+    let season_rank = match season {
+        "F" => 3,
+        "N" => 2,
+        "M" => 1,
+        "S" => 0,
+        _ => 4,
     };
-    (-yy, sem_rank)
+    (-year, 4 - season_rank)
 }

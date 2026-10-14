@@ -24,7 +24,7 @@ export type CatalogLoad = {
  * server's content hash. On a hash miss, downloads `/api/catalog/binary`,
  * persists the gzipped bytes to OPFS, and prunes stale catalogs.
  *
- * Returns the decompressed bytes ready to hand to `WasmIndex`.
+ * Returns the decompressed bytes.
  */
 export async function loadCatalog(): Promise<CatalogLoad> {
   const t0 = performance.now();

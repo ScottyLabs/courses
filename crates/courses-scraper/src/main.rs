@@ -1,13 +1,14 @@
 //! CMU course catalog scraper. Pulls course info, sections, program audits
 //! and syllabi from Stellic and Canvas into `exported/`, driven by FCE and
 //! Schedule of Classes discovery feeds. The companion `courses-index` crate
-//! reads this output to build the client-side search index.
+//! reads this output to build the catalog.
 //!
 //! `docs/` at the repo root carries per-source reference material covering
 //! API shapes, data conventions, and operator guidance.
 
 mod canvas;
 mod discovery;
+mod ldap;
 mod requirements;
 mod stellic;
 mod syllabi;
@@ -25,8 +26,6 @@ use canvas::Canvas;
 use discovery::{Sem, Soc, Task, course_tasks, fetch_soc, parse_fce};
 use stellic::Stellic;
 
-secretspec_derive::declare_secrets!("../../secretspec.toml");
-
 const SEASONS: &[&str] = &["fall", "spring", "summer_1", "summer_2"];
 
 #[derive(Copy, Clone, Debug, ValueEnum, PartialEq, Eq)]
@@ -34,6 +33,7 @@ enum Mode {
     Courses,
     Programs,
     Syllabi,
+    Ldap,
     All,
 }
 
@@ -53,9 +53,6 @@ struct Args {
     #[arg(long, default_value = "exported", env = "EXPORT_ROOT")]
     export_root: PathBuf,
 
-    #[arg(long, env = "LIMIT")]
-    limit: Option<usize>,
-
     #[arg(long, value_enum, default_value_t = Mode::Courses, env = "MODE")]
     mode: Mode,
 
@@ -71,11 +68,23 @@ fn main() -> Result<()> {
         .init();
     let args = Args::parse();
 
-    let secrets = SecretSpec::builder()
-        .with_provider("env")
-        .with_reason("courses-scraper")
-        .load()?
-        .secrets;
+    // Personal credentials come from plain env: workflow env in CI, the
+    // devenv shell's secretspec dev profile (.env via local provider) in dev
+    let cookie_header = std::env::var("COOKIE_HEADER")
+        .ok()
+        .filter(|s| !s.is_empty());
+    let canvas_token = std::env::var("CANVAS_TOKEN").ok().filter(|s| !s.is_empty());
+    let ldap_password = std::env::var("CMU_LDAP_PASSWORD")
+        .ok()
+        .filter(|s| !s.is_empty());
+
+    // Directory enrichment reads existing scrape output and talks only
+    // to LDAP, no Stellic session needed
+    if args.mode == Mode::Ldap {
+        let password = ldap_password.context("CMU_LDAP_PASSWORD required for ldap mode")?;
+
+        return ldap::scrape_ldap(&args.export_root, &password);
+    }
 
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(args.concurrency)
@@ -86,7 +95,8 @@ fn main() -> Result<()> {
     // Always authenticate against Stellic, even for syllabi-only runs:
     // the AndrewID it returns names the per-student subdir under
     // `export_root` for all output kinds.
-    let (stellic, term_joined) = Stellic::login(secrets.cookie_header.clone(), &args.export_root)?;
+    let (stellic, term_joined) =
+        Stellic::login(cookie_header, &args.export_root, args.concurrency)?;
 
     let joined_sem = Sem::from_id(term_joined.semester).context("unknown joined semester id")?;
     let anchor = joined_sem.ay_start(term_joined.year);
@@ -106,11 +116,8 @@ fn main() -> Result<()> {
     );
 
     let canvas = if needs_canvas {
-        let token = secrets
-            .canvas_token
-            .clone()
-            .context("CANVAS_TOKEN required for syllabi mode")?;
-        Some(Canvas::new(token))
+        let token = canvas_token.context("CANVAS_TOKEN required for syllabi mode")?;
+        Some(Canvas::new(token, args.concurrency))
     } else {
         None
     };
@@ -125,6 +132,7 @@ fn main() -> Result<()> {
         Mode::Syllabi => {
             scrape_syllabi(canvas.as_ref().unwrap(), &args, &syllabi_dir, &pool)?;
         }
+        Mode::Ldap => unreachable!("dispatched before Stellic login"),
         Mode::All => {
             let c = canvas.as_ref().unwrap();
             let ((cr, pr), sr) = pool.install(|| {
@@ -138,9 +146,15 @@ fn main() -> Result<()> {
                     || scrape_syllabi(c, &args, &syllabi_dir, &pool),
                 )
             });
+
             cr?;
             pr?;
             sr?;
+
+            match ldap_password.as_deref() {
+                Some(pw) => ldap::scrape_ldap(&args.export_root, pw)?,
+                None => warn!("CMU_LDAP_PASSWORD not set; skipping directory enrichment"),
+            }
         }
     }
     Ok(())
@@ -152,23 +166,28 @@ fn scrape_syllabi(
     syllabi_dir: &std::path::Path,
     pool: &rayon::ThreadPool,
 ) -> Result<()> {
-    let mut tasks = pool.install(|| syllabi::build_tasks(canvas))?;
-    if let Some(n) = args.limit {
-        tasks.truncate(n);
-    }
+    let existing = syllabi::load_existing_keys()?;
+    info!(existing = existing.len(), "listed CDN syllabi");
+
+    let tasks = pool.install(|| syllabi::build_tasks(canvas))?;
+
     let total = tasks.len();
     info!(total, concurrency = args.concurrency, "scraping syllabi");
 
     let done = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
+
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
-            let result = syllabi::save_task(canvas, syllabi_dir, &task, args.incremental);
+            let result =
+                syllabi::save_task(canvas, syllabi_dir, &task, args.incremental, &existing);
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
+
             if let Err(e) = result {
                 failed.fetch_add(1, Ordering::Relaxed);
                 debug!(error = %e, task = ?task, "syllabus save failed");
             }
+
             if n.is_multiple_of(500) {
                 info!(
                     done = n,
@@ -179,6 +198,7 @@ fn scrape_syllabi(
             }
         });
     });
+
     info!(
         done = done.load(Ordering::Relaxed),
         failed = failed.load(Ordering::Relaxed),
@@ -202,6 +222,7 @@ fn scrape_courses(
                 .collect::<Vec<_>>()
         },
     );
+
     let fce = fce?;
     let soc: HashMap<&str, Soc> = soc_results
         .into_iter()
@@ -224,18 +245,16 @@ fn scrape_courses(
         .cloned()
         .collect();
 
-    let mut tasks: Vec<Task> = courses
+    let tasks: Vec<Task> = courses
         .into_par_iter()
         .flat_map_iter(|c| course_tasks(&c, &fce, &soc, anchor))
         .collect();
-    if let Some(n) = args.limit {
-        tasks.truncate(n);
-    }
     let total = tasks.len();
     info!(total, concurrency = args.concurrency, "scraping courses");
 
     let done = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
+
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
             let result = match &task {
@@ -247,10 +266,12 @@ fn scrape_courses(
                 } => stellic.save_sections(course, *lyear, *sem_id, args.incremental),
             };
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
+
             if let Err(e) = result {
                 failed.fetch_add(1, Ordering::Relaxed);
                 debug!(error = %e, task = ?task, "task failed");
             }
+
             if n.is_multiple_of(500) {
                 info!(
                     done = n,
@@ -261,6 +282,7 @@ fn scrape_courses(
             }
         });
     });
+
     info!(
         done = done.load(Ordering::Relaxed),
         failed = failed.load(Ordering::Relaxed),
@@ -275,15 +297,10 @@ fn scrape_programs(
     programs_dir: &std::path::Path,
     pool: &rayon::ThreadPool,
 ) -> Result<()> {
-    let mut programs = stellic.get_programs()?;
+    let programs = stellic.get_programs()?;
     info!(count = programs.len(), "fetched program catalog");
-    if let Some(n) = args.limit {
-        programs.truncate(n);
-    }
-    let mut tasks = pool.install(|| requirements::build_tasks(stellic, &programs));
-    if let Some(n) = args.limit {
-        tasks.truncate(n);
-    }
+
+    let tasks = pool.install(|| requirements::build_tasks(stellic, &programs));
     let total = tasks.len();
     info!(
         total,
@@ -293,14 +310,17 @@ fn scrape_programs(
 
     let done = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
+
     pool.install(|| {
         tasks.into_par_iter().for_each(|task| {
             let result = requirements::save_audit(stellic, programs_dir, &task, args.incremental);
             let n = done.fetch_add(1, Ordering::Relaxed) + 1;
+
             if let Err(e) = result {
                 failed.fetch_add(1, Ordering::Relaxed);
                 debug!(error = %e, task = ?task, "audit save failed");
             }
+
             if n.is_multiple_of(200) {
                 info!(
                     done = n,
@@ -311,6 +331,7 @@ fn scrape_programs(
             }
         });
     });
+
     info!(
         done = done.load(Ordering::Relaxed),
         failed = failed.load(Ordering::Relaxed),

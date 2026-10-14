@@ -230,6 +230,7 @@ async fn main() -> Result<()> {
                 bytes = initial.bytes.len(),
                 "initial catalog fetched"
             );
+
             let cache = Arc::new(ArcSwap::from_pointee(initial));
             spawn_s3_poller(
                 client.clone(),
@@ -247,6 +248,7 @@ async fn main() -> Result<()> {
 
     let addr = format!("0.0.0.0:{port}");
     let listener = TcpListener::bind(&addr).await?;
+
     info!(
         addr = %addr,
         static_dir = ?std::env::var("STATIC_DIR").ok(),
@@ -369,6 +371,7 @@ async fn fetch_object(client: &S3Client, bucket: &str, key: &str) -> Result<S3Ca
         .send()
         .await
         .with_context(|| format!("get_object s3://{bucket}/{key}"))?;
+
     let etag = resp
         .e_tag()
         .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
@@ -386,6 +389,7 @@ async fn fetch_etag(client: &S3Client, bucket: &str, key: &str) -> Result<String
         .send()
         .await
         .with_context(|| format!("head_object s3://{bucket}/{key}"))?;
+
     Ok(resp
         .e_tag()
         .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
@@ -403,6 +407,7 @@ fn spawn_s3_poller(
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(interval).await;
+
             let current_etag = cache.load().etag.clone();
             match fetch_etag(&client, &bucket, &key).await {
                 Ok(remote_etag) if remote_etag != current_etag => {
@@ -469,6 +474,7 @@ async fn catalog_version(_user: CurrentUser, State(state): State<AppState>) -> R
                     let status =
                         StatusCode::from_u16(resp.status().as_u16()).unwrap_or(StatusCode::OK);
                     let bytes = resp.bytes().await.unwrap_or_default();
+
                     let mut response = Response::new(axum::body::Body::from(bytes));
                     *response.status_mut() = status;
                     response
@@ -497,6 +503,7 @@ async fn catalog_binary(_user: CurrentUser, State(state): State<AppState>) -> Re
         CatalogSource::S3 { cache } => {
             let cur = cache.load_full();
             let is_gzip = cur.bytes.starts_with(&[0x1f, 0x8b]);
+
             let mut response = Response::new(axum::body::Body::from(cur.bytes.clone()));
             let h = response.headers_mut();
             h.insert(
@@ -519,6 +526,7 @@ async fn catalog_binary(_user: CurrentUser, State(state): State<AppState>) -> Re
                 Ok(resp) => {
                     let status =
                         StatusCode::from_u16(resp.status().as_u16()).unwrap_or(StatusCode::OK);
+
                     let mut response =
                         Response::new(axum::body::Body::from_stream(resp.bytes_stream()));
                     *response.status_mut() = status;

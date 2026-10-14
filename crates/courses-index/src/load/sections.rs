@@ -166,8 +166,10 @@ pub fn load_sections(courses_history_root: &Path, courses: &mut [Course]) -> Res
                     sem: section.term.sem,
                     campus_id: campus,
                 });
+
             out.sections.push(section);
         }
+
         for (course_id, instructors) in instructors_by_course {
             let entry = extra_instructors.entry(course_id).or_default();
             for instr in instructors {
@@ -183,6 +185,7 @@ pub fn load_sections(courses_history_root: &Path, courses: &mut [Course]) -> Res
                     .or_insert(instr);
             }
         }
+
         for code in orphaned_course_codes {
             out.orphaned_course_codes.insert(code);
         }
@@ -192,6 +195,7 @@ pub fn load_sections(courses_history_root: &Path, courses: &mut [Course]) -> Res
         if let Some(extras) = extra_instructors.remove(&course.id) {
             merge_instructors(&mut course.instructors_recent, extras);
         }
+
         if let Some(extras) = extra_semesters.remove(&course.id) {
             for sem in extras {
                 if !course.semesters_offered.contains(&sem) {
@@ -245,6 +249,7 @@ fn parse_file(path: &Path, code_to_id: &HashMap<&str, CourseId>) -> Option<Parse
             return None;
         }
     };
+
     let parsed: Sections = match serde_json::from_slice(&bytes) {
         Ok(v) => v,
         Err(err) => {
@@ -269,6 +274,7 @@ fn parse_file(path: &Path, code_to_id: &HashMap<&str, CourseId>) -> Option<Parse
             out.orphaned_course_codes.insert(code);
             continue;
         };
+
         for group in item.section_groups {
             let section_type = SectionType::from_label(&group.group_name);
             for raw in group.sections {
@@ -279,6 +285,7 @@ fn parse_file(path: &Path, code_to_id: &HashMap<&str, CourseId>) -> Option<Parse
                 else {
                     continue;
                 };
+
                 out.campus_by_section
                     .insert(raw.id, raw.campus.unwrap_or(0));
 
@@ -362,6 +369,7 @@ fn parse_clock_minutes(s: &str) -> Option<u16> {
     if s.len() < 4 {
         return None;
     }
+
     let (time, meridiem) = if let Some(core) = s.strip_suffix("AM").or_else(|| s.strip_suffix("am"))
     {
         (core.trim(), false)
@@ -414,6 +422,7 @@ fn merge_instructors(
 ) {
     let mut by_id: HashMap<InstructorId, InstructorRef> =
         existing.drain(..).map(|i| (i.id, i)).collect();
+
     for (id, extra) in extras {
         by_id
             .entry(id)
@@ -432,12 +441,14 @@ fn merge_instructors(
             })
             .or_insert(extra);
     }
+
     let mut merged: Vec<InstructorRef> = by_id.into_values().collect();
     for refn in merged.iter_mut() {
         refn.semesters_taught
             .sort_by(|a, b| (b.0, a.1 as u8).cmp(&(a.0, b.1 as u8)));
         refn.semesters_taught.dedup();
     }
+
     merged.sort_by_key(|a| a.id);
     *existing = merged;
 }

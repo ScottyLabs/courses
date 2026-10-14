@@ -10,14 +10,12 @@ Master course: `https://canvas.cmu.edu/courses/sis_course_id:syllabus-registry` 
 
 Authenticate API requests with `Authorization: Bearer <token>` where the token is generated from `https://canvas.cmu.edu/profile/settings` under "Approved Integrations" -> "+ New Access Token".
 
-The token currently in use for development expires August 25 at 12:00 AM. After that, a new token is needed.
-
 ## Structure
 
 The registry is a three-level Canvas hierarchy:
 
-1. The master course (`3769`) contains 30 modules, one per term, named like `Spring 2026 (S26)` or `Summer 2024 (M24)`. Term codes follow `<season><yy>` where `season` is `S` (spring), `M` (summer-1), `N` (summer-2), or `F` (fall). Coverage runs from Summer 2019 (M19).
-1. Each term module's items are 60 `ExternalUrl` entries, one per department, with titles like `Architecture (48XXX)`. Each item's `external_url` points to a per-(term, department) sub-course identified by `sis_course_id:syllabus-registry-<TERM>-<DEPT>` (e.g. `syllabus-registry-S26-ARC`). At the time of writing, the registry contains 1797 such sub-courses across all terms.
+1. The master course (`3769`) contains one module per term, named like `Spring 2026 (S26)` or `Summer 2024 (M24)`. Term codes follow `<season><yy>` where `season` is `S` (spring), `M` (summer-1), `N` (summer-2), or `F` (fall). Coverage runs from Summer 2019 (M19).
+1. Each term module's items are `ExternalUrl` entries, one per department, with titles like `Architecture (48XXX)`. Each item's `external_url` points to a per-(term, department) sub-course identified by `sis_course_id:syllabus-registry-<TERM>-<DEPT>` (e.g. `syllabus-registry-S26-ARC`).
 1. Each dept sub-course has up to four modules: `Notice to Users`, `Available Syllabi`, `Unavailable Syllabi`, `Individualized Experiences`. Items inside are either `File` (a Canvas file object that resolves to a downloadable PDF/DOC) or `Page` (a Canvas page).
 
 - "Available Syllabi" `File` items are each a real downloadable file (e.g. `48649_S26_designleadership_mcnutt.pdf`, content type `application/pdf`).
@@ -42,7 +40,11 @@ Direct file listing on `/api/v1/courses/3769/files` returns 403, so the module-w
 The scraper has a `syllabi` mode that walks the registry and saves every `File` and `Page` item from each sub-course's `Available Syllabi` module:
 
 ```
-cargo run --release -- --mode syllabi --canvas-token <token>
+CANVAS_TOKEN=<token> cargo run --release -- --mode syllabi
 ```
 
-The token can also be supplied via `CANVAS_TOKEN` env. Output goes to `exported/syllabi/<term>/<dept>/<course_section>.<ext>` (configurable via `--syllabi-dir`). `File` items are saved as the original PDF/DOC. `Page` items are saved as `<course_section>.url`, a plain-text file containing the Canvas page URL where the syllabus is rendered. We don't try to resolve the page's `syllabus-source` redirect or pull a canonical link from the target course's `syllabus_body`, since those bodies are usually empty or a tangle of mailto links, anchors, and supplementary readings rather than a single syllabus URL.
+Output goes to `<export_root>/syllabi/<term>/<dept>/<course_section>.<ext>`. `File` items are saved as the original PDF/DOC. `Page` items are saved as `<course_section>.url`, a plain-text file containing the Canvas page URL where the syllabus is rendered. We don't try to resolve the page's `syllabus-source` redirect or pull a canonical link from the target course's `syllabus_body`, since those bodies are usually empty or a tangle of mailto links, anchors, and supplementary readings rather than a single syllabus URL.
+
+## CDN persistence
+
+The scrape workflow syncs the local tree to `s3://cdn-courses/syllabi/` after every run, and the next run skips anything already there (see [`running.md`](./running.md)), so the bucket is the cumulative store across runs and students. `courses-index` attaches one `SyllabusRef { term, dept, section, ext }` per uploaded file to its course, and clients reconstruct the public URL as `<CDN_PUBLIC_URL>/syllabi/<term>/<dept>/<code_nodash>[-<section>].<ext>`.
