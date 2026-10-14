@@ -4,7 +4,7 @@ CMU's central directory is reachable at `ldaps://ldap.cmu.edu` and holds one ent
 
 ## Auth
 
-Simple bind as `uid=scottylabs-svc,ou=andrewperson,dc=andrew,dc=cmu,dc=edu` with the password from `CMU_LDAP_PASSWORD`. This is the org-wide ScottyLabs service account. In dev the password comes from a gitignored `.env` through the secretspec `local` provider, never from OpenBao. In CI it comes from the OpenBao `ci` profile. Only project leads can read that profile directly, but CI in any ScottyLabs repo can read it, including the shared checks on pull requests to this repo.
+The scraper binds to the directory as `uid=scottylabs-svc,ou=andrewperson,dc=andrew,dc=cmu,dc=edu` using the password in `CMU_LDAP_PASSWORD`. This is the org-wide ScottyLabs service account, so its password stays out of the shared dev secrets. Developers keep it in a gitignored `.env` that secretspec reads through the `local` provider, and CI reads it from the OpenBao `ci` profile, which only project leads and this repo's CI jobs (including the shared checks on pull requests) can access.
 
 ## Query shape
 
