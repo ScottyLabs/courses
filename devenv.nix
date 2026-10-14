@@ -25,15 +25,11 @@
     };
 
     kennel = {
-      services.api = {
-        customDomain = "api.courses.scottylabs.org";
+      services = {
+        api.customDomain = "api.cmu.courses";
+        web-api.customDomain = "web-api.cmu.courses";
       };
-      services.web-api = {
-        customDomain = "web-api.courses.scottylabs.org";
-      };
-      sites.docs = {
-        customDomain = "docs.cmu.courses";
-      };
+      sites.docs.customDomain = "docs.cmu.courses";
     };
   };
 
