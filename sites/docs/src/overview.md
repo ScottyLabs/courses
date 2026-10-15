@@ -8,4 +8,4 @@ The CMU Courses project has three layers:
 
 1. Two APIs consume the catalog: `courses-api` is the public REST surface, and `courses-web-api` is the web app's backend, which serves the SPA bundle and the catalog to the browser on a single origin.
 
-The scraper section below documents the per-source collection logic. The courses index section documents how the catalog is distributed.
+The scraper section below documents the per-source collection logic.

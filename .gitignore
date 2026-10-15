@@ -25,6 +25,7 @@ sites/web/dist/
 exported/
 sites/web/static/catalog/
 sites/docs/book/
+/site/
 
 # OS
 .DS_Store
