@@ -1,0 +1,9 @@
+[project]
+site_name = "CMU Courses"
+site_url = "https://docs.cmu.courses"
+repo_url = "https://git.cmu.dev/ScottyLabs/courses"
+docs_dir = "src"
+edit_uri = "_edit/main/sites/docs/src/"
+
+[project.theme]
+features = ["content.action.edit"]

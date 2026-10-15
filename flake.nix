@@ -44,7 +44,7 @@
             output = "build";
           };
 
-          docs = helpers.buildMdbook {
+          docs = helpers.buildZensical {
             src = ./sites/docs;
             name = "courses-docs";
           };

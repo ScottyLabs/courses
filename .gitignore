@@ -24,8 +24,8 @@ sites/web/dist/
 # Generated artifacts
 exported/
 sites/web/static/catalog/
-sites/docs/book/
-/site/
+sites/docs/site/
+sites/docs-migrating-wip/book/
 
 # OS
 .DS_Store
