@@ -33,6 +33,8 @@
     };
   };
 
+  packages = [ pkgs.zensical ];
+
   treefmt.config.settings.global.excludes = [
     ".devenv/**"
     ".direnv/**"

@@ -3,7 +3,7 @@
 //! Schedule of Classes discovery feeds. The companion `courses-index` crate
 //! reads this output to build the catalog.
 //!
-//! `docs/` at the repo root carries per-source reference material covering
+//! `sites/docs-migrating-wip` carries per-source reference material covering
 //! API shapes, data conventions, and operator guidance.
 
 mod canvas;

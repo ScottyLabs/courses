@@ -64,5 +64,5 @@ the generated `sites/web/build` directory through `courses-web-api` using `STATI
 | `deno task check` | `sites/web` | Check Svelte and TypeScript |
 | `devenv --no-tui shell` | Repository root | Show plain startup logs when troubleshooting |
 
-More details: [architecture](sites/docs/src/overview.md) and
-[scraper usage](sites/docs/src/scraper/running.md).
+More details: [architecture](sites/docs-migrating-wip/src/overview.md) and
+[scraper usage](sites/docs-migrating-wip/src/scraper/running.md).

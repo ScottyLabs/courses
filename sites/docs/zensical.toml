@@ -1,0 +1,19 @@
+[project]
+site_name = "CMU Courses"
+site_url = "https://docs.cmu.courses"
+repo_url = "https://git.cmu.dev/ScottyLabs/courses"
+docs_dir = "src"
+edit_uri = "_edit/main/sites/docs/src/"
+
+[project.theme]
+features = ["content.action.edit"]
+
+[[project.theme.palette]]
+scheme = "slate"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+scheme = "default"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to dark mode"
