@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "1.33.1-dev57.0"
+  },
   "devDependencies": {
     "@sveltejs/adapter-static": "3.0.10",
     "@sveltejs/kit": "2.57.0",
