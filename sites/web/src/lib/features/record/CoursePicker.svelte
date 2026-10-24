@@ -160,7 +160,7 @@
         }}
         onfocus={() => (open = true)}
         {onkeydown}
-        class="h-10 w-full rounded-field border border-line-strong bg-surface pr-4 pl-11 text-body-2 text-ink transition-colors outline-none placeholder:text-muted hover:border-muted focus:border-accent"
+        class="h-10 w-full rounded-field border border-line-strong bg-surface pr-4 pl-11 text-body-2 text-ink transition-colors placeholder:text-muted hover:border-muted focus:border-accent"
       />
       {#if showList}
         <ul

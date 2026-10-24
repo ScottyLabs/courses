@@ -166,7 +166,7 @@
       {onkeydown}
       onclick={show}
       onblur={hide}
-      class="h-10 w-full rounded-field border border-line-strong bg-surface pl-4 text-body-2 text-ink transition-colors outline-none placeholder:text-muted hover:border-muted focus:border-accent disabled:border-line disabled:text-faint disabled:placeholder:text-faint {clearable &&
+      class="h-10 w-full rounded-field border border-line-strong bg-surface pl-4 text-body-2 text-ink transition-colors placeholder:text-muted hover:border-muted focus:border-accent disabled:border-line disabled:text-faint disabled:placeholder:text-faint {clearable &&
       selected
         ? 'pr-[4.5rem]'
         : 'pr-11'}"

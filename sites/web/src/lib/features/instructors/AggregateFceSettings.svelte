@@ -27,7 +27,7 @@
     aria-describedby="{id}-help"
     value={settings.semesters ?? ""}
     oninput={onSemesters}
-    class="h-7 min-w-0 flex-1 rounded-[8px] border border-line-strong bg-surface px-4 text-label-md font-normal text-ink transition-colors outline-none placeholder:text-muted hover:border-muted focus:border-accent"
+    class="h-7 min-w-0 flex-1 rounded-[8px] border border-line-strong bg-surface px-4 text-label-md font-normal text-ink transition-colors placeholder:text-muted hover:border-muted focus:border-accent"
   />
 </div>
 <fieldset class="-mt-2">

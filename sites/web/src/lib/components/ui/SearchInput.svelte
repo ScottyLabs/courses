@@ -41,7 +41,7 @@
 
 <div
   role="search"
-  class="group relative flex items-center {variant === 'underline'
+  class="group focus-ring-within relative flex items-center {variant === 'underline'
     ? 'h-12 border-b border-line-strong px-3 focus-within:border-accent lg:h-[50px] lg:px-4'
     : 'h-10 rounded-full border border-line-strong bg-surface px-3 focus-within:border-accent'} {className}"
 >

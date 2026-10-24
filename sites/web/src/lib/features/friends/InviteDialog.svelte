@@ -101,7 +101,7 @@
         value={url}
         aria-describedby="{fieldId}-expires"
         onfocus={(event) => event.currentTarget.select()}
-        class="h-10 min-w-0 flex-1 rounded-field border border-line-strong bg-surface-2 px-4 text-body-2 text-ink outline-none focus:border-accent"
+        class="h-10 min-w-0 flex-1 rounded-field border border-line-strong bg-surface-2 px-4 text-body-2 text-ink focus:border-accent"
       />
       <Button variant="primary" icon={copied ? Check : Copy} onclick={copy}>{copied ? "Copied" : "Copy link"}</Button>
     </div>
