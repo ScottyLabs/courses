@@ -64,6 +64,8 @@ export type FriendStatus = Schemas["FriendStatus"];
 export type Friend = Schemas["Friend"];
 /** `POST /api/friends/invites`: a single-use link to `APP_URL/invite/{token}`. */
 export type Invite = Schemas["Invite"];
+/** `GET /api/friends/invites/{token}`: who made an invite, before it's accepted. */
+export type InviteInfo = Schemas["InviteInfo"];
 /** `GET`/`PUT /api/friends/sharing`: what accepted friends may see. */
 export type Sharing = Schemas["Sharing"];
 /** `GET /api/friends/{id}/schedules`: a friend's schedule marked visible to friends. */

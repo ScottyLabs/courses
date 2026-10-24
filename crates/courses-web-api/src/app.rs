@@ -105,7 +105,7 @@ fn api() -> OpenApiRouter {
         .routes(routes!(friends::remove))
         .routes(routes!(friends::invite))
         .routes(routes!(friends::redeem))
-        .routes(routes!(friends::revoke_invite))
+        .routes(routes!(friends::invite_info, friends::revoke_invite))
         .routes(routes!(friends::get_sharing, friends::set_sharing))
         .routes(routes!(friends::friend_schedules))
         .routes(routes!(friends::friends_courses))

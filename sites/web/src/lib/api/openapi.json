@@ -490,6 +490,53 @@
       }
     },
     "/api/friends/invites/{token}": {
+      "get": {
+        "tags": ["friends"],
+        "summary": "Who made an invite, so the invite page can say who it's from. Seeing it doesn't use the invite up.",
+        "operationId": "invite_info",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": ["friends"],
         "summary": "Revokes one of the caller's invites.",
@@ -1984,6 +2031,29 @@
           "url": {
             "type": "string",
             "description": "The website's page that redeems it."
+          }
+        }
+      },
+      "InviteInfo": {
+        "type": "object",
+        "description": "Who made an invite, for the invite page before the invite is accepted.",
+        "required": ["name", "andrewId", "expiresAt", "own"],
+        "properties": {
+          "andrewId": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Milliseconds since the epoch."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the student who made the invite."
+          },
+          "own": {
+            "type": "boolean",
+            "description": "The caller made this invite."
           }
         }
       },

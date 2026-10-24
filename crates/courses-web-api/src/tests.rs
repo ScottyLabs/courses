@@ -1226,6 +1226,20 @@ async fn invites_are_single_use_and_requests_need_consent() {
         .json();
     let token = invite["token"].as_str().unwrap().to_owned();
     assert_eq!(invite["url"], format!("{ORIGIN}/invite/{token}"));
+    let info_uri = format!("/api/friends/invites/{token}");
+    assert_eq!(
+        f.get(&info_uri, None).await.status,
+        StatusCode::UNAUTHORIZED
+    );
+    let info = f.get(&info_uri, Some("bob")).await;
+    assert_eq!(info.status, StatusCode::OK, "{}", info.text());
+    assert_eq!(info.json()["andrewId"], "alice");
+    assert_eq!(info.json()["own"], false);
+    assert_eq!(
+        info.json()["expiresAt"],
+        invite["expiresAt"].as_i64().unwrap() / 1000 * 1000
+    );
+    assert_eq!(f.get(&info_uri, Some("alice")).await.json()["own"], true);
     let redeemed = f
         .write(
             "POST",
@@ -1251,6 +1265,10 @@ async fn invites_are_single_use_and_requests_need_consent() {
     assert_eq!(
         f.get("/api/friends", Some("alice")).await.json()[0]["status"],
         "accepted"
+    );
+    assert_eq!(
+        f.get(&info_uri, Some("carol")).await.status,
+        StatusCode::NOT_FOUND
     );
 }
 

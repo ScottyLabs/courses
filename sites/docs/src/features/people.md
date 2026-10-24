@@ -50,3 +50,36 @@ The settings are a device convenience in localStorage (`cmucourses:fce-aggregate
   hours a week and "Teaches with". The week calendar comes with the schedules page's shared `WeekGrid`.
 - In all semesters: what they taught each semester, linking to that semester's view.
 - Evaluation history: recent teaching rating, courses evaluated, teaching rating by semester and a per-course table.
+
+## Friends
+
+Friends are new in CMU Courses; the Figma's "Profile Page (Friends)" sets the look. They live on the profile
+(`/profile/friends`) and on the invite page (`/invite/<token>`), over the friends routes of the
+[web API](../api/web-api.md#friends).
+
+| Where | What |
+| --- | --- |
+| `lib/features/friends/friends.ts` | The friends store: friends and requests, the invite made in this tab, sharing; errors in plain words (tested) |
+| `lib/features/friends/instance.svelte.ts` | The website's store, emptied when the account changes |
+| `lib/features/profile/FriendsSection.svelte` | The section: requests, friend cards, sent requests, sharing settings |
+| `lib/features/friends/FriendsActions.svelte` | "Share Link" and "Add Friends" beside the heading, with their dialogs |
+| `lib/features/friends/FriendSchedule.svelte` | A friend's friends-visible schedule for a semester |
+| `lib/features/friends/InvitePage.svelte` | The invite page |
+
+- **Friend cards** show the friend's name and Andrew ID, "Schedule" when they share schedules, and the courses they're
+  taking in the chosen semester (from `GET /api/friends/courses`), with the ones the student is also taking (their
+  schedule for the semester and courses in progress on their record) first and marked. The semester defaults to the
+  one in session. The card's menu removes the friend after a confirmation.
+- **Requests**: incoming ones can be accepted or declined, sent ones canceled. "Add Friends" sends a request by Andrew
+  ID (an email address works too); when nobody with that ID has signed in, it offers an invite link instead.
+- **Invite links**: "Share Link" makes a link (`/invite/<token>`, built from the site's own origin), copies or shares
+  it, makes a new one or revokes it. The API can't list a student's links, so the dialog shows only the one made in
+  this tab.
+- **Sharing**: "What friends can see" holds the two switches, share my courses and share my schedules, each saying
+  exactly what friends see; both start off. The settings link here (`/profile/friends#sharing`).
+- **A friend's schedule** opens in a dialog: semester, schedule (when they share several), and each course with its
+  chosen sections and meeting times, pass/fail and hidden courses noted.
+- **The invite page** asks a signed-out visitor to sign in without naming the sender, then shows who sent it
+  (`GET /api/friends/invites/{token}`, [ADR 38](../decisions/0038-show-an-invites-sender-before-it-is-accepted.md)),
+  what friends can see, and Accept. It handles the student's own link, existing friends, pending requests and links
+  that expired or were used.

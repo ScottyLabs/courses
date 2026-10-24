@@ -8,6 +8,7 @@ import type {
   FriendSchedule,
   FriendsTaking,
   Invite,
+  InviteInfo,
   Me,
   NewPlan,
   NewSchedule,
@@ -97,6 +98,8 @@ function friendsApi(client: ApiClient) {
     /** Declines, cancels or removes. */
     remove: (id: string) => client.delete<undefined>(`/api/friends/${seg(id)}`),
     invite: () => client.post<Invite>("/api/friends/invites"),
+    /** Who made an invite; 404 once it expired or was used. Doesn't use it up. */
+    inviteInfo: (token: string) => client.get<InviteInfo>(`/api/friends/invites/${seg(token)}`),
     redeem: (token: string) => client.post<Friend>(`/api/friends/invites/${seg(token)}/redeem`),
     revokeInvite: (token: string) => client.delete<undefined>(`/api/friends/invites/${seg(token)}`),
     sharing: () => client.get<Sharing>("/api/friends/sharing"),
