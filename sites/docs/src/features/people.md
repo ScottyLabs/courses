@@ -12,18 +12,24 @@ signed out, the pages ask the visitor to sign in, and a non-CMU account is told 
 
 | Where | What |
 | --- | --- |
-| `routes/instructors/` | Thin routes over the feature components |
-| `lib/features/instructors/InstructorsPage.svelte` | The list: search, department, saved courses, sort, semester picker, cards or rows |
-| `lib/features/instructors/InstructorPage.svelte` | One instructor: aggregate FCEs, evaluations by section, teaching this semester or by semester, evaluation history |
+| `routes/instructors/` | A layout and two thin pages over the feature components |
+| `lib/features/instructors/InstructorsShell.svelte` | The layout: filter rail, search toolbar, and the rows beside an open instructor |
+| `lib/features/instructors/scope.svelte.ts` | State the pages share: semester, filters (in the URL), documents, results, the open instructor |
+| `lib/features/instructors/InstructorResults.svelte` | `/instructors`: cards or rows |
+| `lib/features/instructors/InstructorDetail.svelte` | `/instructors/<slug>`: aggregate data, evaluations by section, teaching, evaluation history |
 | `lib/features/instructors/fce-aggregate.ts` | Loading an instructor's FCE rows, the aggregate window and figures (tested) |
 | `lib/features/instructors/aggregate-settings.svelte.ts` | The rail's "Aggregate FCEs" choices, kept on the device |
 | `lib/components/instructor/` | Instructor card and row, FCE stat boxes and table, the trend chart |
 
+The layout keeps the list's state while the student opens instructors. In the list view on screens 1280 pixels wide
+or more, an open instructor shows beside Courseweave's rows, which stay in their own scrolling column; in the cards
+view and on narrower screens the instructor page is on its own, with "All instructors" going back to the list.
+
 The list keeps its filters in the URL (`q`, `dept`, `saved=1`, `sort=sections`), so Back from an instructor, a
 reload or a shared link shows the same list. Search is Courseweave's: names first, then course numbers (`15-122`,
-`15-1`) and course titles; `/` focuses the field and Enter opens the first result. Saved is a filter, matching
-instructors who teach one of the student's saved courses. The cards/list switch is remembered per device; rows have
-letter headings when sorted by name.
+`15-1`) and course titles; `/` focuses the field, the arrow keys move through the rows and Enter opens one. Saved is
+a filter, matching instructors who teach one of the student's saved courses. The cards/list switch is remembered per
+device; rows have letter headings when sorted by name.
 
 Cards follow the Figma: the name and departments, three stat boxes (workload, teaching rate, course rate) and the
 FCE rows the aggregate counts. A card loads its FCE rows when it comes near the viewport, from the `fce/courses/<NN>`

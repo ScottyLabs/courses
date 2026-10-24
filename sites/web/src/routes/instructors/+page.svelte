@@ -1,5 +1,5 @@
 <script lang="ts">
-  import InstructorsPage from "$lib/features/instructors/InstructorsPage.svelte";
+  import InstructorResults from "$lib/features/instructors/InstructorResults.svelte";
 </script>
 
-<InstructorsPage />
+<InstructorResults />

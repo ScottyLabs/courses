@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/state";
-  import InstructorPage from "$lib/features/instructors/InstructorPage.svelte";
+  import InstructorDetail from "$lib/features/instructors/InstructorDetail.svelte";
 </script>
 
-{#key page.params.id}
-  <InstructorPage slug={page.params.id ?? ""} />
-{/key}
+<InstructorDetail />
