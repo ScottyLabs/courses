@@ -113,7 +113,8 @@ export interface Course {
 
 export interface TermData {
   term: TermMeta;
-  generatedAt: string;
+  /** Absent from the Rust builder's documents, which leave out build times so builds are reproducible. */
+  generatedAt?: string;
   courses: Course[];
 }
 

@@ -25,7 +25,8 @@ export interface Department {
 /** A loaded term with lookup tables. Built once per term and shared app-wide. */
 export interface Term {
   meta: TermMeta;
-  generatedAt: string;
+  /** Absent from the Rust builder's documents, which leave out build times so builds are reproducible. */
+  generatedAt?: string;
   courses: Course[];
   courseById: Map<string, Course>;
   searchDocs: SearchDoc[];
@@ -83,7 +84,7 @@ export function indexTerm(data: TermData): Term {
 
   return {
     meta: data.term,
-    generatedAt: data.generatedAt,
+    ...(data.generatedAt === undefined ? {} : { generatedAt: data.generatedAt }),
     courses: data.courses,
     courseById,
     searchDocs: buildSearchDocs(data.courses),

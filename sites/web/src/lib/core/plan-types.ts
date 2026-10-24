@@ -121,6 +121,7 @@ export interface ProgramInfo {
 
 /** public/data/programs/index.json. Each version's tree is at public/data/programs/<auditId>.json. */
 export interface ProgramsIndex {
-  generatedAt: string;
+  /** Absent from the Rust builder's documents, which leave out build times so builds are reproducible. */
+  generatedAt?: string;
   programs: ProgramInfo[];
 }

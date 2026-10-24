@@ -48,7 +48,8 @@ export interface CatalogEntry {
 }
 
 export interface CatalogIndex {
-  generatedAt: string;
+  /** Absent from the Rust builder's documents, which leave out build times so builds are reproducible. */
+  generatedAt?: string;
   courses: Record<string, CatalogEntry>;
 }
 
