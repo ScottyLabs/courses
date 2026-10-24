@@ -154,3 +154,49 @@ fn fce_documents_match_courseweave() {
     report("fce", &docs, &differences);
     assert!(differences.is_empty());
 }
+
+#[test]
+#[ignore = "needs Courseweave's built files and a Stellic program export"]
+fn program_documents_match_courseweave() {
+    let courseweave = env_dir("COURSEWEAVE_DATA").join("programs");
+    let exported = env_dir("EXPORTED_ROOT");
+
+    let start = Instant::now();
+    let (docs, summary) = courses_index::programs::documents(&exported)
+        .unwrap()
+        .expect("no program exports");
+    println!("programs: built in {:.2?}: {summary:?}", start.elapsed());
+
+    // A version for every file Courseweave wrote, and no others.
+    let ours: BTreeSet<String> = docs
+        .iter()
+        .map(|(n, _)| n.strip_prefix("programs/").unwrap().to_owned())
+        .collect();
+    assert_eq!(ours, file_stems(&courseweave));
+
+    let differences = compare(&docs, |name| {
+        Some(courseweave.join(format!("{}.json", name.strip_prefix("programs/")?)))
+    });
+    report("programs", &docs, &differences);
+    assert!(differences.is_empty());
+}
+
+#[test]
+fn reports_the_first_difference() {
+    let a = serde_json::json!({ "x": [1, { "y": 2.5 }], "z": null });
+    let b = serde_json::json!({ "x": [1, { "y": 2.5 }], "z": null });
+    assert_eq!(first_difference("doc", &a, &b), None);
+    let c = serde_json::json!({ "x": [1, { "y": 2 }], "z": null });
+    assert_eq!(
+        first_difference("doc", &a, &c).as_deref(),
+        Some("doc.x[1].y: ours 2.5, Courseweave's 2")
+    );
+    let d = serde_json::json!({ "x": [1], "z": null, "w": 1 });
+    assert!(
+        first_difference("doc", &a, &d)
+            .unwrap()
+            .starts_with("doc.w")
+    );
+    // Integers and integral floats are different JSON values, so both sides must agree on the spelling.
+    assert!(first_difference("doc", &serde_json::json!(4), &serde_json::json!(4.0)).is_some());
+}

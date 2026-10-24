@@ -3,3 +3,4 @@
 pub mod doc;
 pub mod fce;
 pub mod load;
+pub mod programs;
