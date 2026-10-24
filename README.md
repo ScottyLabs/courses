@@ -12,7 +12,7 @@ Log in to OpenBao and set up devenv by following kennel's [local development](ht
 
 The browser-facing API reads audience-separated SQLite catalogs from
 `data/catalog` and stores personal schedules/saved courses in
-`data/private/users.sqlite`. See [backend setup and API](sites/docs/src/api/sqlite-backend.md)
+`data/private/users.sqlite`. See [web API](sites/docs/src/api/web-api.md)
 and [data audit](sites/docs/src/api/data-audit.md).
 
 Build the local catalog with `python3 scripts/import_catalog.py data/raw` after
