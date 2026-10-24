@@ -164,7 +164,7 @@ export function clearFilters(query: ExplorerQuery): ExplorerQuery {
 
 export const SORT_LABELS: Record<SortKey, string> = {
   relevance: "Relevance",
-  number: "Course number",
+  number: "Number",
   title: "Title",
   units: "Units",
   hours: "Fewest FCE hours",

@@ -17,9 +17,15 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/profile", label: "Profile", icon: User },
 ];
 
-/** Whether `item` is the current section: course pages belong to Courses, invites to Profile. */
+/** Whether `item` is the current section: course pages and the requisite explorer belong to Courses, invites to Profile. */
 export function isActive(item: NavItem, pathname: string): boolean {
-  if (item.href === "/") return pathname === "/" || pathname.startsWith("/course/");
+  if (item.href === "/")
+    return (
+      pathname === "/" ||
+      pathname.startsWith("/course/") ||
+      pathname === "/requisites" ||
+      pathname.startsWith("/requisites/")
+    );
   if (item.href === "/profile" && pathname.startsWith("/invite/")) return true;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }

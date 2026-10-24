@@ -47,7 +47,9 @@
     const ids = requisiteCourses(expression);
     const first = ids[0];
     if (first === undefined) return "See details";
-    return ids.length === 1 ? codeOf(first) : `${codeOf(first)} and ${ids.length - 1} more`;
+    if (ids.length === 1) return codeOf(first);
+    const join = expression?.type === "any" ? "or" : "and";
+    return `${codeOf(first)} ${join} ${ids.length - 1} more`;
   });
   const chipStatus = $derived(kind === "coreqs" ? requisites.coreqStatus : requisites.prereqStatus);
   const titleOf = (id: string): string | undefined => index.value?.courses[id]?.title;

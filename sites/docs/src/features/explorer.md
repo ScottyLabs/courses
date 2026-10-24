@@ -1,5 +1,53 @@
 # Course explorer
 
+The Courses page (`/`), the course page (`/course/[code]`), the requisite explorer (`/requisites`) and the shared
+course components other pages reuse. They port Courseweave's explorer, catalog and FCE features
+(`src/features/explorer`, `catalog`, `fce`) onto the Figma's layout.
+
+## Courses page
+
+`sites/web/src/routes/+page.svelte` wires the pieces in `sites/web/src/lib/features/explorer/`:
+
+| File | What it does |
+| --- | --- |
+| `query.ts` | The page's state in its URL: Courseweave's filter keys (`core/explorer/filters.ts`) plus `term`, `q`, `sort`, `view=chart`, `unoffered`, `course` and the Figma's extra filters: a units range (`ulo`, `uhi`), a course-number level (`num`) and the seasons a course is offered in (`offered`) |
+| `url-state.svelte.ts` | Keeps the query and the URL in step: edits replace the history entry after a pause, a semester change or an opened course adds one, and links or Back are read back in |
+| `explorer.svelte.ts` | Everything computed from the query: the semester (`resolveTerm`, `term=all` for all semesters), the documents it needs, the compiled requirement filter, the results and the courses other semesters offer |
+| `results.ts` | Ranked search (`scoreCourse`), Courseweave's filters and the extra ones, sorting; other semesters' matches and the "Show courses not offered" list |
+| `ExplorerRail.svelte` | The filter rail: saved only, fits my schedule, department, units, offered in, level, requirement (gen eds or any program requirement, members only), days and times, session, delivery, scheduled only, FCE hours and rating, how cards aggregate FCEs, and courses not offered |
+| `ExplorerToolbar.svelte`, `chips.ts` | Search, result count, removable filter chips, semester, sort, the FCE chart and the cards/list switch |
+| `CourseResults.svelte` | Cards (20 at a time), rows (100 at a time) or the hours chart; more load as the end of the list scrolls into view |
+
+Selecting a course opens it in the detail panel (`?course=15-122`): beside the list from 1440px wide, in place of the
+list below that. The panel's Expand goes to the full course page. "/" focuses the search, the arrow keys move through
+the results from the search field and Enter opens the highlighted one.
+
+Signed out, the requirement filter, FCE filters and the FCE parts of cards are replaced by sign-in prompts; the list,
+search and the other filters work on the public documents.
+
+## Shared course components
+
+`sites/web/src/lib/components/course/` holds what the Courses page, the profile, schedules and instructor pages
+share. Each component needs only a course (or its id) and a semester:
+
+- `CourseCard` (the Figma card: requisite status with a popover of the expression as status chips, semester select,
+  save star, friends taking it; expanded, the FCE aggregate and table), `CourseRow` in a `CourseList` (Courseweave's
+  compact rows) and `CourseCardSmall` (the Figma's small card, used for saved courses).
+- `RequisiteExpression`, `RequisiteSummary`, `RequisiteTreeNode`, `RequiresAndUnlocks`, `UnlocksList`,
+  `CourseChipList`.
+- `FceAggregate`, `FceTable`, `CourseFcePanel`, `FceHistory`, `LineChart`, `HoursScatter`, `WorkloadMeter`,
+  `InstructorFceBadge`.
+- `SaveButton`, `FriendsTaking` (from `GET /api/friends/courses?term=`), `MemberSignIn`.
+
+They load what they show through `data.svelte.ts` (catalog index, a semester, offerings, descriptions, FCEs,
+syllabi, friends taking a course) and `requisite-context.svelte.ts` (the student's requisite context for a
+semester), which load each document once however many components ask
+([decision 32](../decisions/0032-share-course-data-between-components.md)). `fce-options.svelte.ts` remembers how
+cards aggregate FCEs on this device.
+
+The profile's Saved Courses section (`lib/features/profile/SavedSection.svelte`) lists saved courses as small cards or
+rows, with department and level filters.
+
 ## Course page
 
 `/course/[code]?term=` is Courseweave's full course page (`CourseFullPage.tsx`), built from section components in

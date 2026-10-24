@@ -74,14 +74,14 @@
       label="Semester"
       options={termOptions}
       bind:value={() => termValue, onterm}
-      class="w-[9.75rem]"
+      class="w-[8rem] sm:w-[9.75rem]"
     />
     <Select
       variant="compact"
       label="Sort by"
       options={sortOptions}
       bind:value={() => sortValue, onsort}
-      class="w-[11.5rem]"
+      class="w-[7.5rem] sm:w-[11.5rem]"
     />
     {#if fceAvailable}
       <IconButton
@@ -91,6 +91,7 @@
         variant="outline"
         pressed={chart}
         onclick={() => onchart(!chart)}
+        class="max-sm:hidden"
       />
     {/if}
     <ViewToggle
