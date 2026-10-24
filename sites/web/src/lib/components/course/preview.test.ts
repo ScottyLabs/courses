@@ -65,6 +65,8 @@ describe("markedTarget", () => {
 describe("pageCourse", () => {
   it("names the course the page is about", () => {
     expect(pageCourse("/course/15-122", "?term=S27")).toBe("15122");
+    expect(pageCourse("/requisites/15-213", "")).toBe("15213");
+    expect(pageCourse("/requisites", "")).toBeNull();
     expect(pageCourse("/", "?term=S27&course=15-213")).toBe("15213");
     expect(pageCourse("/", "?term=S27")).toBeNull();
     expect(pageCourse("/plan", "")).toBeNull();

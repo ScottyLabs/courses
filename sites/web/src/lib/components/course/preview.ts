@@ -72,10 +72,11 @@ export function markedTarget(attr: string | null, term: string | null): PreviewT
 
 /**
  * The course the page itself is about, so links to it (another semester's sections, "Expand") don't preview what
- * is already on screen: the course page's course, or the course open in the Courses page's panel.
+ * is already on screen: the course page's or the requisite explorer's course, or the course open in the Courses
+ * page's panel.
  */
 export function pageCourse(pathname: string, search: string): string | null {
-  const match = /^\/course\/([^/]+)\/?$/u.exec(pathname);
+  const match = /^\/(?:course|requisites)\/([^/]+)\/?$/u.exec(pathname);
   if (match !== null) {
     try {
       return courseIdOf(decodeURIComponent(match[1] ?? ""));
