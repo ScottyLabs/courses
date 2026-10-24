@@ -210,8 +210,9 @@
       <div class="grid gap-x-8 gap-y-8 {course ? 'lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]' : ''}">
         <div class="flex min-w-0 flex-col gap-8">
           {#if course && term?.value}
-            <CourseSections {course} {sched} meta={term.value.meta} />
+            <!-- Narrow screens: the calendar comes first, so a tapped section's preview is near. -->
             {#if !wide.current}<ScheduleCalendar {sched} />{/if}
+            <CourseSections {course} {sched} meta={term.value.meta} />
           {/if}
           <div class={card}><CourseAbout {courseId} termId={checkTerm} onshowtree={showTree} /></div>
           <div class={card}><CountsToward {courseId} termId={checkTerm} /></div>

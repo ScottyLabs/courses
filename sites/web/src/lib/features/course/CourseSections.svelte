@@ -29,7 +29,7 @@
     <p class="text-body-2 text-muted">{sectionCounts(course)} in {meta.name}</p>
   </div>
   <p class="mb-2 hidden text-label-md text-muted pointer-coarse:block">
-    Tap a section to preview it in your schedule's calendar.
+    Tap a section to preview it in the calendar.
   </p>
   {#if notes.length > 0}
     <div class="mb-2 flex gap-1.5 text-label-md text-muted">
