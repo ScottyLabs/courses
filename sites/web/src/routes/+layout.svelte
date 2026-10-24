@@ -2,6 +2,7 @@
   import "./layout.css";
   import type { Snippet } from "svelte";
   import { afterNavigate, goto } from "$app/navigation";
+  import CoursePreviewLayer from "$lib/components/course/CoursePreviewLayer.svelte";
   import AppFooter from "$lib/components/shell/AppFooter.svelte";
   import AppHeader from "$lib/components/shell/AppHeader.svelte";
   import { setSession } from "$lib/components/shell/session";
@@ -56,3 +57,4 @@
 </div>
 <Toaster />
 <RecordOnboarding />
+<CoursePreviewLayer />
