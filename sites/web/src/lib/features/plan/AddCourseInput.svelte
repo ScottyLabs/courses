@@ -2,11 +2,11 @@
   // "+ Add a course" at the bottom of a semester: a combobox over the whole catalog that shows whether each course
   // is offered that semester. Type, Enter, type the next. Courseweave's features/degree/AddCourseInput.tsx.
   import { Plus } from "@lucide/svelte";
+  import { findCourses } from "$lib/components/course/course-search";
   import type { CatalogIndex } from "$lib/core/catalog-types";
   import { offering, OFFERING_LABEL, type Offering } from "$lib/core/plan";
   import { termLabel } from "$lib/core/requisites";
   import type { SearchDoc } from "$lib/core/search";
-  import { findCourses } from "./course-search";
 
   let {
     term,
