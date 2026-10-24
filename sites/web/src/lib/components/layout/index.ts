@@ -13,5 +13,7 @@ export {
   profileHref,
 } from "./profile-sections";
 export type { ProfileSection, ProfileSectionId } from "./profile-sections";
+export { profileBand } from "./profile-band.svelte";
+export type { ProfileBand } from "./profile-band.svelte";
 export { getRail } from "./rail-context";
 export type { RailControls } from "./rail-context";

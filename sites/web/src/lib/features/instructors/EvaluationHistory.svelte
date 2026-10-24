@@ -1,10 +1,10 @@
 <script lang="ts">
-  import LineChart from "$lib/components/instructor/LineChart.svelte";
-  import { courseCode, semesterName } from "$lib/components/instructor/format";
+  import LineChart from "$lib/components/course/LineChart.svelte";
+  import { recentTeachingRate } from "$lib/components/instructor/instructor-fce";
   import StatBox from "$lib/components/ui/StatBox.svelte";
-  import { FCE_HOURS_HELP, formatHours, formatRating, type InstructorFce } from "$lib/core/fce";
+  import { FCE_HOURS_HELP, formatHours, formatRating, termName, type InstructorFce } from "$lib/core/fce";
+  import { codeOf } from "$lib/core/requisite-format";
   import { coursePath } from "$lib/core/routes";
-  import { recentTeachingRate } from "./fce-aggregate";
 
   // Courseweave's InstructorFce: the whole evaluation history at a glance, as a trend and per course.
   const RECENT = 4;
@@ -31,7 +31,7 @@
     <h2 id="history-fce-heading" class="text-heading-5 text-strong">Evaluation history</h2>
     <p class="mt-1 text-body-2 text-muted">
       {fce.terms.length}
-      {fce.terms.length === 1 ? "semester" : "semesters"} with responses{first ? ` since ${semesterName(first)}` : ""},
+      {fce.terms.length === 1 ? "semester" : "semesters"} with responses{first ? ` since ${termName(first)}` : ""},
       {responses.toLocaleString("en-US")} responses in all.
     </p>
   </div>
@@ -51,10 +51,11 @@
         <LineChart
           label="{fce.name}'s overall teaching rating by semester"
           domain={[1, 5]}
+          height={150}
           format={(value) => value.toFixed(Number.isInteger(value) ? 0 : 2)}
           points={fce.terms.map((t) => ({
             label: t.term,
-            title: semesterName(t.term),
+            title: termName(t.term),
             value: t.teachingRate === null ? null : Math.round(t.teachingRate * 100) / 100,
             sub: `${t.responses} responses`,
           }))}
@@ -80,16 +81,16 @@
           {@const name = title(course.courseId)}
           <tr class="align-top">
             <td>
-              <a href={coursePath(course.courseId, term)}>{courseCode(course.courseId)}</a>
+              <a href={coursePath(course.courseId, term)}>{codeOf(course.courseId)}</a>
               {#if name}<div class="max-w-[10rem] truncate sm:max-w-[16rem] text-label-md font-normal text-muted">{name}</div>{/if}
               <div class="text-label-md font-normal text-muted sm:hidden">
                 {course.terms}
                 {course.terms === 1 ? "semester" : "semesters"}, last {course.last}
               </div>
             </td>
-            <td class="whitespace-nowrap max-sm:hidden" title="{semesterName(course.first)} to {semesterName(course.last)}">
+            <td class="whitespace-nowrap max-sm:hidden" title="{termName(course.first)} to {termName(course.last)}">
               {course.terms}
-              {course.terms === 1 ? "semester" : "semesters"}, last {semesterName(course.last)}
+              {course.terms === 1 ? "semester" : "semesters"}, last {termName(course.last)}
             </td>
             <td class="text-right">{formatRating(course.teachingRate)}</td>
             <td class="text-right">{formatRating(course.courseRate)}</td>

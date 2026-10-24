@@ -1,39 +1,12 @@
-<script lang="ts" module>
-  import type { CatalogIndex } from "$lib/core/catalog-types";
-  import { buildSearchDocs, type SearchDoc } from "$lib/core/search";
-  import type { Course } from "$lib/core/types";
-
-  const docsCache = new WeakMap<CatalogIndex, SearchDoc[]>();
-
-  /** Search docs for every catalog course, built once per catalog. */
-  function catalogDocs(index: CatalogIndex): SearchDoc[] {
-    let docs = docsCache.get(index);
-    if (docs === undefined) {
-      const courses: Course[] = Object.values(index.courses).map((e) => ({
-        id: e.id,
-        code: e.code,
-        title: e.title,
-        units: e.units,
-        dept: "",
-        level: "U",
-        instructors: [],
-        sections: [],
-        crossListed: [],
-      }));
-      docs = buildSearchDocs(courses);
-      docsCache.set(index, docs);
-    }
-    return docs;
-  }
-</script>
-
 <script lang="ts">
   // Pick any course: the semester's courses first, then the rest of the catalog (courses not offered now). Shows the
   // chosen course with a clear button once picked. Follows the ARIA combobox pattern. Courseweave's CoursePicker in
   // features/record/shared.tsx.
   import { Search, X } from "@lucide/svelte";
   import { tick } from "svelte";
-  import { searchCourses } from "$lib/core/search";
+  import { coursePreview } from "$lib/components/course/preview";
+  import { findOfferedFirst } from "$lib/components/course/course-search";
+  import type { Course } from "$lib/core/types";
   import type { RecordData } from "./record-data.svelte";
 
   const LIMIT = 8;
@@ -61,15 +34,7 @@
   let input = $state<HTMLInputElement>();
   let clearButton = $state<HTMLButtonElement>();
 
-  const results = $derived.by(() => {
-    if (query.trim() === "") return [];
-    const term = data.term;
-    const offered = term === null ? [] : searchCourses(term.searchDocs, query, LIMIT);
-    if (offered.length >= LIMIT || data.index === null) return offered;
-    const seen = new Set(offered.map((c) => c.id));
-    const more = searchCourses(catalogDocs(data.index), query, LIMIT).filter((c) => !seen.has(c.id));
-    return [...offered, ...more].slice(0, LIMIT);
-  });
+  const results = $derived(findOfferedFirst(data.term?.searchDocs ?? [], data.index, query, LIMIT));
   const showList = $derived(open && query.trim() !== "");
 
   async function pick(course: Course): Promise<void> {
@@ -117,7 +82,7 @@
       aria-labelledby="{id}-label"
       class="flex h-10 min-w-0 items-center gap-2 rounded-field border border-line-strong bg-paper pr-1 pl-4"
     >
-      <span class="tabular shrink-0 text-label-lg text-strong">{info.code}</span>
+      <span {...coursePreview(value)} class="tabular shrink-0 text-label-lg text-strong">{info.code}</span>
       <span class="min-w-0 flex-1 truncate text-body-2 text-ink">{info.title ?? "Not in the catalog"}</span>
       <button
         bind:this={clearButton}

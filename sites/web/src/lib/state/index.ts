@@ -11,7 +11,7 @@ export {
   schedules,
 } from "./instances.svelte.ts";
 export { Personal } from "./personal.ts";
-export type { PersonalDeps, SignOutResult } from "./personal.ts";
+export type { HeldDrafts, PersonalDeps, SignOutResult } from "./personal.ts";
 export { ScheduleStore } from "./schedules.ts";
 export type { ScheduleItem } from "./schedules.ts";
 export { PlanStore } from "./plans.ts";
@@ -34,8 +34,14 @@ export { worstStatus } from "./sync.ts";
 export type { SaveStatus } from "./sync.ts";
 export { browserEnv } from "./env.ts";
 export type { StoreEnv } from "./env.ts";
-export { ALL_SEMESTERS, ALL_SEMESTER_PAGES, isAllSemesters, resolveTerm } from "./term-scope.ts";
-export { lastOrigin, planOrigin, trackOrigin } from "./nav-origin.ts";
+export {
+  ALL_SEMESTERS,
+  ALL_SEMESTER_PAGES,
+  isAllSemesters,
+  resolveTerm,
+  semesterOptions,
+} from "./term-scope.ts";
+export { lastOrigin, originBack, planOrigin, trackOrigin } from "./nav-origin.ts";
 export {
   buildScheduleView,
   fittingSections,

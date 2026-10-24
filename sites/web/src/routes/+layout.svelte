@@ -2,6 +2,7 @@
   import "./layout.css";
   import type { Snippet } from "svelte";
   import { afterNavigate, goto } from "$app/navigation";
+  import CoursePreviewLayer from "$lib/components/course/CoursePreviewLayer.svelte";
   import AppFooter from "$lib/components/shell/AppFooter.svelte";
   import AppHeader from "$lib/components/shell/AppHeader.svelte";
   import { setSession } from "$lib/components/shell/session";
@@ -10,6 +11,7 @@
   import { shellSession } from "$lib/state/shell-session";
   import { applyTheme, theme } from "$lib/components/shell/theme.svelte";
   import Toaster from "$lib/components/ui/Toaster.svelte";
+  import HeldDraftsDialog from "$lib/features/profile/HeldDraftsDialog.svelte";
   import RecordOnboarding from "$lib/features/record/RecordOnboarding.svelte";
 
   let { children }: { children: Snippet } = $props();
@@ -55,4 +57,6 @@
   <AppFooter />
 </div>
 <Toaster />
+<HeldDraftsDialog />
 <RecordOnboarding />
+<CoursePreviewLayer />

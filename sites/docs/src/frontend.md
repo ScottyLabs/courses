@@ -97,9 +97,13 @@ changed is where the data lives:
 
 - **Signed out**, every store is a draft in sessionStorage (`cmucourses:draft:<store>`) for this tab only.
   `personal.mode` is `draft`; label the data as unsaved.
-- **Signing in** loads the account's records (`personal.mode` is `loading`, then `account`) and saves the tab's drafts
-  into them: new schedules and plans are created, the record and preferences are merged with Courseweave's rules,
-  saved courses are added.
+- **Signing in** loads the account's records (`personal.mode` is `loading`, then `account`). The tab's drafted
+  schedules (with courses), plans, record and saved courses are held back until the student adds them or discards
+  them (`personal.heldDrafts`, `acceptDrafts()`, `discardDrafts()`; `HeldDraftsDialog` asks,
+  [decision 42](decisions/0042-ask-before-adding-signed-out-drafts-to-an-account.md)): added, new schedules and plans
+  are created under names the account's schedules and plans don't use, the record is merged with Courseweave's rules and saved courses
+  are added. Preferences are merged at once. An empty default schedule is dropped when the account already has one for
+  its semester. Signing out gives the tab its held drafts back.
 - **Signed in**, every edit shows at once and is written back after a pause of 1.5 seconds, so bursts of edits are one
   request. Each schedule and plan is its own record; the record and preferences are one record each. Writes name the
   revision they're based on; when another device wrote first (409), the edits made here since that revision are

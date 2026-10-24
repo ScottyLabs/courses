@@ -4,9 +4,10 @@
   heavier one marked. FCEs are member data: signed out, a sign-in prompt takes its place.
 -->
 <script lang="ts">
-  import { LockKeyhole, LogIn } from "@lucide/svelte";
-  import Button from "$lib/components/ui/Button.svelte";
-  import { catalog, resource, session } from "$lib/data";
+  import MemberSignIn from "$lib/components/course/MemberSignIn.svelte";
+  import { coursePreview } from "$lib/components/course/preview";
+  import WorkloadMeter, { TONE_TEXT } from "$lib/components/course/WorkloadMeter.svelte";
+  import { catalog, resource } from "$lib/data";
   import type { Term } from "$lib/core/data";
   import {
     FCE_HOURS_HELP,
@@ -17,7 +18,6 @@
   } from "$lib/core/fce";
   import { scheduleLoad } from "$lib/core/fce/workload";
   import type { ResolvedEntry } from "$lib/core/state/schedule-view";
-  import WorkloadMeter, { TONE_TEXT } from "./WorkloadMeter.svelte";
 
   let { entries, term }: { entries: readonly ResolvedEntry[]; term: Term } = $props();
 
@@ -42,17 +42,7 @@
 {#if visible.length === 0}
   <p class="text-body-2 text-muted">Add courses to see how many hours a week they take.</p>
 {:else if fce.status === "signin" || fce.status === "forbidden"}
-  <div class="flex flex-wrap items-center gap-3 rounded-field border border-dashed border-line-strong bg-surface-2 px-3 py-2.5">
-    <LockKeyhole aria-hidden="true" class="size-4 shrink-0 text-muted" />
-    <p class="min-w-0 flex-1 text-body-2 text-ink">
-      {fce.status === "signin"
-        ? "Sign in with your CMU account to see expected hours from course evaluations."
-        : "Course evaluations are only for CMU accounts."}
-    </p>
-    {#if fce.status === "signin"}
-      <Button size="sm" variant="secondary" icon={LogIn} onclick={() => session.signIn()}>Sign in</Button>
-    {/if}
-  </div>
+  <MemberSignIn subject="expected hours from course evaluations" reason={fce.status} />
 {:else if fce.status === "error"}
   <p class="text-body-2 text-muted">Couldn't load course evaluations. {fce.error}</p>
 {:else if load === null}
@@ -96,7 +86,7 @@
       {#each load.rows as row (row.entry.course.id)}
         {@const mini = row.mini !== null}
         <li class="grid grid-cols-[4.25rem_minmax(0,1fr)_4.75rem] items-center gap-2 text-label-md">
-          <span class="tabular font-semibold text-strong">{row.entry.course.code}</span>
+          <span {...coursePreview(row.entry.course.id, term.meta.id)} class="tabular font-semibold text-strong">{row.entry.course.code}</span>
           {#if row.hours !== null}
             <WorkloadMeter hours={row.hours} units={row.entry.course.units} {mini} />
           {:else}

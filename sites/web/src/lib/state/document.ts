@@ -5,6 +5,7 @@ import type { Cell } from "../data/cell.ts";
 import {
   DEFAULT_DEBOUNCE_MS,
   draftKey,
+  heldKey,
   localCopy,
   parseStored,
   pendingKey,
@@ -42,6 +43,8 @@ export class DocumentStore<T> {
   readonly #mode: Cell<StoreMode>;
   readonly #status: Cell<SaveStatus>;
   readonly #error: Cell<string | null>;
+  /** A signed-out draft waiting for the student to add it to the account or discard it. */
+  readonly #held: Cell<T | null>;
   #sync: RecordSync<T> | null = null;
   #owner: string | null = null;
   #expired = false;
@@ -55,10 +58,15 @@ export class DocumentStore<T> {
     this.#mode = deps.cell<StoreMode>("draft");
     this.#status = deps.cell<SaveStatus>("saved");
     this.#error = deps.cell<string | null>(null);
+    this.#held = deps.cell<T | null>(null);
   }
 
   get #draftKey(): string {
     return draftKey(this.#a.name);
+  }
+
+  get #heldKey(): string {
+    return heldKey(this.#a.name);
   }
 
   get #pendingKey(): string {
@@ -84,6 +92,44 @@ export class DocumentStore<T> {
   /** Signed in and the server doesn't have everything yet. */
   get unsaved(): boolean {
     return this.#mode.value === "account" && (this.#sync?.unsaved ?? false);
+  }
+
+  /** A signed-out draft held back from the account until adoptHeld() or dropHeld(). */
+  get held(): T | null {
+    return this.#held.value;
+  }
+
+  #setHeld(value: T | null): void {
+    this.#held.value = value;
+    writeJson(this.#env, this.#heldKey, value === null ? null : { value });
+  }
+
+  /**
+   * Before an account loads: sets this tab's signed-out draft aside, when it has anything, so it joins the account
+   * only when the student says so (adoptHeld). Returns whether a draft is held.
+   */
+  holdDraft(): boolean {
+    const draft = this.#readLocal(this.#draftKey, null);
+    const earlier = this.#readLocal(this.#heldKey, null);
+    let held: T | null = earlier === null ? null : earlier.value;
+    if (draft !== null && !this.#a.isEmpty(draft.value))
+      held = earlier === null ? draft.value : this.#a.merge(draft.value, earlier.value);
+    writeJson(this.#env, this.#draftKey, null);
+    this.#setHeld(held);
+    return held !== null;
+  }
+
+  /** Signed in: merges the held draft into the account's record and saves it. */
+  adoptHeld(): void {
+    const held = this.#held.value;
+    if (this.#mode.value !== "account" || held === null) return;
+    this.edit((value) => this.#a.merge(held, value));
+    this.#setHeld(null);
+  }
+
+  /** Forgets the held draft. */
+  dropHeld(): void {
+    this.#setHeld(null);
   }
 
   /** Applies an edit now; signed in, it's saved after a short pause. Returns the new value. */
@@ -168,11 +214,16 @@ export class DocumentStore<T> {
     this.#mode.value = mode;
   }
 
-  /** Signed out: shows this tab's draft. */
+  /** Signed out: shows this tab's draft, with any draft held back from an account it was never added to. */
   startDraft(): void {
     this.#reset("draft");
     this.#owner = null;
-    this.#value.value = this.#readLocal(this.#draftKey, null)?.value ?? this.#a.empty();
+    const draft = this.#readLocal(this.#draftKey, null)?.value;
+    const held = this.#readLocal(this.#heldKey, null)?.value;
+    if (held === undefined) this.#value.value = draft ?? this.#a.empty();
+    else this.#value.value = draft === undefined ? held : this.#a.merge(draft, held);
+    this.#setHeld(null);
+    this.#persist();
     this.#refreshStatus();
   }
 
@@ -225,13 +276,15 @@ export class DocumentStore<T> {
     this.#refreshStatus();
   }
 
-  /** Signed out on purpose: forgets the account's record and anything unsaved, and starts an empty draft. */
+  /** Signed out on purpose: forgets the account's record and anything unsaved; the draft is the held one, if any. */
   clear(): void {
     this.#reset("draft");
     writeJson(this.#env, this.#pendingKey, null);
     writeJson(this.#env, this.#draftKey, null);
     this.#owner = null;
-    this.#value.value = this.#a.empty();
+    this.#value.value = this.#held.value ?? this.#a.empty();
+    this.#setHeld(null);
+    this.#persist();
     this.#refreshStatus();
   }
 

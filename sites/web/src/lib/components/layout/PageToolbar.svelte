@@ -15,6 +15,7 @@
     chips,
     onreset,
     actions,
+    actionsLayout = "auto",
     children,
     class: className = "",
   }: {
@@ -37,6 +38,12 @@
     onreset?: () => void;
     /** Right-aligned controls: sort select, view toggle. */
     actions?: Snippet;
+    /**
+     * Where `actions` go on small screens. auto: beside the chips, wrapping under them when they don't fit. inline:
+     * in the Filter button's row while the rail is a sheet (for a few icon buttons). row: a full row of their own on
+     * phones, so they never squeeze the result count.
+     */
+    actionsLayout?: "auto" | "inline" | "row";
     /** Anything else under the toolbar, such as the profile filters row or a workload summary. */
     children?: Snippet;
     class?: string;
@@ -48,6 +55,9 @@
   );
   const hasMeta = $derived(
     count !== undefined || chips !== undefined || actions !== undefined || rail?.asSheet === true,
+  );
+  const actionsInline = $derived(
+    actionsLayout === "inline" && actions !== undefined && rail?.asSheet === true,
   );
   const titleClass = $derived(
     hideTitle === true ? "sr-only" : hideTitle === "desktop" ? "lg:sr-only" : "",
@@ -74,6 +84,9 @@
                 {countText}
               </p>
             {/if}
+            {#if actionsInline}
+              <div class="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">{@render actions?.()}</div>
+            {/if}
           </div>
         {/if}
         {#if chips || (onreset && rail?.asSheet)}
@@ -85,8 +98,12 @@
           </div>
         {/if}
       </div>
-      {#if actions}
-        <div class="flex max-w-full shrink-0 flex-wrap items-center gap-3">{@render actions()}</div>
+      {#if actions && !actionsInline}
+        <div
+          class="flex max-w-full shrink-0 flex-wrap items-center gap-3 {actionsLayout === 'row' ? 'max-sm:w-full' : ''}"
+        >
+          {@render actions()}
+        </div>
       {/if}
     </div>
   {/if}

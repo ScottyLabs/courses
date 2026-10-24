@@ -4,48 +4,31 @@
   courses planned or scheduled for earlier semesters, count; this schedule's own courses count as corequisites.
 -->
 <script lang="ts">
-  import { Check, ChevronDown, Info, TriangleAlert, Clock } from "@lucide/svelte";
-  import { catalog, resource } from "$lib/data";
+  import { Check, ChevronDown, Clock, Info, TriangleAlert } from "@lucide/svelte";
+  import { catalogIndex } from "$lib/components/course/data.svelte";
+  import { termRequisites } from "$lib/components/course/requisite-context.svelte";
   import type { Term } from "$lib/core/data";
   import { summarizeCheck } from "$lib/core/record/check-summary";
-  import { requisiteContext } from "$lib/core/record/context";
   import { checkCourse } from "$lib/core/requisites";
   import { coursePath, profilePath } from "$lib/core/routes";
   import type { ResolvedEntry } from "$lib/core/state/schedule-view";
-  import { plans, record, schedules } from "$lib/state";
+  import { record } from "$lib/state";
 
   let { entries, term }: { entries: readonly ResolvedEntry[]; term: Term } = $props();
 
-  const index = resource(() => catalog.catalogIndex());
+  const index = $derived(catalogIndex());
+  // The same context the course pages check against, shared through the course components' cache.
+  const ctx = $derived(termRequisites(term.meta.id).ctx);
   let open = $state(true);
   const id = $props.id();
 
-  /** Term to the schedule shown for it, for every semester with a schedule. */
-  const activeSchedule = $derived.by(() => {
-    const out: Record<string, string> = {};
-    for (const s of Object.values(schedules.items)) {
-      if (out[s.termId] !== undefined) continue;
-      const active = schedules.activeId(s.termId);
-      if (active !== null) out[s.termId] = active;
-    }
-    return out;
-  });
-
   const rows = $derived.by(() => {
-    const catalogIndex = index.value;
-    if (catalogIndex === undefined) return null;
-    const ctx = requisiteContext({
-      term,
-      record: record.data,
-      catalog: catalogIndex,
-      plan: plans.active,
-      schedules: schedules.items,
-      activeSchedule,
-    });
+    const catalog = index.value;
+    if (catalog === undefined || ctx === null) return null;
     const out: { code: string; courseId: string; text: string; level: string }[] = [];
     let unchecked = 0;
     for (const { course } of entries) {
-      const entry = catalogIndex.courses[course.id];
+      const entry = catalog.courses[course.id];
       const check = checkCourse(course.id, entry, ctx);
       const summary = summarizeCheck(check, entry);
       // With nothing on record, a missing prerequisite most likely means "not entered yet": ask for the record

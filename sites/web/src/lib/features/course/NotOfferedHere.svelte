@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ArrowRight, GitFork } from "@lucide/svelte";
   import { catalogIndex, offerings } from "$lib/components/course/data.svelte";
+  import { getCourseHref } from "$lib/components/course/links";
   import Button from "$lib/components/ui/Button.svelte";
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import { nearestTerm } from "$lib/core/offerings";
@@ -9,7 +10,6 @@
   import { coursePath, coursesPath } from "$lib/core/routes";
   import { catalogTitle } from "$lib/core/explorer/unoffered";
   import type { TermIndexEntry } from "$lib/core/types";
-  import { getCourseHref } from "./links";
   import { requisitesPath } from "./paths";
 
   let {

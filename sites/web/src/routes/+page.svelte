@@ -17,7 +17,7 @@
   import { codeOf } from "$lib/core/requisite-format";
   import { coursePath } from "$lib/core/routes";
   import type { Course } from "$lib/core/types";
-  import { ALL_SEMESTERS } from "$lib/state";
+  import { ALL_SEMESTERS, semesterOptions } from "$lib/state";
   import CourseDetailPanel from "$lib/features/course/CourseDetailPanel.svelte";
   import { filterChips } from "$lib/features/explorer/chips";
   import CourseResults from "$lib/features/explorer/CourseResults.svelte";
@@ -36,11 +36,15 @@
   $effect(() => url.followSearch());
   $effect(() => () => url.destroy());
 
-  // Wide screens show a course beside the list; narrower ones show it in place of the list.
+  // A course opens beside the list from 1024px. Below 1440px the filter rail collapses while it's open, to make room;
+  // showing the rail again puts the course in place of the list, as on narrower screens.
   const wide = new MediaQuery("(min-width: 90rem)");
+  const desktop = new MediaQuery("(min-width: 64rem)");
+  let railCollapsed = $state(false);
   const selectedId = $derived(query.course === null ? null : parseCourseCode(query.course));
-  const panelBeside = $derived(selectedId !== null && wide.current);
-  const panelAlone = $derived(selectedId !== null && !wide.current);
+  const squeezed = $derived(selectedId !== null && desktop.current && !wide.current);
+  const panelBeside = $derived(selectedId !== null && (wide.current || (squeezed && railCollapsed)));
+  const panelAlone = $derived(selectedId !== null && !panelBeside);
 
   let view = $state<ListView>(storedView("courses") ?? "cards");
   const chart = $derived(query.chart && x.fceMap !== null);
@@ -102,10 +106,7 @@
 
   // ---- Toolbar ----
 
-  const termOptions = $derived([
-    ...(x.terms.value ?? []).map((t) => ({ value: t.id, label: t.name })),
-    { value: ALL_SEMESTERS, label: "All semesters" },
-  ]);
+  const termOptions = $derived(semesterOptions(x.terms.value ?? []));
   const sortOptions = $derived(
     (Object.keys(SORT_LABELS) as SortKey[])
       .filter((key) => !FCE_SORTS.includes(key) || x.fceMap !== null)
@@ -234,6 +235,8 @@
   filterCount={x.filterCount}
   backLabel="Search"
   header={panelAlone ? undefined : toolbar}
+  autoCollapse={squeezed}
+  bind:railCollapsed
 >
   {#snippet rail()}
     <ExplorerRail
@@ -310,7 +313,7 @@
       <aside
         aria-label="Course details"
         class="min-w-0 rounded-card border border-pressed bg-surface {panelBeside
-          ? 'scrollbar-thin sticky top-[calc(var(--header-h)+1rem)] max-h-[calc(100dvh-var(--header-h)-2rem)] w-[460px] shrink-0 overflow-y-auto overscroll-contain min-[105rem]:w-[500px]'
+          ? 'scrollbar-thin sticky top-[calc(var(--header-h)+1rem)] max-h-[calc(100dvh-var(--header-h)-2rem)] w-[400px] shrink-0 overflow-y-auto overscroll-contain xl:w-[440px] min-[90rem]:w-[460px] min-[105rem]:w-[500px]'
           : 'w-full'}"
       >
         {#key selectedId}

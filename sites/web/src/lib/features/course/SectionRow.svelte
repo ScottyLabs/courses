@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ArrowLeftRight, Check, Plus, TriangleAlert } from "@lucide/svelte";
+  import type { Attachment } from "svelte/attachments";
   import InstructorFceBadge from "$lib/components/course/InstructorFceBadge.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import { instructorSlug } from "$lib/core/data";
@@ -46,12 +47,60 @@
   // Recitations usually repeat their lecture's instructors; list only the ones who teach this section.
   const instructors = $derived(section.instructors.filter((name) => teachesSection(course, section, name)));
   const location = (m: Section["meetings"][number]): string => (redacted ? "Hidden" : formatLocation(m));
+  const previewing = $derived(sched.hovered === section);
+
+  /**
+   * Previews this row's result in the schedule's calendar: while a mouse points at it or focus is inside it, and on
+   * a touch screen when the row itself (not its buttons or links) is tapped, until another row is tapped or this one
+   * again.
+   */
+  const previewOnHover: Attachment<HTMLElement> = (node) => {
+    let touch = false;
+    const stop = (): void => {
+      if (sched.hovered === section) sched.preview(null);
+    };
+    const enter = (event: PointerEvent): void => {
+      if (event.pointerType === "mouse") sched.preview(section);
+    };
+    const leave = (event: PointerEvent): void => {
+      if (event.pointerType === "mouse") stop();
+    };
+    const down = (event: PointerEvent): void => {
+      touch = event.pointerType !== "mouse";
+    };
+    const tap = (event: MouseEvent): void => {
+      if (!touch || (event.target instanceof Element && event.target.closest("a, button") !== null)) return;
+      sched.preview(sched.hovered === section ? null : section);
+    };
+    const focusIn = (): void => sched.preview(section);
+    const focusOut = (event: FocusEvent): void => {
+      if (!(event.relatedTarget instanceof Node && node.contains(event.relatedTarget))) stop();
+    };
+    node.addEventListener("pointerenter", enter);
+    node.addEventListener("pointerleave", leave);
+    node.addEventListener("pointerdown", down);
+    node.addEventListener("click", tap);
+    node.addEventListener("focusin", focusIn);
+    node.addEventListener("focusout", focusOut);
+    return () => {
+      node.removeEventListener("pointerenter", enter);
+      node.removeEventListener("pointerleave", leave);
+      node.removeEventListener("pointerdown", down);
+      node.removeEventListener("click", tap);
+      node.removeEventListener("focusin", focusIn);
+      node.removeEventListener("focusout", focusOut);
+      stop();
+    };
+  };
 </script>
 
 <div
+  {@attach previewOnHover}
   class="grid grid-cols-[4.25rem_minmax(0,1fr)_auto] gap-x-2 px-2 py-2.5 transition-colors hover:bg-hover @md:grid-cols-[3.75rem_minmax(0,1fr)_6rem] @3xl:grid-cols-[4.5rem_20rem_minmax(0,1fr)_5rem_6rem] @3xl:gap-x-3 {isChosen
     ? 'bg-ok-bg/60'
-    : ''}"
+    : previewing
+      ? 'bg-hover'
+      : ''}"
 >
   <div class={isChild ? "@3xl:border-l-2 @3xl:border-line @3xl:pl-2" : ""}>
     <span class="tabular block leading-tight text-strong {isChild ? 'text-body-1' : 'text-heading-6'}">{section.name}</span>

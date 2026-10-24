@@ -4,6 +4,8 @@
 -->
 <script lang="ts">
   import { CalendarPlus, Clock, ExternalLink, Layers, Users } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
+  import { profileBand } from "$lib/components/layout/profile-band.svelte";
   import Card from "$lib/components/ui/Card.svelte";
   import CourseChip from "$lib/components/ui/CourseChip.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
@@ -24,6 +26,11 @@
   let { title }: { title: string } = $props();
 
   let semester = $state("");
+  // Phones get the taller field select (40px tap targets); wider screens the Figma's compact filter box.
+  const wide = new MediaQuery("(min-width: 40rem)");
+
+  // The semester filter sits in the section's title band.
+  profileBand(() => ({ filters: termIds.length > 1 ? semesterFilter : undefined }));
 
   const all = $derived(
     Object.values(schedules.items).toSorted(
@@ -51,17 +58,17 @@
   }
 </script>
 
-<div class="flex flex-col gap-6">
-  {#if termIds.length > 1}
-    <Select
-      bind:value={semester}
-      label="Semester"
-      variant="compact"
-      class="w-48"
-      options={[{ value: "", label: "All semesters" }, ...termIds.map((id) => ({ value: id, label: termLabel(id) }))]}
-    />
-  {/if}
+{#snippet semesterFilter()}
+  <Select
+    bind:value={semester}
+    label="Semester"
+    variant={wide.current ? "compact" : "field"}
+    class="w-full sm:w-48"
+    options={[{ value: "", label: "All semesters" }, ...termIds.map((id) => ({ value: id, label: termLabel(id) }))]}
+  />
+{/snippet}
 
+<div class="flex flex-col gap-6">
   {#if personal.mode === "loading"}
     <div class="grid gap-6 xl:grid-cols-2">
       <Skeleton variant="block" class="h-40" />
@@ -106,7 +113,7 @@
                 <span class="text-muted">&hellip;</span>
               {/if}
               {#if perWeek !== null}
-                <span aria-hidden="true" class="h-5 w-px bg-line-strong"></span>
+                <span aria-hidden="true" class="hidden h-5 w-px bg-line-strong sm:block"></span>
                 <span class="inline-flex items-center gap-1.5">
                   <Clock aria-hidden="true" class="size-5" />{perWeek} hrs/week
                 </span>

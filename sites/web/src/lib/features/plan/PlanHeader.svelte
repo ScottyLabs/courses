@@ -4,6 +4,7 @@
   // Courseweave's features/degree/PlanHeader.tsx.
   import { Copy, FileUp, Pencil, Plus, Send, Trash2 } from "@lucide/svelte";
   import { goto } from "$app/navigation";
+  import SendToStellicDialog from "$lib/components/stellic/SendToStellicDialog.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
   import Select from "$lib/components/ui/Select.svelte";
@@ -21,7 +22,6 @@
   import DegreeProgressBar from "./DegreeProgressBar.svelte";
   import MenuItem from "./MenuItem.svelte";
   import OptionsMenu from "./OptionsMenu.svelte";
-  import SendToStellic from "./SendToStellic.svelte";
 
   const page = planPage();
   const plan = $derived(page.plan);
@@ -199,9 +199,9 @@
   {/snippet}
 </Dialog>
 
-<SendToStellic
+<SendToStellicDialog
   bind:open={sending}
-  {plan}
-  current={page.derived.current}
-  titleOf={(id) => page.lookup(id).title ?? page.lookup(id).code}
+  mode="plan"
+  initialId={plan.id}
+  courseTitle={(id) => page.lookup(id).title ?? page.lookup(id).code}
 />

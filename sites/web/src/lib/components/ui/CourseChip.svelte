@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { coursePreview } from "$lib/components/course/preview";
   import type { ChipSize, ChipTone } from "./Chip.svelte";
   import Chip from "./Chip.svelte";
   import StatusChip, { type RequisiteStatus } from "./StatusChip.svelte";
@@ -29,6 +30,8 @@
   } = $props();
 
   const target = $derived(link ? (href ?? `/course/${encodeURIComponent(code)}`) : undefined);
+  // Links preview their course by themselves (CoursePreviewLayer); a plain chip is marked for one.
+  const attrs = $derived(link ? {} : coursePreview(code));
 </script>
 
 {#snippet text()}
@@ -38,7 +41,7 @@
 {/snippet}
 
 {#if status}
-  <StatusChip {status} href={target} {size} class={className}>{@render text()}</StatusChip>
+  <StatusChip {status} href={target} {size} {attrs} class={className}>{@render text()}</StatusChip>
 {:else}
-  <Chip {tone} href={target} {size} class={className}>{@render text()}</Chip>
+  <Chip {tone} href={target} {size} {attrs} class={className}>{@render text()}</Chip>
 {/if}

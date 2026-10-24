@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ArrowRight, ChevronLeft } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import { goto } from "$app/navigation";
   import CourseFcePanel from "$lib/components/course/CourseFcePanel.svelte";
   import { catalogIndex, courseDetails, offerings, termData } from "$lib/components/course/data.svelte";
@@ -19,7 +20,7 @@
   import { termLabel } from "$lib/core/requisites";
   import { coursePath, coursesPath } from "$lib/core/routes";
   import { catalog, resource } from "$lib/data";
-  import { device, isAllSemesters, lastOrigin, planOrigin, resolveTerm } from "$lib/state";
+  import { device, isAllSemesters, originBack, resolveTerm } from "$lib/state";
   import CatalogFacts from "./CatalogFacts.svelte";
   import CountsToward from "./CountsToward.svelte";
   import CourseAbout from "./CourseAbout.svelte";
@@ -31,8 +32,9 @@
   import NotOfferedHere from "./NotOfferedHere.svelte";
   import OfferingHistory from "./OfferingHistory.svelte";
   import { requisitesPath } from "./paths";
-  import RequisiteStatus from "./RequisiteStatus.svelte";
+  import RequisiteStatus from "$lib/components/course/RequisiteStatus.svelte";
   import ScheduleActions from "./ScheduleActions.svelte";
+  import ScheduleCalendar from "./ScheduleCalendar.svelte";
 
   let {
     courseId,
@@ -82,13 +84,14 @@
   const checkLoad = $derived(checkTerm === null ? null : termData(checkTerm));
 
   const sched = new CourseSchedule(() => (course && term?.value ? { course, term: term.value } : null));
+  // Wide screens keep the calendar in view beside the sections; narrower ones show it after them.
+  const wide = new MediaQuery("(min-width: 1024px)");
 
-  // Opened from the degree plan: back returns there; from the course list, to the list as it was.
-  const fromPlan = planOrigin();
-  const origin = lastOrigin();
+  // Back returns to the page the course was opened from (the degree plan, a schedule, the course list as it was, an
+  // instructor or the profile); otherwise to the semester's course list.
+  const origin = originBack();
   const back = $derived.by(() => {
-    if (fromPlan !== null) return { href: fromPlan, label: "Back to plan" };
-    if (origin !== null && (origin === "/" || origin.startsWith("/?"))) return { href: origin, label: "Back to courses" };
+    if (origin !== null) return origin;
     return { href: coursesPath(termId ?? resolved), label: "All courses" };
   });
 
@@ -204,19 +207,22 @@
         </div>
       </header>
 
-      <div class="grid gap-x-8 gap-y-8 {course ? 'lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]' : ''}">
+      <div class="grid gap-x-8 gap-y-8 {course ? 'lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]' : ''}">
         <div class="flex min-w-0 flex-col gap-8">
           {#if course && term?.value}
+            <!-- Narrow screens: the calendar comes first, so a tapped section's preview is near. -->
+            {#if !wide.current}<ScheduleCalendar {sched} />{/if}
             <CourseSections {course} {sched} meta={term.value.meta} />
           {/if}
           <div class={card}><CourseAbout {courseId} termId={checkTerm} onshowtree={showTree} /></div>
           <div class={card}><CountsToward {courseId} termId={checkTerm} /></div>
-        </div>
-        {#if course}
-          <aside class="flex min-w-0 flex-col gap-8" aria-label="Offering history">
-            <!-- The schedules feature's WeekGrid (lib/components/calendar) goes here, sticky beside the sections, to
-                 preview each choice in the student's schedule. -->
+          {#if course}
             <div class={card}><OfferingHistory {courseId} currentTerm={termId} terms={terms.value ?? []} /></div>
+          {/if}
+        </div>
+        {#if course && wide.current}
+          <aside class="min-w-0" aria-label="Your schedule">
+            <ScheduleCalendar {sched} hourHeight={32} class="sticky top-[calc(var(--header-h)+1rem)]" />
           </aside>
         {/if}
       </div>

@@ -1,11 +1,12 @@
 <script lang="ts">
+  // The Figma's three FCE boxes: workload, teaching rate and course rate, for course and instructor cards and pages.
   import { Star } from "@lucide/svelte";
-  import Skeleton from "../ui/Skeleton.svelte";
-  import StarRating from "../ui/StarRating.svelte";
-  import StatBox from "../ui/StatBox.svelte";
+  import Skeleton from "$lib/components/ui/Skeleton.svelte";
+  import StarRating from "$lib/components/ui/StarRating.svelte";
+  import StatBox from "$lib/components/ui/StatBox.svelte";
   import { FCE_HOURS_HELP } from "$lib/core/fce";
-  import type { FceAggregate } from "$lib/features/instructors/fce-aggregate";
-  import { trimNumber } from "./format";
+  import type { FceAggregate } from "./fce-aggregate";
+  import { trimNumber } from "./fce-format";
 
   let {
     stats,

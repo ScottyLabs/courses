@@ -5,6 +5,9 @@ import { getContext, setContext, untrack } from "svelte";
 import { MediaQuery } from "svelte/reactivity";
 import { goto } from "$app/navigation";
 import { page } from "$app/state";
+import { aggregateFce, selectFceRows } from "$lib/components/course/fce-aggregate";
+import { fceOptions } from "$lib/components/course/fce-options.svelte";
+import { loadInstructorFce, recentTeachingRate } from "$lib/components/instructor/instructor-fce";
 import { getSession } from "$lib/components/shell/session";
 import { catalog, resource } from "$lib/data";
 import { lastName, type Instructor } from "$lib/core/data";
@@ -18,8 +21,6 @@ import {
 import { saved, device } from "$lib/state";
 import { ALL_SEMESTERS, isAllSemesters, resolveTerm } from "$lib/state/term-scope";
 import { loadAllInstructors, loadCourseLookup } from "./data";
-import { aggregate, loadInstructorFce, recentTeachingRate, windowRows } from "./fce-aggregate";
-import { aggregateChoices } from "./aggregate-settings.svelte";
 
 export type Sort = "name" | "sections";
 
@@ -157,9 +158,9 @@ export class InstructorsScope {
   /** The section table shows every semester, not just the aggregate's. */
   everySemester = $state(false);
   readonly windowed = $derived(
-    this.fce.value ? windowRows(this.fce.value.rows, aggregateChoices.value, this.courses) : [],
+    this.fce.value ? selectFceRows(this.fce.value.rows, fceOptions.value, this.courses) : [],
   );
-  readonly stats = $derived(this.fce.value ? aggregate(this.windowed) : null);
+  readonly stats = $derived(this.fce.value ? aggregateFce(this.windowed) : null);
   readonly courseOptions = $derived(
     (this.fce.value?.summary.courses ?? [])
       .map((course) => {

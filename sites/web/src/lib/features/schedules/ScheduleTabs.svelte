@@ -47,6 +47,7 @@
   } = $props();
 
   const termId = $derived(term.meta.id);
+  let tablist = $state<HTMLElement>();
   const list = $derived(schedules.forTerm(termId));
   const active = $derived(list.find((s) => s.id === activeId) ?? null);
   const placeholder = $derived(nextScheduleName(Object.values(schedules.items).filter((s) => s.termId === termId)));
@@ -155,10 +156,28 @@
       },
     },
   ]);
+
+  // Narrow screens scroll the tabs: keep the shown schedule's tab in view, such as a new one at the end.
+  $effect(() => {
+    void activeId;
+    void list.length;
+    const strip = tablist;
+    const tab = strip?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
+    if (strip === undefined || tab === null || tab === undefined) return;
+    const left = tab.offsetLeft - strip.offsetLeft;
+    if (left < strip.scrollLeft) strip.scrollLeft = left;
+    else if (left + tab.offsetWidth > strip.scrollLeft + strip.clientWidth)
+      strip.scrollLeft = left + tab.offsetWidth - strip.clientWidth;
+  });
 </script>
 
 <div bind:this={tabs} class="flex items-end gap-2 border-b border-line">
-  <div role="tablist" aria-label="Schedules" class="scrollbar-thin flex min-w-0 items-end gap-5 overflow-x-auto">
+  <div
+    bind:this={tablist}
+    role="tablist"
+    aria-label="Schedules"
+    class="scrollbar-thin flex min-w-0 items-end gap-5 overflow-x-auto"
+  >
     {#each list.length > 0 ? list : [null] as s (s?.id ?? "placeholder")}
       {@const id = s?.id ?? null}
       {@const isActive = id === activeId || s === null}

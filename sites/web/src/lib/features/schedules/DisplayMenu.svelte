@@ -3,7 +3,7 @@
   choice is the student's calendar display preference, so every calendar on the site follows it.
 -->
 <script lang="ts">
-  import { ChevronDown } from "@lucide/svelte";
+  import { ChevronDown, Eye } from "@lucide/svelte";
   import Checkbox from "$lib/components/ui/Checkbox.svelte";
   import Popover from "$lib/components/ui/Popover.svelte";
   import type { CalendarDisplay } from "$lib/core/state/store";
@@ -24,10 +24,13 @@
     <button
       type="button"
       {...props}
-      class="inline-flex h-10 items-center gap-6 rounded-tag border-[0.5px] border-muted bg-surface pr-3 pl-3.5 text-body-2 text-ink hover:border-ink lg:h-9 lg:w-52 lg:justify-between"
+      title="Calendar display"
+      class="inline-flex h-10 items-center gap-6 rounded-tag border-[0.5px] border-muted bg-surface pr-3 pl-3.5 text-body-2 text-ink hover:border-ink max-sm:w-10 max-sm:justify-center max-sm:rounded-full max-sm:border max-sm:border-line-strong max-sm:p-0 max-sm:hover:bg-hover lg:h-9 lg:w-52 lg:justify-between"
     >
-      Show
-      <ChevronDown aria-hidden="true" class="size-5 transition-transform {open ? 'rotate-180' : ''}" />
+      <!-- Phones show an eye icon; the name stays for screen readers. -->
+      <Eye aria-hidden="true" class="size-5 sm:hidden" />
+      <span class="max-sm:sr-only">Show</span>
+      <ChevronDown aria-hidden="true" class="size-5 transition-transform max-sm:hidden {open ? 'rotate-180' : ''}" />
     </button>
   {/snippet}
   {#snippet children()}

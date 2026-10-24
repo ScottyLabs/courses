@@ -57,7 +57,7 @@
     {#if entry?.prereqs}
       <div class="scrollbar-thin -mx-1 overflow-x-auto px-1">
         {#key expandAll}
-          <ul class="min-w-fit">
+          <ul>
             <RequisiteTreeNode req={entry.prereqs} {ctx} path={[id]} depth={0} />
           </ul>
         {/key}

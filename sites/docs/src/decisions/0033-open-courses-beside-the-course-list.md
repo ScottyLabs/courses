@@ -4,7 +4,8 @@ Date: 2026-10-24
 
 ## Status
 
-Accepted
+Accepted. Amended during integration: between 1024 and 1440px wide, opening a course collapses the filter rail so
+the panel still sits beside the list.
 
 ## Context
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import StarRating from "$lib/components/ui/StarRating.svelte";
-  import StatBox from "$lib/components/ui/StatBox.svelte";
+  // The course card's "Aggregate Data" well: what the averages cover, then the three FCE boxes.
   import { termName } from "$lib/core/fce";
   import type { FceAggregate } from "./fce-aggregate";
+  import FceStats from "./FceStats.svelte";
 
   let {
     aggregate,
@@ -34,26 +34,5 @@
       title={aggregate.terms.map((term) => termName(term)).join(", ")}>({span})</span
     >
   </h3>
-  <div class="mt-3 grid gap-2 sm:grid-cols-3">
-    <StatBox
-      variant="plain"
-      label="Workload"
-      value={aggregate.hours === null ? "-" : aggregate.hours.toFixed(2)}
-      unit="hrs/wk"
-    />
-    <StatBox variant="plain" label="Teaching Rate">
-      {#if aggregate.teachingRate === null}
-        <span class="text-[20px] leading-7">-</span>
-      {:else}
-        <StarRating value={aggregate.teachingRate} label="Teaching rate" />
-      {/if}
-    </StatBox>
-    <StatBox variant="plain" label="Course Rate">
-      {#if aggregate.courseRate === null}
-        <span class="text-[20px] leading-7">-</span>
-      {:else}
-        <StarRating value={aggregate.courseRate} label="Course rate" />
-      {/if}
-    </StatBox>
-  </div>
+  <FceStats stats={aggregate} variant="plain" class="mt-3" />
 </section>

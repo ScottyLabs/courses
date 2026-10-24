@@ -10,6 +10,7 @@ import type { SaveStatus } from "./sync.ts";
 
 const DRAFT_KEY = "cmucourses:draft:saved";
 const PENDING_KEY = "cmucourses:pending:saved";
+const HELD_KEY = "cmucourses:held:saved";
 
 const strings = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
@@ -21,6 +22,8 @@ export class SavedStore {
   readonly #mode: Cell<StoreMode>;
   readonly #status: Cell<SaveStatus>;
   readonly #error: Cell<string | null>;
+  /** Courses saved signed out, waiting for the student to add them to the account or discard them. */
+  readonly #held: Cell<string[]>;
   /** Changes the server doesn't have yet: course id to saved (true) or not (false). */
   readonly #pending = new Map<string, boolean>();
   #sending: Promise<void> | null = null;
@@ -36,6 +39,7 @@ export class SavedStore {
     this.#mode = deps.cell<StoreMode>("draft");
     this.#status = deps.cell<SaveStatus>("saved");
     this.#error = deps.cell<string | null>(null);
+    this.#held = deps.cell<string[]>([]);
   }
 
   /** Saved course ids, oldest first. */
@@ -57,6 +61,47 @@ export class SavedStore {
 
   get unsaved(): boolean {
     return this.#mode.value === "account" && (this.#pending.size > 0 || this.#sending !== null);
+  }
+
+  /** Courses saved signed out, held back from the account until adoptHeld() or dropHeld(). */
+  get held(): readonly string[] {
+    return this.#held.value;
+  }
+
+  #setHeld(ids: string[]): void {
+    this.#held.value = ids;
+    writeJson(this.#env, HELD_KEY, ids.length > 0 ? { ids } : null);
+  }
+
+  #readIds(key: string): string[] {
+    const raw = readJson(this.#env, key);
+    return isObject(raw) ? strings(raw.ids) : [];
+  }
+
+  /**
+   * Before an account loads: sets aside the courses saved signed out, so they join the account only when the student
+   * says so (adoptHeld). Returns how many are held.
+   */
+  holdDraft(): number {
+    const ids = [
+      ...new Set([...this.#readIds(HELD_KEY), ...this.#readIds(DRAFT_KEY), ...this.#ids.value]),
+    ];
+    writeJson(this.#env, DRAFT_KEY, null);
+    this.#ids.value = [];
+    this.#setHeld(ids);
+    return ids.length;
+  }
+
+  /** Signed in: saves the held courses to the account. */
+  adoptHeld(): void {
+    if (this.#mode.value !== "account") return;
+    for (const id of this.#held.value) this.add(id);
+    this.#setHeld([]);
+  }
+
+  /** Forgets the held courses. */
+  dropHeld(): void {
+    this.#setHeld([]);
   }
 
   has(courseId: string): boolean {
@@ -161,12 +206,13 @@ export class SavedStore {
     this.#setStatus("saved", null);
   }
 
-  /** Signed out: shows this tab's draft. */
+  /** Signed out: shows this tab's draft, with any courses held back from an account they were never added to. */
   startDraft(): void {
     this.#reset("draft");
     this.#owner = null;
-    const raw = readJson(this.#env, DRAFT_KEY);
-    this.#ids.value = isObject(raw) ? [...new Set(strings(raw.ids))] : [];
+    this.#ids.value = [...new Set([...this.#readIds(HELD_KEY), ...this.#readIds(DRAFT_KEY)])];
+    this.#setHeld([]);
+    this.#persist();
   }
 
   /** Signed in as `owner`: loads the account's saved courses, then sends this tab's draft and unsent changes. */
@@ -211,13 +257,17 @@ export class SavedStore {
     this.#setStatus("error", SESSION_ENDED);
   }
 
-  /** Signed out on purpose: forgets the account's saved courses and unsent changes. */
+  /**
+   * Signed out on purpose: forgets the account's saved courses and unsent changes, keeping only courses held back
+   * from it, as a draft again.
+   */
   clear(): void {
     this.#reset("draft");
     writeJson(this.#env, PENDING_KEY, null);
-    writeJson(this.#env, DRAFT_KEY, null);
     this.#owner = null;
-    this.#ids.value = [];
+    this.#ids.value = this.#held.value;
+    this.#setHeld([]);
+    this.#persist();
   }
 
   retry(): void {

@@ -42,3 +42,5 @@
 | 38 | [Show an invite's sender before it's accepted](0038-show-an-invites-sender-before-it-is-accepted.md) | accepted |
 | 39 | [Build an instructor's FCE rows in the browser from the course documents](0039-build-instructor-fce-rows-in-the-browser.md) | accepted |
 | 40 | [Adapt the Figma design to the features, borrowing from Courseweave](0040-follow-courseweaves-interaction-design.md) | accepted |
+| 41 | [Preview every course link, by hover or by press and hold](0041-preview-every-course-link.md) | accepted |
+| 42 | [Ask before adding signed-out drafts to an account](0042-ask-before-adding-signed-out-drafts-to-an-account.md) | accepted |

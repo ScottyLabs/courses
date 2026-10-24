@@ -28,6 +28,9 @@
     </h2>
     <p class="text-body-2 text-muted">{sectionCounts(course)} in {meta.name}</p>
   </div>
+  <p class="mb-2 hidden text-label-md text-muted pointer-coarse:block">
+    Tap a section to preview it in the calendar.
+  </p>
   {#if notes.length > 0}
     <div class="mb-2 flex gap-1.5 text-label-md text-muted">
       <Info aria-hidden="true" class="mt-0.5 size-3.5 shrink-0" />
@@ -44,7 +47,6 @@
       <Button size="sm" variant="secondary" icon={LogIn} onclick={() => session.signIn()}>Sign in</Button>
     </div>
   {/if}
-  <!-- The schedules feature's WeekGrid (lib/components/calendar) goes beside this list to preview choices. -->
   <div class="@container rounded-card border border-pressed bg-surface">
     <div
       aria-hidden="true"

@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
   import { goto } from "$app/navigation";
   import { ArrowDownUp, Bookmark, ChevronLeft, GraduationCap, SearchX, UserX } from "@lucide/svelte";
+  import FceAggregateSettings from "$lib/components/course/FceAggregateSettings.svelte";
   import FilterButton from "$lib/components/layout/FilterButton.svelte";
   import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
   import RailGroup from "$lib/components/layout/RailGroup.svelte";
@@ -22,8 +23,7 @@
   import { departmentName } from "$lib/core/departments";
   import { saved } from "$lib/state";
   import { ALL_SEMESTERS } from "$lib/state/term-scope";
-  import AggregateFceSettings from "./AggregateFceSettings.svelte";
-  import { semesterOptions } from "./data";
+  import { semesterOptions } from "$lib/state";
   import InstructorRows from "./InstructorRows.svelte";
   import { provideInstructorsScope } from "./scope.svelte";
 
@@ -191,7 +191,7 @@
       <Button variant="secondary" full onclick={() => scope.reset()}>Reset</Button>
     </RailGroup>
     <RailGroup title="Aggregate FCEs">
-      <AggregateFceSettings />
+      <FceAggregateSettings />
       {#if open}
         <div class="flex flex-col gap-2">
           <MultiSelect

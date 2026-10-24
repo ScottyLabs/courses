@@ -6,6 +6,7 @@
   import { Link2, LogIn, Unlink, Users } from "@lucide/svelte";
   import { api } from "$lib/api";
   import Button from "$lib/components/ui/Button.svelte";
+  import CopyField from "$lib/components/ui/CopyField.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
   import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
@@ -14,7 +15,6 @@
   import { profilePath, sharedSchedulePath } from "$lib/core/routes";
   import type { Sharing } from "$lib/api/types";
   import { schedules, type ScheduleItem } from "$lib/state";
-  import CopyField from "./CopyField.svelte";
 
   let {
     open = $bindable(false),

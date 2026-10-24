@@ -91,11 +91,11 @@
     <output class="tabular shrink-0 text-label-lg text-ink" aria-live="polite">{format(low, high)}</output>
   </div>
   {#if presets.length > 0}
-    <div class="mt-2 flex gap-2">
+    <div class="mt-2 flex gap-1.5">
       {#each presets as preset (preset.label)}
         <button
           type="button"
-          class="flex-1 {togglePill}"
+          class="flex-1 whitespace-nowrap {togglePill}"
           aria-pressed={low === preset.low && high === preset.high}
           onclick={() => pick(preset)}
         >

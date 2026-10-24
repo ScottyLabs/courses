@@ -22,6 +22,7 @@ import { mergeNewer, normalizePlan } from "../core/sync-merge.ts";
 import { CollectionStore } from "./collection.ts";
 import type { StoreDeps } from "./drafts.ts";
 import { isObject } from "./env.ts";
+import { distinctName } from "./names.ts";
 import type { PreferencesStore } from "./preferences.ts";
 import type { Stored } from "./sync.ts";
 
@@ -71,6 +72,15 @@ export class PlanStore {
         remove: (id) => api.plans.remove(id),
         normalize,
         merge: (local, remote) => mergeNewer(local, remote),
+        // A plan drafted signed out keeps its courses, under a name none of the account's plans has.
+        adoptDraft: (draft, existing) => {
+          const name = distinctName(
+            draft.name,
+            existing.map((p) => p.name),
+            "Plan",
+          );
+          return { value: name === draft.name ? draft : { ...draft, name }, save: true };
+        },
       },
       deps,
     );
