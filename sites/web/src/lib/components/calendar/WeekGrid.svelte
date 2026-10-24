@@ -197,7 +197,8 @@
   {@const h = blockHeight(block)}
   {@const structured = block.section !== undefined || block.location !== undefined}
   {@const tag = shown.section && block.section ? block.section : null}
-  {@const detail = structured ? (shown.location ? block.location : undefined) : block.detail}
+  {@const room = block.location === "TBA" ? undefined : block.location}
+  {@const detail = structured ? (shown.location ? room : undefined) : block.detail}
   {@const showTime = shown.time && !small && h >= 30}
   {@const inline = view === "day" && !small && h < 50}
   {@const showDetail = !small && Boolean(detail) && (inline ? h >= 30 : h >= (showTime ? 50 : 30))}

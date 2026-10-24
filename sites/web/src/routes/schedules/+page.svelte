@@ -211,6 +211,13 @@
     </RailGroup>
 
     <RailGroup title="Courses">
+      {#if session.status === "signed-out"}
+        <p class="-mt-3 text-body-2 text-muted">
+          <button type="button" class="text-accent-ink underline underline-offset-2" onclick={() => session.signIn()}
+            >Sign in</button
+          > to see rooms and instructors.
+        </p>
+      {/if}
       {#if view && termId && !loadingAccount}
         {#if view.entries.length > 0}
           <ul class="-mx-2.5 flex flex-col gap-1" aria-label="Courses in this schedule">
