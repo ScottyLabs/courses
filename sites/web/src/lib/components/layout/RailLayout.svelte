@@ -19,6 +19,8 @@
     sheetLabel = "Filter",
     backLabel = "Back",
     storageKey,
+    autoCollapse = false,
+    railCollapsed = $bindable(false),
     class: className = "",
   }: {
     /** Heading at the top of the rail (Figma "Filter by", "Schedule"). */
@@ -41,6 +43,13 @@
     backLabel?: string;
     /** Remember "Hide" on this device under this key. */
     storageKey?: string;
+    /**
+     * Collapse the rail for now, such as while a course is open beside the list on a mid-size screen. Show still
+     * opens it; nothing is remembered.
+     */
+    autoCollapse?: boolean;
+    /** Bind to follow whether the rail column is collapsed (false below the desktop breakpoint). */
+    railCollapsed?: boolean;
     class?: string;
   } = $props();
 
@@ -50,14 +59,33 @@
     return hiddenKey !== undefined && readLocal(hiddenKey) === "hidden";
   }
 
+  /** Hidden with Hide, remembered on the device. */
   let collapsed = $state(initiallyCollapsed());
+  /** Shown with Show while `autoCollapse` holds; forgotten when it ends. */
+  let peek = $state(false);
   let sheetOpen = $state(false);
 
   let aside = $state<HTMLElement>();
 
+  const shownCollapsed = $derived(collapsed || (autoCollapse && !peek));
+
+  $effect.pre(() => {
+    if (!autoCollapse) peek = false;
+  });
+
+  $effect.pre(() => {
+    railCollapsed = desktop.current && shownCollapsed;
+  });
+
   async function setCollapsed(next: boolean): Promise<void> {
-    collapsed = next;
-    if (hiddenKey !== undefined) writeLocal(hiddenKey, next ? "hidden" : null);
+    if (next && autoCollapse && peek && !collapsed) {
+      // Hiding a rail shown over the automatic collapse just undoes that Show.
+      peek = false;
+    } else {
+      collapsed = next;
+      peek = !next && autoCollapse;
+      if (hiddenKey !== undefined) writeLocal(hiddenKey, next ? "hidden" : null);
+    }
     // The toggle button is replaced; keep keyboard focus on its counterpart.
     await tick();
     aside?.querySelector<HTMLElement>("[data-rail-toggle]")?.focus();
@@ -88,14 +116,14 @@
     <aside
       bind:this={aside}
       aria-label={title}
-      class="shrink-0 border-r border-line bg-surface {collapsed
+      class="shrink-0 border-r border-line bg-surface {shownCollapsed
         ? 'w-16'
         : 'w-[340px] xl:w-[380px] min-[90rem]:w-[418px]'}"
     >
       <div
         class="scrollbar-thin sticky top-(--header-h) h-[calc(100dvh-var(--header-h))] overflow-y-auto overscroll-contain"
       >
-        {#if collapsed}
+        {#if shownCollapsed}
           <div class="flex flex-col items-center gap-2 pt-5">
             <IconButton
               label="Show {name}"

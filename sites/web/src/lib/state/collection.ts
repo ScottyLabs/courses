@@ -31,6 +31,12 @@ export interface CollectionAdapter<T extends { id: string }> {
   normalize(raw: unknown): T | null;
   /** This device's copy combined with the server's, when the edits that made it aren't known. */
   merge(local: T, remote: T): T;
+  /**
+   * A signed-out draft record the account doesn't have, joining the account's `existing` records on sign-in: the
+   * record to add (renamed so no two share a name) and whether to save it now, or null to leave it out (an empty
+   * default the account already has one of). Without it, drafts are added as they are.
+   */
+  adoptDraft?(value: T, existing: readonly T[]): { value: T; save: boolean } | null;
 }
 
 export class CollectionStore<T extends { id: string }> {
@@ -309,8 +315,8 @@ export class CollectionStore<T extends { id: string }> {
       );
     }
     // Earlier unsaved changes first, then the signed-out draft on top.
-    for (const local of [...pending.items, ...draft.items])
-      this.#importLocal(items, revisions, local);
+    for (const local of pending.items) this.#importLocal(items, revisions, local);
+    for (const local of draft.items) this.#importLocal(items, revisions, local, true);
     for (const id of pending.deleted) {
       if (items[id] === undefined) continue;
       delete items[id];
@@ -324,15 +330,34 @@ export class CollectionStore<T extends { id: string }> {
     if (this.#deletes.size > 0) void this.#sendDeletes(epoch);
   }
 
-  /** Folds a record kept on this device into the account's: new ones are created, known ones merged and saved. */
+  /**
+   * Folds a record kept on this device into the account's: new ones are created, known ones merged and saved. A new
+   * signed-out draft goes through the adapter's `adoptDraft` first.
+   */
   #importLocal(
     items: Record<string, T>,
     revisions: Map<string, number>,
     local: LocalCopy<T>,
+    isDraft = false,
   ): void {
     const id = local.value.id;
     const stored = items[id];
     const revision = revisions.get(id) ?? null;
+    if (isDraft && stored === undefined && this.#a.adoptDraft !== undefined) {
+      const adopted = this.#a.adoptDraft(local.value, Object.values(items));
+      if (adopted === null) return;
+      items[id] = adopted.value;
+      this.#syncs.set(
+        id,
+        this.#sync({
+          value: adopted.value,
+          revision: null,
+          unsaved: adopted.save,
+          editsKnown: true,
+        }),
+      );
+      return;
+    }
     // Based on what the server still has: this device's copy is simply newer. Otherwise merge the two.
     const next =
       stored !== undefined && revision !== local.basedOn
