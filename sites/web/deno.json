@@ -6,8 +6,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && node scripts/check.mjs",
-    "test": "svelte-kit sync && deno test --allow-read --allow-env 'src/lib/**/*.test.ts' 'dev/**/*.test.ts'",
-    "generate-api": "openapi-typescript src/lib/api/openapi.json -o src/lib/api/schema.d.ts"
+    "test": "svelte-kit sync && deno test --allow-read --allow-write --allow-env 'src/lib/**/*.test.ts' 'dev/**/*.test.ts'",
+    "generate-api": "deno run --allow-read --allow-write --allow-env --allow-sys dev/generate-api.ts"
   },
   "compilerOptions": {
     "lib": ["deno.window", "dom", "dom.iterable", "esnext"]
