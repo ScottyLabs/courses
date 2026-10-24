@@ -16,6 +16,7 @@ export { default as InstructorFceBadge } from "./InstructorFceBadge.svelte";
 export { default as LineChart } from "./LineChart.svelte";
 export { default as MemberSignIn } from "./MemberSignIn.svelte";
 export { default as RequisiteExpression } from "./RequisiteExpression.svelte";
+export { default as RequisiteStatus } from "./RequisiteStatus.svelte";
 export { default as RequisiteSummary } from "./RequisiteSummary.svelte";
 export { default as RequisiteTreeNode } from "./RequisiteTreeNode.svelte";
 export { default as RequiresAndUnlocks } from "./RequiresAndUnlocks.svelte";
