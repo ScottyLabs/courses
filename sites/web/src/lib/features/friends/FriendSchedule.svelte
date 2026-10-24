@@ -120,10 +120,12 @@
                 <p class="mt-1 text-body-2 text-muted">No section chosen yet.</p>
               {/if}
               {#each item.parts as part (part.name)}
-                <p class="tabular mt-1 text-body-2 text-ink">
-                  <span class="inline-block w-14 font-medium">{sectionLabel(part)}</span>
-                  {#each part.meetings as meeting, index (index)}{index > 0 ? "; " : ""}{meets(meeting)}{/each}
-                </p>
+                <div class="tabular mt-1 flex gap-3 text-body-2 text-ink">
+                  <span class="w-14 shrink-0 font-medium">{sectionLabel(part)}</span>
+                  <span class="flex min-w-0 flex-col">
+                    {#each part.meetings as meeting, index (index)}<span>{meets(meeting)}</span>{/each}
+                  </span>
+                </div>
               {/each}
               {#if item.entry.passFail}
                 <Chip size="sm" tone="neutral" label="Pass/fail" class="mt-2" />
