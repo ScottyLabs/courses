@@ -87,7 +87,8 @@
       .map((f) => ({
         value: String(f.nodeId),
         // Indented to show the tree in a native select.
-        label: `${"\u00A0\u00A0\u00A0".repeat(f.depth)}${f.name}${f.target ? ` (${f.target})` : ""}`,
+        // The target only when the name doesn't already say it ("Science/Engineering (4 courses)").
+        label: `${"\u00A0\u00A0\u00A0".repeat(f.depth)}${f.name}${f.target && !f.name.includes(f.target) ? ` (${f.target})` : ""}`,
       }));
   });
 
