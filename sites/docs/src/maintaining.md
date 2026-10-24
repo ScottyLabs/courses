@@ -33,12 +33,11 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 | `seo.rs` | Course page head tags, sitemap and robots.txt |
 | `account.rs` | Account deletion |
 | `tests.rs` | Router-level tests: ownership, revisions, validation, audiences, syllabi, SEO, friends, deletion, limits |
-| `sites/web/src/lib/contracts.ts` | Browser wire types and same-origin HTTP client |
-| `data-client.ts` | API-first reads, worker handoff, session rechecks and fallback |
-| `catalog.ts` | Download validation and identity-scoped OPFS cache |
-| `local-catalog.ts`, `sqlite.worker.ts`, `sqlite-catalog.ts` | Worker lifecycle, SQLite runtime and parameterized queries |
-| `components/CourseHistory.svelte`, `components/Friends.svelte` | Personal-history and consent UI |
-| `routes/+page.svelte` | Main navigation, catalog, schedules and requirement reference UI |
+| `sites/web/src/lib/core/` | Courseweave's UI-free modules (audits, requisites, plans, search, schedules, imports) and their tests |
+| `sites/web/src/lib/api/` | Same-origin API client, errors and the types generated from `openapi.json` |
+| `sites/web/src/lib/data/` | Catalog document loading and caching, the session, stale-deploy reloads |
+| `sites/web/src/lib/state/` | Server-backed stores for schedules, plans, the record, saved courses and preferences; drafts |
+| `sites/web/dev/` | The in-memory mock API for development and tests; the API type generator |
 | `scripts/import_catalog.py` | Local source normalization and independently sanitized database generation |
 | `scripts/courseweave.py` | Explicit S27 snapshot conversion and source checks |
 | `scripts/scrape_programs.py` | Public CMU catalog requirement discovery and retrieval |
@@ -46,19 +45,18 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 
 ## Request lifecycle
 
-1. The page requests identity and terms. An anonymous identity result starts a public database warmup; a verified CMU identity starts a member warmup.
-1. Search uses JSON immediately. Download and WASM initialization happen independently in a worker.
-1. After checksum and schema validation, queries covered by the browser database run locally. Uncovered historical terms and programs continue through the API.
-1. Failure to initialize or query locally returns the client to the API path. Personal writes always use the server.
-1. An account change disposes the old worker. Logout clears the browser catalog cache. After 60 seconds of local use, identity is checked again before another local read.
+The website loads catalog documents from `GET /api/catalog/<name>` and runs Courseweave's code over them in the
+browser; personal data is read and written through the JSON routes with revisions. [Website data and
+state](frontend.md) describes both, the stores and the development mock.
 
-Authentication gates **bytes**, not just UI elements. Public SQLite is generated independently and does not contain the member fields even in deleted/free pages. Member data already downloaded by a previously authorized browser cannot be remotely retracted.
+Authentication gates **bytes**, not just UI elements: the server picks a document's public or member version by the
+caller's session, and member data already downloaded by a previously authorized browser cannot be remotely retracted.
 
 ## Changing the code
 
 Keep SQL parameterized. Keep ownership in each mutation's SQL predicate, even when the UI has already checked it. Never infer CMU membership from project groups. When adding a protected field, update both the JSON/public export policy and `verify_catalog.py`.
 
-When changing catalog queries, update both `backend/catalog.rs` and `sqlite-catalog.ts`. Add coverage metadata only when the browser export actually includes that dataset/term. The fallback depends on honest coverage declarations.
+When a catalog document's format changes, update its types in `sites/web/src/lib/core` and the loaders in `sites/web/src/lib/data/catalog.ts` with it. When a personal route changes, regenerate `openapi.json` and the website's types (`deno task generate-api`), and update the mock API in `sites/web/dev`.
 
 Personal schema changes must preserve existing records. Current additions are `CREATE TABLE IF NOT EXISTS`; `PRAGMA user_version` identifies the schema. Future column changes need a version-gated migration, a test opening a previous schema, and a backup/rollback plan. Never run a catalog importer against the personal database.
 
@@ -74,10 +72,7 @@ cd sites/web
 deno task check
 deno task test
 deno task build
-deno task test:browser
 ```
-
-Open `http://127.0.0.1:5176/tests/sqlite-browser.html` for the real WASM worker smoke test. Its fixture server exposes only the **public** database. It must report API warmup, SQLite handoff, field exclusion and disposal as PASS.
 
 Use the pinned TypeScript/Svelte checker versions. The previous `@ts-nocheck` on the main page hid an incompatible checker setup; it has been removed. Do not restore it to silence type errors.
 
