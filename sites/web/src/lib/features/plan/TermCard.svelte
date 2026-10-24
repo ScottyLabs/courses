@@ -198,8 +198,7 @@
   }
 </script>
 
-{#snippet heading()}
-  <h3 id={headingId} class="truncate text-heading-6 text-strong">{termLabel(term)}</h3>
+{#snippet chips()}
   {#if tag}
     <span class="shrink-0 rounded-full bg-paper px-2 py-0.5 text-label-md text-ink">{tag}</span>
   {/if}
@@ -227,23 +226,28 @@
       : 'border-pressed'} {phase === 'past' ? 'bg-surface/70' : 'bg-surface'}"
 >
   <header class="flex items-center gap-2 border-b border-line py-2 pr-2 pl-4">
-    {#if page.compact}
-      <button
-        type="button"
-        onclick={() => page.toggleTerm(term)}
-        aria-expanded={open}
-        aria-controls={bodyId}
-        class="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-tag text-left"
-      >
-        <ChevronDown
-          aria-hidden="true"
-          class="size-4 shrink-0 text-muted transition-transform {open ? '' : '-rotate-90'}"
-        />
-        {@render heading()}
-      </button>
-    {:else}
-      <div class="flex min-h-9 min-w-0 flex-1 items-center gap-2">{@render heading()}</div>
-    {/if}
+    <div class="flex min-h-10 min-w-0 flex-1 items-center gap-2 md:min-h-9">
+      <h3 id={headingId} class="min-w-0 truncate text-heading-6 text-strong">
+        {#if page.compact}
+          <button
+            type="button"
+            onclick={() => page.toggleTerm(term)}
+            aria-expanded={open}
+            aria-controls={bodyId}
+            class="-ml-1 flex min-h-10 max-w-full items-center gap-2 rounded-tag pl-1 text-left"
+          >
+            <ChevronDown
+              aria-hidden="true"
+              class="size-4 shrink-0 text-muted transition-transform {open ? '' : '-rotate-90'}"
+            />
+            <span class="truncate">{termLabel(term)}</span>
+          </button>
+        {:else}
+          {termLabel(term)}
+        {/if}
+      </h3>
+      {@render chips()}
+    </div>
     {#if syncedSchedule}
       <button
         type="button"
