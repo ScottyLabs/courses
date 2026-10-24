@@ -20,7 +20,7 @@
   // More appear as the end of the list comes into view.
   let limit = $state(PAGE.cards);
   $effect(() => {
-    void [scope.query, scope.dept, scope.sort, scope.savedOnly, scope.termParam, scope.view];
+    void [scope.query, scope.depts, scope.sort, scope.savedOnly, scope.termParam, scope.view];
     limit = untrack(() => PAGE[scope.view]);
   });
   const visible = $derived(scope.results.slice(0, limit));

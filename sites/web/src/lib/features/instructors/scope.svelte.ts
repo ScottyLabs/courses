@@ -40,7 +40,8 @@ export class InstructorsScope {
   readonly #params = $derived(page.url.searchParams);
   readonly termParam = $derived(this.#params.get("term"));
   readonly allMode = $derived(isAllSemesters(this.termParam));
-  readonly dept = $derived(this.#params.get("dept") ?? "");
+  /** Departments to show, as the Courses page's filter: `dept=CS,MSC`. */
+  readonly depts = $derived((this.#params.get("dept") ?? "").split(",").filter((d) => d !== ""));
   readonly sort = $derived<Sort>(this.#params.get("sort") === "sections" ? "sections" : "name");
   readonly savedOnly = $derived(this.#params.get("saved") === "1");
   readonly #urlQuery = $derived(this.#params.get("q") ?? "");
@@ -121,7 +122,7 @@ export class InstructorsScope {
     const savedIds = new Set(saved.ids);
     const scored: { doc: ListedDoc; score: number }[] = [];
     for (const doc of this.docs) {
-      if (this.dept !== "" && !doc.inst.depts.includes(this.dept)) continue;
+      if (this.depts.length > 0 && !doc.inst.depts.some((d) => this.depts.includes(d))) continue;
       if (this.savedOnly && !doc.inst.courseIds.some((id) => savedIds.has(id))) continue;
       const score = scoreInstructor(doc, q);
       if (score > 0) scored.push({ doc, score });
@@ -140,7 +141,7 @@ export class InstructorsScope {
   /** Letter headings in the rows: sorted by name, without a query. */
   readonly grouped = $derived(this.sort === "name" && this.query.trim() === "");
   readonly filterCount = $derived(
-    (this.dept === "" ? 0 : 1) + (this.savedOnly ? 1 : 0) + (this.sort === "sections" ? 1 : 0),
+    (this.depts.length > 0 ? 1 : 0) + (this.savedOnly ? 1 : 0) + (this.sort === "sections" ? 1 : 0),
   );
   readonly countText = $derived(
     this.results.length === this.total
