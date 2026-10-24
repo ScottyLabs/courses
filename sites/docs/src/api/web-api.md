@@ -154,6 +154,7 @@ within the write limit below.
 | `POST /api/friends/{id}/accept` | Write | | 204 |
 | `DELETE /api/friends/{id}` | Write | | 204 |
 | `POST /api/friends/invites` | Write | | `{ token, url, expiresAt }` |
+| `GET /api/friends/invites/{token}` | Member | | `InviteInfo`: the sender, for the invite page |
 | `POST /api/friends/invites/{token}/redeem` | Write | | `Friend` (accepted) |
 | `DELETE /api/friends/invites/{token}` | Write | | 204 |
 | `GET /api/friends/sharing` | Member | | `{ shareCourses, shareSchedules }` |
@@ -288,7 +289,10 @@ A database newer than the build refuses to open.
 
 - A request names an Andrew ID of someone who has signed in once (`POST /api/friends`), or goes through an invite link
   (`POST /api/friends/invites`): single use, valid seven days, replacing the caller's previous link, with
-  `url` `APP_URL/invite/<token>`. Redeeming an invite makes the two friends at once.
+  `url` `APP_URL/invite/<token>`. Redeeming an invite makes the two friends at once. Before that,
+  `GET /api/friends/invites/{token}` tells a member who sent it (`name`, `andrewId`), when it expires and whether they
+  made it themselves (`own`), without using it up; an expired, used or unknown token is 404
+  ([ADR 38](../decisions/0038-show-an-invites-sender-before-it-is-accepted.md)).
 - Only the recipient accepts a request. Either person can decline, cancel or remove (`DELETE /api/friends/{id}`), and
   access ends immediately.
 - Friendship alone shares nothing. Each student chooses, with `PUT /api/friends/sharing`, whether accepted friends see

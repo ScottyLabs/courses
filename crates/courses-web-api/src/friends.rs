@@ -90,6 +90,19 @@ pub struct Invite {
     pub expires_at: i64,
 }
 
+/// Who made an invite, for the invite page before the invite is accepted.
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct InviteInfo {
+    /// The name of the student who made the invite.
+    pub name: String,
+    pub andrew_id: String,
+    /// Milliseconds since the epoch.
+    pub expires_at: i64,
+    /// The caller made this invite.
+    pub own: bool,
+}
+
 #[derive(Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Sharing {
@@ -333,6 +346,43 @@ pub async fn invite(
         token,
         expires_at: expires.timestamp_millis(),
     }))
+}
+
+/// Who made an invite, so the invite page can say who it's from. Seeing it doesn't use the invite up.
+#[utoipa::path(
+    get,
+    path = "/api/friends/invites/{token}",
+    tag = "friends",
+    params(("token" = String, Path)),
+    responses((status = OK, body = InviteInfo), (status = NOT_FOUND, body = ErrorBody), (status = UNAUTHORIZED, body = ErrorBody))
+)]
+pub async fn invite_info(
+    user: CurrentUser,
+    Extension(state): Extension<AppState>,
+    Path(token): Path<String>,
+) -> ApiResult<Json<InviteInfo>> {
+    state
+        .db
+        .run(move |db| {
+            let found: Option<(String, String, i64, String)> = db
+                .query_row(
+                    "SELECT p.name, p.andrew_id, i.expires_at, i.owner FROM friend_invites i
+                     JOIN profiles p ON p.subject = i.owner
+                     WHERE i.token = ? AND i.expires_at > ?",
+                    params![token, Utc::now().timestamp()],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+                )
+                .optional()?;
+            let (name, andrew_id, expires_at, owner) =
+                found.ok_or_else(|| ApiError::not_found("This invite expired or was used."))?;
+            Ok(Json(InviteInfo {
+                name,
+                andrew_id,
+                expires_at: expires_at * 1000,
+                own: owner == user.subject,
+            }))
+        })
+        .await
 }
 
 /// Accepts an invite: the two become friends at once and the link is used up.

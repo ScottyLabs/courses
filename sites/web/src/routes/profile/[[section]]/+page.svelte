@@ -4,7 +4,7 @@
   import { getSession } from "$lib/components/shell/session";
   import SignInPrompt from "$lib/components/shell/SignInPrompt.svelte";
   import Title from "$lib/components/shell/Title.svelte";
-  import FriendsSection from "$lib/features/profile/FriendsSection.svelte";
+  import FriendsSection, { friendsActions } from "$lib/features/profile/FriendsSection.svelte";
   import SavedSection from "$lib/features/profile/SavedSection.svelte";
   import SchedulesSection from "$lib/features/profile/SchedulesSection.svelte";
   import SettingsSection from "$lib/features/profile/SettingsSection.svelte";
@@ -33,6 +33,7 @@
   name={session.status === "signed-in" ? session.name : undefined}
   detail={session.status === "signed-in" ? session.detail : undefined}
   band={data.section !== "friends"}
+  actions={data.section === "friends" && session.status === "signed-in" ? friendsActions : undefined}
 >
   {#if data.section === "settings"}
     <SettingsSection />

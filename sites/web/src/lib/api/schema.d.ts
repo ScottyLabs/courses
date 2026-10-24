@@ -171,7 +171,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Who made an invite, so the invite page can say who it's from. Seeing it doesn't use the invite up. */
+    get: operations["invite_info"];
     put?: never;
     post?: never;
     /** Revokes one of the caller's invites. */
@@ -671,6 +672,19 @@ export interface components {
       token: string;
       /** @description The website's page that redeems it. */
       url: string;
+    };
+    /** @description Who made an invite, for the invite page before the invite is accepted. */
+    InviteInfo: {
+      andrewId: string;
+      /**
+       * Format: int64
+       * @description Milliseconds since the epoch.
+       */
+      expiresAt: number;
+      /** @description The name of the student who made the invite. */
+      name: string;
+      /** @description The caller made this invite. */
+      own: boolean;
     };
     /** @enum {string} */
     Level: "undergraduate" | "graduate";
@@ -1354,6 +1368,43 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Invite"];
+        };
+      };
+    };
+  };
+  invite_info: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InviteInfo"];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorBody"];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorBody"];
         };
       };
     };
