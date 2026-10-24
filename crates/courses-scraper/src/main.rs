@@ -1,7 +1,8 @@
 //! CMU course catalog scraper. Pulls course info, sections, program audits
 //! and syllabi from Stellic and Canvas into `exported/`, driven by FCE and
-//! Schedule of Classes discovery feeds. The companion `courses-index` crate
-//! reads this output to build the catalog.
+//! Schedule of Classes discovery feeds, and captures the public Schedule of
+//! Classes (`--mode soc`). The companion `courses-index` crate reads this
+//! output to build the catalog.
 //!
 //! `sites/docs-migrating-wip` carries per-source reference material covering
 //! API shapes, data conventions, and operator guidance.
@@ -10,6 +11,7 @@ mod canvas;
 mod discovery;
 mod ldap;
 mod requirements;
+mod soc;
 mod stellic;
 mod syllabi;
 
@@ -34,6 +36,8 @@ enum Mode {
     Programs,
     Syllabi,
     Ldap,
+    /// The public Schedule of Classes, into `<export_root>/soc/`. Needs no credentials.
+    Soc,
     All,
 }
 
@@ -66,6 +70,30 @@ struct Args {
 
     #[arg(long, env = "INCREMENTAL")]
     incremental: bool,
+
+    /// `--mode soc`: the terms to capture (repeat or separate with commas); default every term the SOC offers.
+    #[arg(long, value_delimiter = ',')]
+    soc_terms: Vec<String>,
+
+    /// `--mode soc`: which courses' detail pages to keep for lecture and section grouping.
+    #[arg(long, value_enum, default_value_t = soc::DetailsMode::Ambiguous)]
+    soc_details: soc::DetailsMode,
+
+    /// `--mode soc`: which courses' reservations to read; `rotate` reads unread courses plus a slice of the rest.
+    #[arg(long, value_enum, default_value_t = soc::ExtrasMode::Rotate)]
+    soc_extras: soc::ExtrasMode,
+
+    /// `--mode soc`: also refresh `soc/details.json`, the course detail pages the catalog reads.
+    #[arg(long)]
+    soc_catalog: bool,
+
+    /// `--mode soc`: only this department (such as `CS`), for trying the scraper out.
+    #[arg(long)]
+    soc_dept: Option<String>,
+
+    /// `--mode soc`: the pause after each request.
+    #[arg(long, default_value_t = 150)]
+    soc_delay_ms: u64,
 }
 
 fn main() -> Result<()> {
@@ -113,6 +141,19 @@ fn main() -> Result<()> {
     let ldap_password = std::env::var("CMU_LDAP_PASSWORD")
         .ok()
         .filter(|s| !s.is_empty());
+
+    // The public Schedule of Classes needs no credentials.
+    if args.mode == Mode::Soc {
+        return soc::run(&soc::Options {
+            export_root: args.export_root.clone(),
+            terms: args.soc_terms.clone(),
+            details: args.soc_details,
+            extras: args.soc_extras,
+            catalog: args.soc_catalog,
+            dept: args.soc_dept.clone(),
+            delay: std::time::Duration::from_millis(args.soc_delay_ms),
+        });
+    }
 
     // Directory enrichment reads existing scrape output and talks only
     // to LDAP, no Stellic session needed
@@ -168,7 +209,7 @@ fn main() -> Result<()> {
         Mode::Syllabi => {
             scrape_syllabi(canvas.as_ref().unwrap(), &args, &syllabi_dir, &pool)?;
         }
-        Mode::Ldap => unreachable!("dispatched before Stellic login"),
+        Mode::Ldap | Mode::Soc => unreachable!("dispatched before Stellic login"),
         Mode::All => {
             let c = canvas.as_ref().unwrap();
             let ((cr, pr), sr) = pool.install(|| {

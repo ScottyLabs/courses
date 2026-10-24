@@ -7,8 +7,9 @@
 //!   cargo test --release -p courses-index --test courseweave_parity -- --ignored --nocapture
 //! ```
 //!
-//! `FCE_DATA_DIR` overrides the directory holding `fces.csv` (the repository's `data/`). Documents are compared as
-//! parsed JSON, so key order and number spelling don't matter. Courseweave's wall-clock `generatedAt` is ignored.
+//! `FCE_DATA_DIR` overrides the directory holding `fces.csv` (the repository's `data/`). FCE and program documents
+//! are compared as parsed JSON, so key order and number spelling don't matter. Semester and catalog documents are
+//! compared byte for byte. Courseweave's wall-clock `generatedAt` is ignored.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -178,6 +179,81 @@ fn program_documents_match_courseweave() {
         Some(courseweave.join(format!("{}.json", name.strip_prefix("programs/")?)))
     });
     report("programs", &docs, &differences);
+    assert!(differences.is_empty());
+}
+
+/// `"generatedAt":"<anything>"` with the value blanked, since Courseweave's comes from the clock.
+fn without_generated_at(json: &[u8]) -> Vec<u8> {
+    let text = String::from_utf8_lossy(json);
+    let re = regex::Regex::new(r#""generatedAt":"[^"]*""#).unwrap();
+    re.replace_all(&text, r#""generatedAt":"""#)
+        .into_owned()
+        .into_bytes()
+}
+
+#[test]
+#[ignore = "needs Courseweave's built files and the CMU-internal inputs"]
+fn semester_documents_match_courseweave() {
+    let courseweave = env_dir("COURSEWEAVE_DATA");
+    let exported = env_dir("EXPORTED_ROOT");
+    let out = tempfile::tempdir().unwrap();
+    let start = Instant::now();
+    courses_index::pipeline::build(&courses_index::pipeline::Options {
+        exported,
+        data: Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data"),
+        output: out.path().join("catalog.sqlite"),
+        terms: Vec::new(),
+        stellic_user: None,
+        dump: Some(out.path().join("dump")),
+        source_date_epoch: None,
+    })
+    .unwrap();
+    println!("built in {:.2?}", start.elapsed());
+
+    // Courseweave's file for each of our documents; the member version is what Courseweave serves.
+    let ours = out.path().join("dump/member");
+    let mut pairs = vec![
+        ("terms".to_owned(), courseweave.join("terms.json")),
+        ("offerings".to_owned(), courseweave.join("offerings.json")),
+        ("teaching".to_owned(), courseweave.join("teaching.json")),
+        (
+            "catalog/index".to_owned(),
+            courseweave.join("catalog/index.json"),
+        ),
+    ];
+    for t in file_stems(&ours.join("term")) {
+        pairs.push((format!("term/{t}"), courseweave.join(format!("{t}.json"))));
+    }
+    for dir in ["catalog/details", "syllabi"] {
+        let theirs = file_stems(&courseweave.join(dir));
+        assert_eq!(file_stems(&ours.join(dir)), theirs, "{dir}");
+        for n in theirs {
+            pairs.push((
+                format!("{dir}/{n}"),
+                courseweave.join(format!("{dir}/{n}.json")),
+            ));
+        }
+    }
+    let mut differences = Vec::new();
+    for (name, theirs) in &pairs {
+        let a = std::fs::read(ours.join(format!("{name}.json"))).unwrap();
+        let b = std::fs::read(theirs).unwrap();
+        if without_generated_at(&a) != without_generated_at(&b) {
+            let a: Value = serde_json::from_slice(&a).unwrap();
+            differences.push(
+                first_difference(name, &a, &read_json(theirs))
+                    .unwrap_or_else(|| format!("{name}: same JSON, different bytes")),
+            );
+        }
+    }
+    println!(
+        "semesters and catalog: {} documents compared, {} differ from Courseweave",
+        pairs.len(),
+        differences.len()
+    );
+    for d in differences.iter().take(20) {
+        println!("  {d}");
+    }
     assert!(differences.is_empty());
 }
 

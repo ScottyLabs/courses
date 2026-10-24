@@ -1,4 +1,4 @@
-name: Scrape and Publish Catalog
+name: Scrape
 on:
   workflow_dispatch:
     inputs:
@@ -11,11 +11,12 @@ on:
           - programs
           - syllabi
           - ldap
+          - soc
           - all
         default: all
       cookie_header:
-        description: "Stellic `Cookie:` header value"
-        required: true
+        description: "Stellic `Cookie:` header value (not needed for soc)"
+        required: false
         type: string
       canvas_token:
         description: "Canvas API token (required for syllabi, all)"
@@ -38,14 +39,8 @@ jobs:
       - name: Scrape
         run: devenv shell -- cargo run --release -p courses-scraper -- --mode ${{ inputs.mode }}
 
-      - name: Build catalog
-        run: devenv shell -- cargo run --release -p courses-index -- --write-catalog catalog.bin
-
-      - name: Upload to garage
-        run: |
-          devenv shell -- cdn-s3 cp catalog.bin s3://cdn-courses/catalog.bin \
-            --content-type application/octet-stream \
-            --content-encoding gzip
+      # The catalog is built from the whole exported/ tree, not one run's output, and published encrypted with
+      # scripts/publish_catalog.py: see sites/docs/src/api/data.md.
 
       - name: Upload syllabi to garage
         run: |

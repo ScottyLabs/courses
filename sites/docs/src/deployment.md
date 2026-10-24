@@ -48,9 +48,9 @@ Syllabus files are served only to signed-in CMU users ([ADR 24](decisions/0024-s
 
 ## Release procedure
 
-1. Build a new catalog with `courses-index build`. Review its data report and source dates.
+1. Build the catalog with `courses-index build` ([catalog data](api/data.md)). Review the printed counts and source dates.
 
-1. Run backend, frontend and catalog checks described in the [maintainer guide](maintaining.md).
+1. Run backend, frontend, builder and browser checks described in the [maintainer guide](maintaining.md).
 
 1. With a dedicated encryption key provisioned, install publisher dependencies in a virtual environment: `pip install -r scripts/publish-requirements.txt`.
 

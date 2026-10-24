@@ -1,5 +1,9 @@
 # Source data audit - October 23, 2026
 
+This audit describes the inputs of the Python importer, which `courses-index build` replaced
+([decision 15](../decisions/0015-build-the-catalog-in-rust.md)). The current inputs and refresh procedure are in
+[catalog data](data.md).
+
 The entire supplied `/Users/etashj/Downloads/data` directory was copied into
 `data/raw`. **90,778 non-DS_Store files, 1,718,136,834 bytes** were checked against
 a SHA-256 inventory with zero mismatches. The original Downloads folder is
@@ -64,9 +68,5 @@ Imported the public [CourseWeave S27 snapshot](https://courseweave.jay3332.tech/
 
 Original JSON, semester metadata, retrieval time and SHA-256 are preserved in ignored `data/raw/courseweave/`. The importer automatically includes that snapshot when present; `--courseweave PATH` selects another S27 snapshot. It validates semester, unique course/section IDs, minute-of-day times and Monday-based weekday indices. Missing times remain TBA. Public catalogs still omit instructors, FCE and locations; member catalogs preserve section instructors and rooms. No Stellic credentials are sent to CourseWeave.
 
-Rebuild and verify:
-
-```sh
-python3 scripts/import_catalog.py data/raw
-python3 scripts/verify_catalog.py
-```
+The S27 schedule CSV and Stellic sections behind that snapshot are now inputs of `courses-index build` directly
+(`exported/schedules/S27.csv`, `exported/stellic-terms/S27`).
