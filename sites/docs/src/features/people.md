@@ -33,7 +33,8 @@ device; rows have letter headings when sorted by name.
 
 Cards follow the Figma: the name and departments, three stat boxes (workload, teaching rate, course rate) and the
 FCE rows the aggregate counts. A card loads its FCE rows when it comes near the viewport, from the `fce/courses/<NN>`
-documents of the courses the FCE index lists for that person, so a long list only downloads what is seen.
+documents of the courses the FCE index lists for that person, so a long list only downloads what is seen
+([ADR 39](../decisions/0039-build-instructor-fce-rows-in-the-browser.md)).
 
 ### Aggregate FCEs
 
@@ -47,7 +48,7 @@ The settings are a device convenience in localStorage (`cmucourses:fce-aggregate
 - The Figma card: aggregate data in the well, then every evaluated section in the window, or every semester with
   "Every semester" on; semester, course, section, workload, ratings, respondents and response rate.
 - In a semester: Courseweave's teaching table (course, title, section, meeting times, rooms, co-instructors), class
-  hours a week and "Teaches with". The week calendar comes with the schedules page's shared `WeekGrid`.
+  hours a week and "Teaches with". Courseweave's weekly timetable waits for the shared `WeekGrid`.
 - In all semesters: what they taught each semester, linking to that semester's view.
 - Evaluation history: recent teaching rating, courses evaluated, teaching rating by semester and a per-course table.
 
