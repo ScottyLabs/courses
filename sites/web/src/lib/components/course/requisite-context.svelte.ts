@@ -13,10 +13,12 @@ export type ChipStatusFn = (courseId: string) => ChipStatus | undefined;
 
 const CHIP_STATUS = { met: "satisfied", planned: "planned", missing: "unsatisfied" } as const;
 
+// With nothing on record, "missing" most likely means "not entered yet", so those chips stay neutral.
 function chipStatus(fn: (id: string) => "met" | "planned" | "missing" | undefined): ChipStatusFn {
   return (id) => {
     const status = fn(id);
-    return status === undefined ? status : CHIP_STATUS[status];
+    const neutral = status === "missing" && record.isEmpty;
+    return status === undefined || neutral ? undefined : CHIP_STATUS[status];
   };
 }
 
