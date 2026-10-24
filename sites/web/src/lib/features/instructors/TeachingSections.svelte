@@ -1,12 +1,17 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
+  import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
+  import type { TbaItem } from "$lib/components/calendar/types";
   import StatBox from "$lib/components/ui/StatBox.svelte";
   import { NO_VALUE } from "$lib/components/instructor/format";
-  import { isUnscheduled, sectionLabel } from "$lib/core/blocks";
+  import { isUnscheduled, sectionBlocks, sectionLabel } from "$lib/core/blocks";
+  import { hashColor } from "$lib/core/colors";
   import { instructorSlug, type Instructor, type Term } from "$lib/core/data";
   import { coInstructors, taughtSections, weeklyHours } from "$lib/core/instructors/instructorData";
   import { coursePath, instructorPath } from "$lib/core/routes";
   import { formatDays, formatLocation, formatTimeRange, formatUnits } from "$lib/core/time";
   import type { Meeting } from "$lib/core/types";
+  import type { CalendarBlock } from "$lib/core/week-grid";
 
   let { inst, term }: { inst: Instructor; term: Term } = $props();
 
@@ -16,6 +21,27 @@
   const partners = $derived(coInstructors(inst, taught));
   const scheduled = $derived(taught.filter((t) => !isUnscheduled(t.section)).length);
   const slugByName = $derived(new Map(term.instructors.map((i) => [i.name, i.slug])));
+  // Courseweave's weekly timetable: every section they teach, a color per course; a class opens its course.
+  const blocks = $derived(
+    taught.flatMap(({ course, section }): CalendarBlock[] =>
+      sectionBlocks(course, section, hashColor(course.id), {
+        onClick: () => void goto(coursePath(course.id, termId)),
+        tooltip: `${course.code} ${section.title ?? course.title}, ${sectionLabel(section)}. Select to open the course.`,
+      }),
+    ),
+  );
+  const tba = $derived(
+    taught
+      .filter(({ section }) => isUnscheduled(section))
+      .map(({ course, section }): TbaItem => ({
+        key: `${course.id}-${section.name}`,
+        label: course.code,
+        title: section.title ?? course.title,
+        detail: sectionLabel(section),
+        color: hashColor(course.id),
+        href: coursePath(course.id, termId),
+      })),
+  );
 
   function partnerHref(name: string): string {
     return instructorPath(slugByName.get(name) ?? instructorSlug(name), termId);
@@ -130,8 +156,23 @@
       </table>
     </div>
   </div>
+</section>
+
+<section aria-labelledby="timetable-heading" class="flex flex-col gap-2">
+  <h2 id="timetable-heading" class="text-heading-5 text-strong">Weekly timetable</h2>
   {#if scheduled === 0}
     <p class="text-body-2 text-muted">None of these sections has a scheduled meeting time yet.</p>
+  {:else}
+    <p class="text-body-2 text-muted">Select a class to open the course.</p>
+    <div class="rounded-card border border-pressed bg-surface p-2 sm:p-3">
+      <WeekGrid
+        {blocks}
+        {tba}
+        hourHeight={44}
+        label="{inst.name}'s classes in {term.meta.name}"
+        tbaDescription=""
+      />
+    </div>
   {/if}
 </section>
 
