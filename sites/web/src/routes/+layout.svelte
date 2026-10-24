@@ -10,6 +10,7 @@
   import { shellSession } from "$lib/state/shell-session";
   import { applyTheme, theme } from "$lib/components/shell/theme.svelte";
   import Toaster from "$lib/components/ui/Toaster.svelte";
+  import RecordOnboarding from "$lib/features/record/RecordOnboarding.svelte";
 
   let { children }: { children: Snippet } = $props();
 
@@ -54,3 +55,4 @@
   <AppFooter />
 </div>
 <Toaster />
+<RecordOnboarding />
