@@ -1,9 +1,14 @@
 // Grade choices for courses taken, and what a grade means for QPA (Courseweave's features/record/TakenSection.tsx).
-import type { CourseInfo } from "$lib/core/record/hooks";
-import { isFactorableGrade } from "$lib/core/requisites";
-import type { Option } from "$lib/components/ui/types";
+import { isFactorableGrade } from "../requisites.ts";
+import type { CourseInfo } from "./hooks.ts";
 
-export const GRADE_OPTIONS: Option[] = [
+/** A choice in a grade select. */
+export interface GradeOption {
+  value: string;
+  label: string;
+}
+
+export const GRADE_OPTIONS: GradeOption[] = [
   { value: "", label: "No grade yet" },
   ...["A", "B", "C", "D"].map((g) => ({ value: g, label: g })),
   { value: "R", label: "R (failed)" },
@@ -28,7 +33,7 @@ export function gradeNote(grade: string | undefined, info: CourseInfo): string |
 }
 
 /** Grade options that keep an imported grade the list doesn't have (such as "AD") selectable. */
-export function gradeOptionsWith(grade: string | undefined): Option[] {
+export function gradeOptionsWith(grade: string | undefined): GradeOption[] {
   if (grade === undefined || grade === "" || GRADE_OPTIONS.some((o) => o.value === grade))
     return GRADE_OPTIONS;
   return [...GRADE_OPTIONS, { value: grade, label: grade }];

@@ -2,7 +2,8 @@
   // Profile "Courses Taken": the academic record. Courses taken, exam and transfer credit, placements and overrides,
   // imported from SIO or Stellic or added by hand; prerequisite checks and the degree plan read it. Courseweave's
   // record page (features/record/RecordPage.tsx), with courses shown as the Figma's Courses Taken page shows them.
-  import { record } from "$lib/state";
+  import Spinner from "$lib/components/ui/Spinner.svelte";
+  import { personal, record } from "$lib/state";
   import ExamCredit from "$lib/features/record/ExamCredit.svelte";
   import ProfileTotals from "$lib/features/record/ProfileTotals.svelte";
   import RecordActions from "$lib/features/record/RecordActions.svelte";
@@ -19,6 +20,9 @@
   const semester = $derived(data.term?.meta.name);
 </script>
 
+{#if personal.mode === "loading"}
+  <div class="flex justify-center py-16"><Spinner size="lg" label="Loading your record" /></div>
+{:else}
 <div class="flex flex-col gap-10" aria-label={title} role="region">
   <div class="flex flex-col gap-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -43,3 +47,4 @@
     Exam credit charts are from the University Registrar.
   </p>
 </div>
+{/if}

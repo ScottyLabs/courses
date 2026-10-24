@@ -109,7 +109,7 @@
           <span class="ml-1.5 font-normal text-ink">{entry.label ?? info.title ?? "Not in the catalog"}</span>
         </a>
       </h3>
-      <IconButton {href} label="Open {info.code}" icon={SquareArrowOutUpRight} class="-mt-2 -mr-2" />
+      <IconButton {href} label="Open {info.code}" icon={SquareArrowOutUpRight} class="-my-2 -mr-2" />
     </div>
     {#if facts.dept}
       <p class="-mt-1 text-body-2 text-muted">{departmentLabel(departmentKey(id, facts))}</p>

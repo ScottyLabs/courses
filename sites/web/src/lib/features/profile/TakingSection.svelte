@@ -25,7 +25,8 @@
   import { entryUnits } from "$lib/core/state/record";
   import { buildScheduleView } from "$lib/core/state/schedule-view";
   import { catalog, resource } from "$lib/data";
-  import { record, schedules } from "$lib/state";
+  import Spinner from "$lib/components/ui/Spinner.svelte";
+  import { personal, record, schedules } from "$lib/state";
   import { recordData } from "$lib/features/record/record-data.svelte";
   import SioImportButton from "$lib/features/record/SioImportButton.svelte";
   import TakingCard from "$lib/features/record/TakingCard.svelte";
@@ -74,6 +75,9 @@
   }
 </script>
 
+{#if personal.mode === "loading"}
+  <div class="flex justify-center py-16"><Spinner size="lg" label="Loading your record" /></div>
+{:else}
 <div class="flex flex-col gap-6" aria-label={title} role="region">
   {#if taking.length > 0}
     <div class="flex flex-wrap items-end gap-3">
@@ -165,3 +169,4 @@
     </p>
   {/if}
 </div>
+{/if}

@@ -26,7 +26,7 @@
   import { entryUnits } from "$lib/core/state/record";
   import { record } from "$lib/state";
   import CoursePicker from "./CoursePicker.svelte";
-  import { GRADE_OPTIONS } from "./grades";
+  import { GRADE_OPTIONS } from "$lib/core/record/grades";
   import type { RecordData } from "./record-data.svelte";
   import RecordSection from "./RecordSection.svelte";
   import TakenCard from "./TakenCard.svelte";

@@ -7,7 +7,7 @@
   import { coursePath } from "$lib/core/routes";
   import { entryUnits, type RecordEntry } from "$lib/core/state/record";
   import { record } from "$lib/state";
-  import { gradeNote, gradeOptionsWith } from "./grades";
+  import { gradeNote, gradeOptionsWith } from "$lib/core/record/grades";
   import type { RecordData } from "./record-data.svelte";
 
   let { entry, data }: { entry: RecordEntry; data: RecordData } = $props();
