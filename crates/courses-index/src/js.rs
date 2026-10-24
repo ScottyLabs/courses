@@ -3,13 +3,16 @@
 //! ([`crate::fce::js`]); this module adds object key order, numeric collation and dates.
 
 use std::cmp::Ordering;
+use std::fmt;
+use std::marker::PhantomData;
 use std::sync::LazyLock;
 
 use icu_collator::options::CollatorOptions;
 use icu_collator::preferences::CollationNumericOrdering;
 use icu_collator::{Collator, CollatorBorrowed, CollatorPreferences};
-use serde::Serialize;
+use serde::de::{Deserializer, MapAccess, Visitor};
 use serde::ser::{SerializeMap, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::fce::js::Num;
 pub use crate::fce::js::{
@@ -85,6 +88,33 @@ impl<V> FromIterator<(String, V)> for Object<V> {
     }
 }
 
+impl<'de, V: Deserialize<'de>> Deserialize<'de> for Object<V> {
+    /// Keeps the keys in document order, as `JSON.parse` does: a repeated key keeps its first position and its last
+    /// value.
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        struct Entries<V>(PhantomData<V>);
+        impl<'de, V: Deserialize<'de>> Visitor<'de> for Entries<V> {
+            type Value = Object<V>;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a JSON object")
+            }
+
+            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Object<V>, A::Error> {
+                let mut out: Vec<(String, V)> = Vec::new();
+                while let Some((k, v)) = map.next_entry::<String, V>()? {
+                    match out.iter_mut().find(|(x, _)| *x == k) {
+                        Some(entry) => entry.1 = v,
+                        None => out.push((k, v)),
+                    }
+                }
+                Ok(Object(out))
+            }
+        }
+        d.deserialize_map(Entries(PhantomData))
+    }
+}
+
 impl<V: Serialize> Serialize for Object<V> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         let mut map = s.serialize_map(Some(self.0.len()))?;
@@ -152,13 +182,20 @@ pub fn parse_date(s: &str) -> Option<f64> {
 
 /// `new Date(seconds * 1000).toISOString()`.
 pub fn iso_from_unix(seconds: i64) -> String {
+    iso_from_unix_millis(seconds * 1000)
+}
+
+/// `new Date(millis).toISOString()`.
+pub fn iso_from_unix_millis(millis: i64) -> String {
+    let seconds = millis.div_euclid(1000);
     let (y, m, d) = civil_from_days(seconds.div_euclid(86_400));
     let rem = seconds.rem_euclid(86_400);
     format!(
-        "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}.000Z",
+        "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}.{:03}Z",
         rem / 3600,
         rem / 60 % 60,
-        rem % 60
+        rem % 60,
+        millis.rem_euclid(1000)
     )
 }
 
@@ -205,6 +242,12 @@ mod tests {
             serde_json::to_string(&o).unwrap(),
             r#"{"10202":4,"15122":2,"09931":1,"02100":3,"x":5}"#
         );
+        let parsed: Object<u8> =
+            serde_json::from_str(r#"{"b":1,"10":2,"a":3,"2":4,"b":5}"#).unwrap();
+        assert_eq!(
+            serde_json::to_string(&parsed).unwrap(),
+            r#"{"2":4,"10":2,"b":5,"a":3}"#
+        );
         assert!(is_array_index("0") && is_array_index("4294967294"));
         assert!(!is_array_index("4294967295") && !is_array_index("01") && !is_array_index("-1"));
     }
@@ -242,6 +285,10 @@ mod tests {
         assert_eq!(parse_date("2026-08-24"), Some(1_787_529_600_000.0));
         assert_eq!(parse_date("2026-8-24"), None);
         assert_eq!(iso_from_unix(1_787_529_601), "2026-08-24T00:00:01.000Z");
+        assert_eq!(
+            iso_from_unix_millis(1_787_529_601_042),
+            "2026-08-24T00:00:01.042Z"
+        );
         assert_eq!(civil_from_days(days_from_civil(2024, 2, 29)), (2024, 2, 29));
     }
 }
