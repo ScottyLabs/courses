@@ -3,15 +3,18 @@
   import type { Snippet } from "svelte";
   import AppFooter from "$lib/components/shell/AppFooter.svelte";
   import AppHeader from "$lib/components/shell/AppHeader.svelte";
-  import { createStubSession, setSession } from "$lib/components/shell/session";
+  import { setSession } from "$lib/components/shell/session";
+  import { session } from "$lib/data";
+  import { personal } from "$lib/state";
+  import { shellSession } from "$lib/state/shell-session";
   import { applyTheme, theme } from "$lib/components/shell/theme.svelte";
   import Toaster from "$lib/components/ui/Toaster.svelte";
 
   let { children }: { children: Snippet } = $props();
 
-  // The shell reads the session through context. The data layer replaces this
-  // stub with the real signed-in session.
-  setSession(createStubSession());
+  // The shell reads the session through context: the data layer's session, with
+  // sign-out saving the student's changes first.
+  setSession(shellSession(session, personal));
 
   $effect(() => {
     applyTheme(theme.dark);
