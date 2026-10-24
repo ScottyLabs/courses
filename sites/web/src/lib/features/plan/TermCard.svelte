@@ -209,8 +209,7 @@
       title="Courses with unmet requisites"
     >
       <TriangleAlert aria-hidden="true" class="size-3" />
-      {problems}
-      {problems === 1 ? "issue" : "issues"}
+      {problems}<span class="max-sm:sr-only">{problems === 1 ? " issue" : " issues"}</span>
     </span>
   {/if}
 {/snippet}
@@ -259,7 +258,12 @@
     {/if}
     <span class="shrink-0 text-right leading-none">
       <span class="tabular text-heading-5 text-strong">{column.totals.units}</span>
-      <span class="text-label-md font-normal text-muted">{column.totals.hasVariable ? "units+" : "units"}</span>
+      <span class="text-label-md font-normal text-muted"
+        ><span class="max-sm:sr-only">{column.totals.hasVariable ? "units+" : "units"}</span><span
+          aria-hidden="true"
+          class="sm:hidden">{column.totals.hasVariable ? "u+" : "u"}</span
+        ></span
+      >
     </span>
     <OptionsMenu label="Options for {termLabel(term)}">
       {#snippet children(close)}
