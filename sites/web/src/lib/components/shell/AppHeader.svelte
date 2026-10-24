@@ -48,7 +48,7 @@
         {/each}
       </ul>
     </nav>
-    <div class="flex items-center gap-8 justify-self-end">
+    <div class="flex items-center gap-4 justify-self-end xl:gap-8">
       <span class="p-1.5"><ThemeSwitch /></span>
       {#if session.status === "loading"}
         <Skeleton class="h-10 w-[110px] rounded-full" />

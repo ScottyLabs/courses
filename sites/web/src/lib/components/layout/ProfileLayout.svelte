@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChevronDown, ChevronLeft, ChevronRight } from "@lucide/svelte";
-  import type { Snippet } from "svelte";
+  import { tick, type Snippet } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
   import Avatar from "../ui/Avatar.svelte";
   import Button from "../ui/Button.svelte";
@@ -46,9 +46,14 @@
   const current = $derived(PROFILE_SECTIONS.find((section) => section.id === active) ?? PROFILE_SECTIONS[0]);
   const heading = $derived(title ?? current.label);
 
-  function setCollapsed(next: boolean): void {
+  let aside = $state<HTMLElement>();
+
+  async function setCollapsed(next: boolean): Promise<void> {
     collapsed = next;
     writeLocal(KEY, next ? "hidden" : null);
+    // The toggle button is replaced; keep keyboard focus on its counterpart.
+    await tick();
+    aside?.querySelector<HTMLElement>("[data-rail-toggle]")?.focus();
   }
 </script>
 
@@ -63,6 +68,7 @@
 {#if desktop.current}
   <div class="flex min-h-0 flex-1 {className}">
     <aside
+      bind:this={aside}
       aria-label="Profile"
       class="shrink-0 border-r border-line bg-surface {collapsed
         ? 'w-16'
@@ -77,6 +83,7 @@
               label="Show profile menu"
               icon={ChevronRight}
               aria-expanded="false"
+              data-rail-toggle
               onclick={() => setCollapsed(false)}
             />
             <nav aria-label="Profile sections" class="mt-3">
@@ -103,6 +110,7 @@
               trailingIcon={ChevronLeft}
               aria-label="Hide profile menu"
               aria-expanded="true"
+              data-rail-toggle
               class="absolute top-[23px] right-[18px]"
               onclick={() => setCollapsed(true)}
             >

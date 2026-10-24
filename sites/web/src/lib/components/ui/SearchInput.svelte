@@ -58,7 +58,7 @@
     {onkeydown}
     autocomplete="off"
     spellcheck="false"
-    class="h-full min-w-0 flex-1 bg-transparent px-2.5 text-ink outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:appearance-none {variant ===
+    class="h-full min-w-0 flex-1 bg-transparent px-2.5 text-ellipsis text-ink outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:appearance-none {variant ===
     'underline'
       ? 'text-body-1 lg:text-heading-4'
       : 'text-body-2'}"

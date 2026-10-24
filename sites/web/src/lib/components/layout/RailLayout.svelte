@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChevronLeft, ChevronRight } from "@lucide/svelte";
-  import type { Snippet } from "svelte";
+  import { tick, type Snippet } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
   import Button from "../ui/Button.svelte";
   import IconButton from "../ui/IconButton.svelte";
@@ -53,9 +53,14 @@
   let collapsed = $state(initiallyCollapsed());
   let sheetOpen = $state(false);
 
-  function setCollapsed(next: boolean): void {
+  let aside = $state<HTMLElement>();
+
+  async function setCollapsed(next: boolean): Promise<void> {
     collapsed = next;
     if (hiddenKey !== undefined) writeLocal(hiddenKey, next ? "hidden" : null);
+    // The toggle button is replaced; keep keyboard focus on its counterpart.
+    await tick();
+    aside?.querySelector<HTMLElement>("[data-rail-toggle]")?.focus();
   }
 
   setRail({
@@ -81,6 +86,7 @@
 <div class="flex min-h-0 flex-1 {className}">
   {#if desktop.current}
     <aside
+      bind:this={aside}
       aria-label={title}
       class="shrink-0 border-r border-line bg-surface {collapsed
         ? 'w-16'
@@ -95,6 +101,7 @@
               label="Show {name}"
               icon={ChevronRight}
               aria-expanded="false"
+              data-rail-toggle
               onclick={() => setCollapsed(false)}
             />
             {#if filterCount > 0}
@@ -117,6 +124,7 @@
               trailingIcon={ChevronLeft}
               aria-label="Hide {name}"
               aria-expanded="true"
+              data-rail-toggle
               class="absolute top-[19px] right-2 min-[90rem]:right-[18px]"
               onclick={() => setCollapsed(true)}
             >

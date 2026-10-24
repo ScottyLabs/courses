@@ -37,19 +37,23 @@
 
   {#snippet header()}
     <PageToolbar title="Final Exam Schedule">
-      <ol class="mb-3 -mt-1 list-inside list-decimal text-body-2 text-ink lg:-mt-2">
-        <li>Download your calendar export from SIO</li>
-        <li>Import the .ics file below</li>
-      </ol>
-      <div class="mb-4 flex flex-wrap gap-3">
-        <Button variant="primary" size="sm" icon={Upload}>Upload Schedule</Button>
-        <Button size="sm" icon={Download} href="https://s3.andrew.cmu.edu/sio/index.html">SIO Export</Button>
-      </div>
-      <SearchInput
-        bind:value={query}
-        label="Search final exams"
-        placeholder="Search courses by ID, description, name or keyword..."
-      />
+      {#snippet intro()}
+          <ol class="-mt-1 mb-3 list-inside list-decimal text-body-2 text-ink lg:-mt-2">
+          <li>Download your calendar export from SIO</li>
+          <li>Import the .ics file below</li>
+        </ol>
+        <div class="mb-4 flex flex-wrap gap-3">
+          <Button variant="primary" size="sm" icon={Upload}>Upload Schedule</Button>
+          <Button size="sm" icon={Download} href="https://s3.andrew.cmu.edu/sio/index.html">SIO Export</Button>
+        </div>
+      {/snippet}
+      {#snippet search()}
+        <SearchInput
+          bind:value={query}
+          label="Search final exams"
+          placeholder="Search courses by ID, description, name or keyword..."
+        />
+      {/snippet}
     </PageToolbar>
   {/snippet}
 

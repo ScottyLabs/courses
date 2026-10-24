@@ -85,12 +85,11 @@
               </td>
             {/each}
           </tr>
-        {:else}
-          <tr>
-            <td colspan={columns.length} class="py-6 text-center text-muted">{empty}</td>
-          </tr>
         {/each}
       </tbody>
     </table>
   </div>
+  {#if rows.length === 0}
+    <p class="px-6 py-6 text-center text-body-2 text-muted">{empty}</p>
+  {/if}
 </div>

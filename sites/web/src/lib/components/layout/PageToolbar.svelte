@@ -8,6 +8,7 @@
     title,
     hideTitle = false,
     titleAction,
+    intro,
     search,
     count,
     countLabel = "results",
@@ -23,6 +24,8 @@
     hideTitle?: boolean | "desktop";
     /** Controls after the title, such as the schedule rename button or Friends' "Add Friends". */
     titleAction?: Snippet;
+    /** Content between the heading and the search, such as instructions and action buttons. */
+    intro?: Snippet;
     /** The search field, usually a SearchInput. */
     search?: Snippet;
     /** Result count; numbers are formatted ("7,927 results"). */
@@ -58,6 +61,7 @@
       {@render titleAction?.()}
     </div>
   {/if}
+  {@render intro?.()}
   {@render search?.()}
   {#if hasMeta}
     <div class="mt-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 lg:mt-3.5">
