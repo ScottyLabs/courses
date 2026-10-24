@@ -1,0 +1,77 @@
+<script lang="ts">
+  // The requirements column: the audit of the plan against its programs, with courses to add or drag onto a
+  // semester. Signed out, degree programs ask to sign in. Courseweave's AuditColumn (features/degree/AuditArea.tsx).
+  import { LogIn } from "@lucide/svelte";
+  import type { ResourceStatus } from "$lib/data";
+  import { session } from "$lib/data";
+  import Button from "$lib/components/ui/Button.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import Spinner from "$lib/components/ui/Spinner.svelte";
+  import type { AuditData } from "$lib/core/programs";
+  import AuditPanel from "./audit/AuditPanel.svelte";
+  import type { TreeContext } from "./audit/tree";
+  import { planPage } from "./context";
+
+  let {
+    data,
+    status,
+    error,
+    drag = false,
+  }: {
+    /** The audit, once every selected program's requirements are loaded. */
+    data: AuditData | null;
+    /** How loading the requirements went. */
+    status: ResourceStatus;
+    error: string | null;
+    /** Beside the semesters: unplanned courses can be dragged onto one. */
+    drag?: boolean;
+  } = $props();
+
+  const page = planPage();
+  const plan = $derived(page.plan);
+  const base = $derived<Omit<TreeContext, "node" | "catalog" | "inPlan">>({
+    termName: page.routed?.meta.name ?? "this semester",
+    offered: (id) => page.routed?.courseById.has(id) ?? false,
+    title: (id) => page.lookup(id).title,
+    units: (id) => page.lookup(id).units,
+    href: (id, term) => page.href(id, term),
+    onAddCourse: (id) => page.addSuggested(id),
+    dragCourses: drag,
+    onDragStart: (courseId) => page.startDrag({ kind: "add", courseId }),
+    onDragEnd: () => page.endDrag(),
+  });
+</script>
+
+{#if status === "signin" || status === "forbidden" || (plan.programs.length === 0 && session.status !== "signed-in")}
+  <div class="rounded-card border border-dashed border-line-strong bg-surface">
+    <EmptyState
+      size="sm"
+      icon={LogIn}
+      headingLevel={3}
+      title={status === "forbidden" ? "Degree programs need a CMU account" : "Sign in to check requirements"}
+      description="Majors, minors and their requirements come from CMU's degree audit, so they're only for signed-in CMU students. Your semesters work without them."
+    >
+      {#if status !== "forbidden"}
+        <Button variant="primary" size="sm" icon={LogIn} onclick={() => session.signIn()}>Sign in</Button>
+      {/if}
+    </EmptyState>
+  </div>
+{:else if plan.programs.length === 0}
+  <div class="rounded-card border border-dashed border-line-strong bg-surface">
+    <AuditPanel input={page.derived.auditInput} data={null} {base} />
+  </div>
+{:else}
+  <div aria-live="polite" aria-busy={data === null && status !== "error"}>
+    {#if data}
+      <AuditPanel input={page.derived.auditInput} {data} {base} />
+    {:else if status === "error"}
+      <p role="alert" class="rounded-card border border-danger/35 bg-surface px-4 py-3 text-body-2 text-danger">
+        Couldn't load the requirements. {error ?? ""} Reload the page to try again.
+      </p>
+    {:else}
+      <p class="flex items-center gap-2 py-6 text-body-2 text-muted">
+        <Spinner size="sm" decorative /> Checking requirements
+      </p>
+    {/if}
+  </div>
+{/if}
