@@ -79,6 +79,7 @@ document doesn't exist publicly.
 | `catalog/details/<NN>` | `Record<courseId, CatalogDetails>` | yes | same |
 | `teaching` | `TeachingData` | no | full |
 | `fce/summary`, `fce/courses/index`, `fce/courses/<NN>`, `fce/instructors` | FCE files from `build-fce.ts` | no | full |
+| `instructors/<id>`, `instructors/all` | The instructor list's rows, new ([decision 43](decisions/0043-list-instructors-from-their-own-documents.md), [format](api/catalog-fce-programs.md#instructor-list-documents)) | no | full |
 | `programs/index`, `programs/<auditId>` | `ProgramsIndex`, `ProgramVersion` (`plan-types.ts`, `degree-types.ts`), from `build-programs.ts` | no | full |
 | `syllabi/<NN>` | syllabus index from `build-syllabi.ts` | no | full |
 | `finals/<id>` | final exam schedule, new (below) | without instructors | full |

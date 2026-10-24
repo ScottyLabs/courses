@@ -7,20 +7,17 @@ import { goto } from "$app/navigation";
 import { page } from "$app/state";
 import { aggregateFce, selectFceRows } from "$lib/components/course/fce-aggregate";
 import { fceOptions } from "$lib/components/course/fce-options.svelte";
-import { loadInstructorFce, recentTeachingRate } from "$lib/components/instructor/instructor-fce";
+import { loadInstructorFce } from "$lib/components/instructor/instructor-fce";
 import { getSession } from "$lib/components/shell/session";
 import { catalog, resource } from "$lib/data";
 import { lastName, type Instructor } from "$lib/core/data";
 import { departmentName } from "$lib/core/departments";
 import type { AllInstructor } from "$lib/core/instructors/allInstructors";
-import {
-  buildInstructorDocs,
-  scoreInstructor,
-  type InstructorDoc,
-} from "$lib/core/instructors/instructorData";
+import { scoreInstructor } from "$lib/core/instructors/instructorData";
 import { saved, device } from "$lib/state";
 import { ALL_SEMESTERS, isAllSemesters, resolveTerm } from "$lib/state/term-scope";
-import { loadAllInstructors, loadCourseLookup } from "./data";
+import { loadAllInstructors, loadCourseLookup, loadInstructorList } from "./data";
+import type { ListedDoc } from "./list";
 
 export type Sort = "name" | "sections";
 
@@ -58,13 +55,22 @@ export class InstructorsScope {
     this.terms.value ? resolveTerm(this.termParam, this.terms.value, device.lastTerm) : null,
   );
   readonly termMeta = $derived(this.terms.value?.find((t) => t.id === this.termId));
-  readonly term = resource(() =>
-    this.signedIn && !this.allMode && this.termId !== null ? catalog.term(this.termId) : null,
+  /**
+   * The list: one small document for the semester or for all semesters (decision 43). The full documents below load
+   * only while an instructor is open.
+   */
+  readonly list = resource(() =>
+    this.signedIn && (this.allMode || this.termId !== null)
+      ? loadInstructorList(this.allMode ? null : this.termId)
+      : null,
   );
-  readonly all = resource(() => (this.signedIn && this.allMode ? loadAllInstructors() : null));
-  /** The FCE index: list rows' ratings, and whether the account may see member data. */
-  readonly fceIndex = resource(() => (this.signedIn ? catalog.fceInstructors() : null));
-  readonly lookup = resource(() => (this.signedIn ? loadCourseLookup() : null));
+  readonly #open = $derived(this.signedIn && this.slug !== null);
+  readonly term = resource(() =>
+    this.#open && !this.allMode && this.termId !== null ? catalog.term(this.termId) : null,
+  );
+  readonly all = resource(() => (this.#open && this.allMode ? loadAllInstructors() : null));
+  /** Course titles for the open instructor's evaluation history. */
+  readonly lookup = resource(() => (this.#open ? loadCourseLookup() : null));
 
   /** `term` for links: "all" or the semester shown. */
   readonly linkTerm = $derived(this.allMode ? ALL_SEMESTERS : this.termId);
@@ -72,21 +78,27 @@ export class InstructorsScope {
     this.allMode ? "all semesters" : (this.termMeta?.name ?? "this semester"),
   );
   readonly forbidden = $derived(
-    this.fceIndex.status === "forbidden" ||
+    this.list.status === "forbidden" ||
       this.term.status === "forbidden" ||
       this.all.status === "forbidden",
   );
   readonly failed = $derived(
-    this.term.status === "error" || this.all.status === "error" || this.terms.status === "error",
+    this.list.status === "error" ||
+      this.term.status === "error" ||
+      this.all.status === "error" ||
+      this.terms.status === "error",
   );
-  readonly ready = $derived(
+  /** The list has loaded for the semester shown. */
+  readonly ready = $derived(this.list.value !== undefined && this.list.status !== "loading");
+  /** The open instructor's documents have loaded. */
+  readonly detailReady = $derived(
     this.allMode
       ? this.all.value !== undefined && this.all.status !== "loading"
-      : this.term.value !== undefined,
+      : this.term.value !== undefined && this.term.status !== "loading",
   );
   /** "All semesters" can't be built without the teaching document. */
   readonly noTeaching = $derived(
-    this.allMode && this.all.status === "ready" && this.all.value === null,
+    this.allMode && this.list.status === "ready" && this.list.value === null,
   );
 
   // ---- The list ----
@@ -97,20 +109,17 @@ export class InstructorsScope {
   /** The cards/list switch; the layout passes the device's last choice. */
   view = $state<View>("cards");
 
-  readonly docs = $derived.by((): InstructorDoc[] => {
-    if (this.allMode) return this.all.value?.docs ?? [];
-    return this.term.value ? buildInstructorDocs(this.term.value) : [];
-  });
+  readonly docs = $derived<ListedDoc[]>(this.list.value ?? []);
   readonly total = $derived(this.docs.length);
   readonly deptOptions = $derived(
     [...new Set(this.docs.flatMap((doc) => doc.inst.depts))]
       .map((code) => ({ value: code, label: departmentName(code), keywords: code }))
       .toSorted((a, b) => a.label.localeCompare(b.label)),
   );
-  readonly results = $derived.by((): InstructorDoc[] => {
+  readonly results = $derived.by((): ListedDoc[] => {
     const q = this.query;
     const savedIds = new Set(saved.ids);
-    const scored: { doc: InstructorDoc; score: number }[] = [];
+    const scored: { doc: ListedDoc; score: number }[] = [];
     for (const doc of this.docs) {
       if (this.dept !== "" && !doc.inst.depts.includes(this.dept)) continue;
       if (this.savedOnly && !doc.inst.courseIds.some((id) => savedIds.has(id))) continue;
@@ -245,12 +254,6 @@ export class InstructorsScope {
   /** A course's title, when the catalog knows it. */
   titleOf(courseId: string): string | undefined {
     return this.lookup.value?.title(courseId) ?? this.term.value?.courseById.get(courseId)?.title;
-  }
-
-  /** Recent teaching rating from the FCE index, for list rows. */
-  rating(name: string): number | null {
-    const entry = this.fceIndex.value?.get(name);
-    return entry === undefined ? null : recentTeachingRate(entry);
   }
 }
 

@@ -1,9 +1,8 @@
 <script lang="ts">
   import InstructorRow from "$lib/components/instructor/InstructorRow.svelte";
   import type { Instructor } from "$lib/core/data";
-  import type { AllInstructor } from "$lib/core/instructors/allInstructors";
-  import type { InstructorDoc } from "$lib/core/instructors/instructorData";
   import { teachingSummary } from "./data";
+  import type { ListedDoc } from "./list";
   import { useInstructorsScope } from "./scope.svelte";
 
   // Courseweave's instructor rows: the list view, and the column beside an open instructor on wide screens.
@@ -14,7 +13,7 @@
     class: className = "",
   }: {
     /** The rows to show (the visible part of the results). */
-    docs: readonly InstructorDoc[];
+    docs: readonly ListedDoc[];
     /** The row the arrow keys are on, from the search field. */
     active?: number;
     /** Where the letter headings stick. */
@@ -48,9 +47,9 @@
         name={doc.inst.name}
         href={scope.href(doc.inst.slug)}
         depts={doc.inst.depts}
-        detail={scope.allMode ? teachingSummary((doc.inst as AllInstructor).terms) : undefined}
+        detail={doc.inst.terms === null ? undefined : teachingSummary(doc.inst.terms)}
         count={countText(doc.inst)}
-        rating={scope.rating(doc.inst.name)}
+        rating={doc.inst.rating}
         selected={doc.inst.slug === scope.slug}
         active={index === active}
       />

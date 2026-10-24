@@ -32,6 +32,7 @@ can load them; components import them as `$lib/data`, `$lib/state` and so on.
 | `catalogIndex()`, `catalogDetails(prefix)`, `courseDetails(courseId)` | The course catalog: titles, units, requisites; descriptions by course-number prefix |
 | `offerings()` | Which semesters offer each course, indexed for search; null without the document |
 | `teaching()` | Who teaches what in each semester (member data) |
+| `instructorList(scope)` | The instructor list's rows for a semester or `all` (member data); null for a catalog built without them |
 | `fceSummary()`, `fceAccess()`, `fceCourses(prefix)`, `courseFce(courseId)`, `fceCoursesIndex()`, `fceInstructors()` | FCEs, decoded from the documents' tuples (member data) |
 | `programsIndex()`, `program(auditId)`, `programs(ids)`, `auditVersions(selections)` | Degree programs and the versions an audit needs (member data) |
 | `syllabi(prefix)`, `courseSyllabi(courseId)` | Past syllabi (member data); `syllabusPath(key)` in `$lib/api` links to a file |

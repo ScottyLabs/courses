@@ -219,6 +219,17 @@ export class Catalog {
     });
   }
 
+  /**
+   * The instructor list's document for a semester, or "all" (member data, decision 43); null when this catalog was
+   * built without it.
+   */
+  instructorList(scope: string): Promise<DocumentTypes["instructorList"] | null> {
+    return orIfMissing(
+      this.document<DocumentTypes["instructorList"]>(docs.instructorList(scope)),
+      null,
+    );
+  }
+
   /** Degree programs and their versions (member data). */
   programsIndex(): Promise<ProgramsIndex> {
     return this.document<ProgramsIndex>(docs.programsIndex);
