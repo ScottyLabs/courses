@@ -139,7 +139,7 @@
           id="plan-start"
           value={plan.startTerm}
           onchange={(event) => plans.setStartTerm(plan.id, event.currentTarget.value)}
-          class="-my-1 min-h-10 min-w-0 cursor-pointer rounded-tag border-0 bg-transparent py-0 pr-7 pl-1 text-label-md text-ink underline decoration-line-strong underline-offset-2 hover:decoration-accent md:min-h-7"
+          class="-my-1 min-h-10 min-w-0 field-sizing-content cursor-pointer rounded-tag border-0 bg-transparent py-0 pr-7 pl-1 text-label-md text-ink underline decoration-line-strong underline-offset-2 hover:decoration-accent md:min-h-7"
         >
           {#each startOptions as o (o.value)}<option value={o.value}>{o.label}</option>{/each}
         </select>

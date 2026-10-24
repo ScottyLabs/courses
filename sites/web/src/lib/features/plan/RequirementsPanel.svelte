@@ -1,16 +1,14 @@
 <script lang="ts">
   // The requirements column: the audit of the plan against its programs, with courses to add or drag onto a
   // semester. Signed out, degree programs ask to sign in. Courseweave's AuditColumn (features/degree/AuditArea.tsx).
-  import { LogIn } from "@lucide/svelte";
   import type { ResourceStatus } from "$lib/data";
   import { session } from "$lib/data";
-  import Button from "$lib/components/ui/Button.svelte";
-  import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
   import type { AuditData } from "$lib/core/programs";
   import AuditPanel from "./audit/AuditPanel.svelte";
   import type { TreeContext } from "./audit/tree";
   import { planPage } from "./context";
+  import SignInNote from "./SignInNote.svelte";
 
   let {
     data,
@@ -43,19 +41,7 @@
 </script>
 
 {#if status === "signin" || status === "forbidden" || (plan.programs.length === 0 && session.status !== "signed-in")}
-  <div class="rounded-card border border-dashed border-line-strong bg-surface">
-    <EmptyState
-      size="sm"
-      icon={LogIn}
-      headingLevel={3}
-      title={status === "forbidden" ? "Degree programs need a CMU account" : "Sign in to check requirements"}
-      description="Majors, minors and their requirements come from CMU's degree audit, so they're only for signed-in CMU students. Your semesters work without them."
-    >
-      {#if status !== "forbidden"}
-        <Button variant="primary" size="sm" icon={LogIn} onclick={() => session.signIn()}>Sign in</Button>
-      {/if}
-    </EmptyState>
-  </div>
+  <SignInNote title="Sign in to check requirements" forbidden={status === "forbidden"} />
 {:else if plan.programs.length === 0}
   <div class="rounded-card border border-dashed border-line-strong bg-surface">
     <AuditPanel input={page.derived.auditInput} data={null} {base} />

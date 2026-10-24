@@ -5,12 +5,12 @@
   import { catalog, resource } from "$lib/data";
   import { defaultVersion } from "$lib/core/programs";
   import type { ProgramInfo, ProgramSelection } from "$lib/core/plan-types";
-  import SignInPrompt from "$lib/components/shell/SignInPrompt.svelte";
   import Chip from "$lib/components/ui/Chip.svelte";
   import SearchInput from "$lib/components/ui/SearchInput.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
   import { countKind, KIND_FILTERS, KIND_LABEL, programCampus, searchPrograms, type KindFilter } from "./programs";
   import SelectedProgram from "./SelectedProgram.svelte";
+  import SignInNote from "../SignInNote.svelte";
 
   let {
     value,
@@ -49,10 +49,7 @@
 </script>
 
 {#if index.status === "signin" || index.status === "forbidden"}
-  <SignInPrompt
-    title={index.status === "signin" ? "Sign in to pick your programs" : "Degree programs need a CMU account"}
-    description="Majors, minors and their requirements come from CMU's degree audit, so they're only for signed-in CMU students. Your semesters still work without them."
-  />
+  <SignInNote title="Sign in to pick your programs" forbidden={index.status === "forbidden"} />
 {:else if index.status === "error"}
   <p role="alert" class="text-body-2 text-danger">Couldn't load degree programs. {index.error} Reload to try again.</p>
 {:else}

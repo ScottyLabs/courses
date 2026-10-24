@@ -59,11 +59,13 @@
 
   // Course ids on each plan semester's published schedule, for offering hints and suggestions.
   const termsKey = $derived(plan.terms.map((t) => t.term).join(","));
-  const scheduledRes = resource(() =>
-    scheduledCourses(termsKey === "" ? [] : termsKey.split(","), untrack(() => published), (id) =>
-      catalog.term(id),
-    ),
-  );
+  const publishedKey = $derived(terms.map((t) => t.id).join(","));
+  const scheduledRes = resource(() => {
+    // Reload when the plan's semesters or the built semesters change.
+    const ids = termsKey === "" ? [] : termsKey.split(",");
+    const built = new Set(publishedKey === "" ? [] : publishedKey.split(","));
+    return scheduledCourses(ids, built, (id) => catalog.term(id));
+  });
   const scheduled = $derived(scheduledRes.value ?? new Map<string, Set<string>>());
 
   // The selected programs' requirements: loaded again only when the programs change.
