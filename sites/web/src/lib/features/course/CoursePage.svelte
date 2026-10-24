@@ -20,7 +20,7 @@
   import { termLabel } from "$lib/core/requisites";
   import { coursePath, coursesPath } from "$lib/core/routes";
   import { catalog, resource } from "$lib/data";
-  import { device, isAllSemesters, lastOrigin, planOrigin, resolveTerm } from "$lib/state";
+  import { device, isAllSemesters, originBack, resolveTerm } from "$lib/state";
   import CatalogFacts from "./CatalogFacts.svelte";
   import CountsToward from "./CountsToward.svelte";
   import CourseAbout from "./CourseAbout.svelte";
@@ -87,12 +87,11 @@
   // Wide screens keep the calendar in view beside the sections; narrower ones show it after them.
   const wide = new MediaQuery("(min-width: 1024px)");
 
-  // Opened from the degree plan: back returns there; from the course list, to the list as it was.
-  const fromPlan = planOrigin();
-  const origin = lastOrigin();
+  // Back returns to the page the course was opened from (the degree plan, a schedule, the course list as it was, an
+  // instructor or the profile); otherwise to the semester's course list.
+  const origin = originBack();
   const back = $derived.by(() => {
-    if (fromPlan !== null) return { href: fromPlan, label: "Back to plan" };
-    if (origin !== null && (origin === "/" || origin.startsWith("/?"))) return { href: origin, label: "Back to courses" };
+    if (origin !== null) return origin;
     return { href: coursesPath(termId ?? resolved), label: "All courses" };
   });
 
