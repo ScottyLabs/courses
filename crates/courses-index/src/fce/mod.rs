@@ -582,6 +582,11 @@ pub struct Summary {
 
 /// Builds every FCE document from the export's text.
 pub fn documents(csv_text: &str) -> Result<(Vec<Document>, Summary)> {
+    documents_and_data(csv_text).map(|(docs, summary, _)| (docs, summary))
+}
+
+/// [`documents`], plus the typed documents for builders that read them (the instructor lists).
+pub fn documents_and_data(csv_text: &str) -> Result<(Vec<Document>, Summary, Fce)> {
     let (rows, dropped) = parse_rows(csv_text);
     let fce = build(&rows)?;
     let docs = fce.documents()?;
@@ -599,7 +604,7 @@ pub fn documents(csv_text: &str) -> Result<(Vec<Document>, Summary)> {
         documents: docs.len(),
         bytes: docs.iter().map(|(_, json)| json.len()).sum(),
     };
-    Ok((docs, summary))
+    Ok((docs, summary, fce))
 }
 
 /// Reads `<data_dir>/fces.csv` and stores the FCE documents in the catalog, member-only. Without the export it

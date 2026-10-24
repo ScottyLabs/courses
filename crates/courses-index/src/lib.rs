@@ -9,6 +9,7 @@ pub mod catalog;
 pub mod config;
 pub mod fce;
 pub mod finals;
+pub mod instructors;
 pub mod js;
 pub mod merge;
 pub mod model;

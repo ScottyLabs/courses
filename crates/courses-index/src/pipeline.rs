@@ -240,8 +240,20 @@ pub fn build(opts: &Options) -> Result<Summary> {
         let member = (member != public).then_some(member);
         docs.raw(name, Some(public), member);
     }
-    docs.public("offerings", &terms::offerings(&terms, &order))?;
-    docs.member("teaching", &terms::teaching(&terms, &order))?;
+    let offerings = terms::offerings(&terms, &order);
+    let teaching = terms::teaching(&terms, &order);
+    docs.public("offerings", &offerings)?;
+    docs.member("teaching", &teaching)?;
+    // The instructor list's own documents, from the semesters, the course catalog and FCEs.
+    for (name, list) in crate::instructors::documents(
+        &terms,
+        &teaching,
+        &offerings,
+        |id| catalog.entries.get(id).map(|e| e.title.clone()),
+        fce.as_ref().map(|(_, _, f)| &f.instructors.instructors),
+    ) {
+        docs.member(name, &list)?;
+    }
 
     let catalog_generated_at = catalog
         .fetched_at
@@ -260,7 +272,7 @@ pub fn build(opts: &Options) -> Result<Summary> {
     }
 
     // FCEs and degree programs: member-only, built by their own modules (decisions 21 and 22).
-    let fce_summary = fce.map(|(list, summary)| {
+    let fce_summary = fce.map(|(list, summary, _)| {
         for (name, json) in list {
             docs.raw(name, None, Some(json));
         }
@@ -354,14 +366,22 @@ pub fn build(opts: &Options) -> Result<Summary> {
     })
 }
 
-/// The FCE documents from `<data>/fces.csv`, or `None` without the export.
-fn fce_documents(data: &Path) -> Result<Option<(Vec<crate::fce::Document>, crate::fce::Summary)>> {
+/// The FCE documents from `<data>/fces.csv` and the typed ones, or `None` without the export.
+fn fce_documents(
+    data: &Path,
+) -> Result<
+    Option<(
+        Vec<crate::fce::Document>,
+        crate::fce::Summary,
+        crate::fce::Fce,
+    )>,
+> {
     let path = data.join("fces.csv");
     if !path.exists() {
         return Ok(None);
     }
     let bytes = std::fs::read(&path).with_context(|| format!("reading {}", path.display()))?;
-    crate::fce::documents(&String::from_utf8_lossy(&bytes))
+    crate::fce::documents_and_data(&String::from_utf8_lossy(&bytes))
         .with_context(|| format!("building FCE documents from {}", path.display()))
         .map(Some)
 }
