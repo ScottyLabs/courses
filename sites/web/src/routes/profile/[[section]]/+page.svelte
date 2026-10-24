@@ -8,7 +8,8 @@
   import SavedSection from "$lib/features/profile/SavedSection.svelte";
   import SchedulesSection from "$lib/features/profile/SchedulesSection.svelte";
   import SettingsSection from "$lib/features/profile/SettingsSection.svelte";
-  import TakenSection from "$lib/features/profile/TakenSection.svelte";
+  import TakenSection, { takenActions, takenFilters } from "$lib/features/profile/TakenSection.svelte";
+  import { hasTakenCourses } from "$lib/features/record/taken-list.svelte";
   import TakingSection from "$lib/features/profile/TakingSection.svelte";
   import type { PageProps } from "./$types";
 
@@ -33,7 +34,14 @@
   name={session.status === "signed-in" ? session.name : undefined}
   detail={session.status === "signed-in" ? session.detail : undefined}
   band={data.section !== "friends"}
-  actions={data.section === "friends" && session.status === "signed-in" ? friendsActions : undefined}
+  actions={session.status !== "signed-in"
+    ? undefined
+    : data.section === "friends"
+      ? friendsActions
+      : data.section === "taken"
+        ? takenActions
+        : undefined}
+  filters={data.section === "taken" && session.status === "signed-in" && hasTakenCourses() ? takenFilters : undefined}
 >
   {#if data.section === "settings"}
     <SettingsSection />
