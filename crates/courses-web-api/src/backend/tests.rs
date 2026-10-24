@@ -231,6 +231,7 @@ async fn shares_can_be_revoked_and_exclude_owner() {
 #[tokio::test]
 async fn anonymous_cannot_read_instructors_or_personal_data() {
     let b = fixture();
+    assert!(!audience(&Err(StatusCode::FORBIDDEN)).unwrap());
     assert_eq!(
         instructors(
             Err(StatusCode::UNAUTHORIZED),

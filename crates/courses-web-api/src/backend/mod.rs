@@ -18,7 +18,7 @@ use std::{
 
 type ApiResult = Result<Json<Value>, ApiError>;
 #[derive(Debug)]
-pub struct ApiError(StatusCode, String);
+pub struct ApiError(pub(crate) StatusCode, pub(crate) String);
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         (self.0, Json(json!({"message":self.1}))).into_response()
@@ -135,7 +135,7 @@ fn val(s: &str) -> SqlValue {
 fn audience(user: &Result<CurrentUser, StatusCode>) -> Result<bool, ApiError> {
     match user {
         Ok(_) => Ok(true),
-        Err(StatusCode::UNAUTHORIZED) => Ok(false),
+        Err(StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN) => Ok(false),
         Err(s) => Err(ApiError(*s, "CMU sign-in required".into())),
     }
 }

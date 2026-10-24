@@ -7,7 +7,7 @@ use axum::{
     extract::FromRequestParts,
     http::{StatusCode, request::Parts},
 };
-use axum_oidc::{AdditionalClaims, OidcClaims, openidconnect};
+use axum_oidc::{AdditionalClaims, OidcClaims, OidcUserInfo, openidconnect};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -60,16 +60,25 @@ where
         let claims = OidcClaims::<GroupClaims>::from_request_parts(parts, state)
             .await
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
+        let user_info = OidcUserInfo::<GroupClaims>::from_request_parts(parts, state)
+            .await
+            .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
         // Only a verified university email from the configured, verified OIDC issuer
-        // is accepted. Project groups alone do not establish CMU affiliation.
-        let cmu_email = verified_cmu_email(
+        // is accepted. The provider may place email claims in UserInfo rather
+        // than the ID token; require the subjects to match before using them.
+        let email = verified_identity_email(
+            claims.subject().as_str(),
             claims.email().map(|email| email.as_str()),
             claims.email_verified() == Some(true),
-        );
-        if !cmu_email {
-            return Err(StatusCode::FORBIDDEN);
-        }
+            user_info.standard_claims.subject().as_str(),
+            user_info
+                .standard_claims
+                .email()
+                .map(|email| email.as_str()),
+            user_info.standard_claims.email_verified() == Some(true),
+        )
+        .ok_or(StatusCode::FORBIDDEN)?;
         let subject = claims.subject().to_string();
         let name = claims
             .name()
@@ -79,14 +88,7 @@ where
             .unwrap_or_else(|| subject.clone());
         let groups = claims.additional_claims().groups.clone();
 
-        let andrew_id = claims
-            .email()
-            .unwrap()
-            .as_str()
-            .split('@')
-            .next()
-            .unwrap()
-            .to_ascii_lowercase();
+        let andrew_id = email.split('@').next().unwrap().to_ascii_lowercase();
         Ok(CurrentUser {
             andrew_id,
             subject,
@@ -111,10 +113,22 @@ pub struct UserInfo {
     responses((status = OK, body = UserInfo), (status = UNAUTHORIZED))
 )]
 pub async fn me(
-    user: CurrentUser,
+    user: Result<CurrentUser, StatusCode>,
+    claims: Option<OidcClaims<GroupClaims>>,
+    user_info: Option<OidcUserInfo<GroupClaims>>,
     Extension(auth): Extension<Arc<AuthConfig>>,
     Extension(backend): Extension<crate::backend::Backend>,
 ) -> Result<Json<UserInfo>, crate::backend::ApiError> {
+    let user = user.map_err(|status| {
+        let message = match (claims.as_ref(), user_info.as_ref()) {
+            (Some(c), Some(info)) if c.subject() != info.standard_claims.subject() => "Your identity provider returned conflicting identities. Sign out and try again.",
+            (Some(c), Some(info)) if c.email().is_none() && info.standard_claims.email().is_none() => "Your identity provider did not supply an email address. Contact ScottyLabs to enable the email claim.",
+            (Some(c), Some(info)) if c.email_verified() != Some(true) && info.standard_claims.email_verified() != Some(true) => "Your identity provider has not verified your email address. Verify it through ScottyLabs sign-in before accessing CMU member data.",
+            (Some(_), Some(_)) => "Sign in with a verified CMU email address to access member data.",
+            _ => "Sign in with CMU to access your account.",
+        };
+        crate::backend::ApiError(status, message.into())
+    })?;
     crate::backend::register_user(&backend, &user)?;
     Ok(Json(UserInfo {
         can_create: true,
@@ -136,6 +150,29 @@ fn verified_cmu_email(email: Option<&str>, verified: bool) -> bool {
         })
 }
 
+fn verified_identity_email<'a>(
+    token_subject: &str,
+    token_email: Option<&'a str>,
+    token_verified: bool,
+    user_info_subject: &str,
+    user_info_email: Option<&'a str>,
+    user_info_verified: bool,
+) -> Option<&'a str> {
+    if token_subject != user_info_subject {
+        return None;
+    }
+    [
+        (token_email, token_verified),
+        (user_info_email, user_info_verified),
+    ]
+    .into_iter()
+    .find_map(|(email, verified)| {
+        verified_cmu_email(email, verified)
+            .then_some(email)
+            .flatten()
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,5 +184,21 @@ mod tests {
         assert!(!verified_cmu_email(Some("user@notcmu.edu"), true));
         assert!(!verified_cmu_email(Some("user@cmu.edu"), false));
         assert!(!verified_cmu_email(None, true));
+    }
+
+    #[test]
+    fn user_info_email_requires_matching_subject_and_verification() {
+        assert_eq!(
+            verified_identity_email("123", None, false, "123", Some("user@cmu.edu"), true),
+            Some("user@cmu.edu")
+        );
+        assert_eq!(
+            verified_identity_email("123", None, false, "456", Some("user@cmu.edu"), true),
+            None
+        );
+        assert_eq!(
+            verified_identity_email("123", None, false, "123", Some("user@cmu.edu"), false),
+            None
+        );
     }
 }

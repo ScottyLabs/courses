@@ -256,3 +256,29 @@ test("anonymous users warm a public catalog without delaying or cancelling API r
   equal((await client.courses({})).total, 2);
   client.resetLocalCatalog();
 });
+
+test("accounts rejected for membership still receive only the public catalog", async () => {
+  const loading = deferred<LocalCatalog>();
+  let receivedUser: User | null | undefined;
+  const client = createDataClient(
+    {
+      ...api,
+      me: async () => {
+        throw new ApiError(403, "Unverified membership");
+      },
+      courses: async () => result(7),
+    },
+    (user) => {
+      receivedUser = user;
+      return loading.promise;
+    },
+  );
+  const loaded = ready(client);
+  await rejects(client.me());
+  equal(receivedUser, null);
+  equal((await client.courses({})).total, 7);
+  loading.resolve(local());
+  await loaded;
+  equal((await client.courses({})).total, 2);
+  client.resetLocalCatalog();
+});

@@ -99,7 +99,7 @@ export function createDataClient(remote: RemoteApi, loadLocal: LocalCatalogFacto
       })
       .catch((cause) => {
         if (started === generation) {
-          if (cause instanceof ApiError && cause.status === 401) warmPublic();
+          if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) warmPublic();
           else if (scope) reset();
         }
         throw cause;
@@ -120,7 +120,7 @@ export function createDataClient(remote: RemoteApi, loadLocal: LocalCatalogFacto
         try {
           await me();
         } catch (cause) {
-          if (!(cause instanceof ApiError && cause.status === 401 && scope === "public"))
+          if (!(cause instanceof ApiError && (cause.status === 401 || cause.status === 403) && scope === "public"))
             throw cause;
           checkedAt = Date.now();
         }

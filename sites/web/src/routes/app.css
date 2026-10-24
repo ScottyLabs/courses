@@ -134,6 +134,18 @@ p {
 .auth-status {
   font-size: 12px;
 }
+.auth-notice {
+  padding: 10px 24px;
+  background: #fff2e5;
+  color: #713b14;
+  border-bottom: 1px solid #e5c7a9;
+  font-size: 13px;
+}
+.auth-notice a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
 .mobile-menu {
   display: none;
 }

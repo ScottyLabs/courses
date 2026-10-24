@@ -57,6 +57,7 @@
   let user = $state<User | null>(null);
   let authLoading = $state(true);
   let authError = $state(false);
+  let authMessage = $state("");
   let terms = $state<Term[]>([]);
   let term = $state("");
   let query = $state("");
@@ -279,6 +280,7 @@
     try {
       user = await data.me();
       authError = false;
+      authMessage = "";
       try {
         savedCourses = await data.savedCourses();
       } catch (cause) {
@@ -288,6 +290,7 @@
     } catch (cause) {
       user = null;
       authError = !(cause instanceof ApiError && cause.status === 401);
+      authMessage = authError ? reason(cause) : "";
     } finally {
       authLoading = false;
     }
@@ -883,6 +886,7 @@
         ><a class="signout" href="/auth/login">Sign in</a>{/if}
     </div>
   </header>
+  {#if authMessage}<div role="alert" class="auth-notice">{authMessage} <a href="/auth/logout">Sign out</a></div>{/if}
   <div class="app-body">
     {#if view === "courses"}
       <aside class:visible={filtersOpen} class="filter-rail">
