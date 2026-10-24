@@ -171,14 +171,9 @@ sites/web/src/
 The semester is a `term` query parameter (`?term=S27`), remembered per student; `term=all` is the all semesters view
 on the course and instructor pages.
 
-## Work in progress
+## Status
 
-Workstreams, each on its own branch merged into `courseweave`:
-
-| Workstream | Scope | Decision numbers |
-| --- | --- | --- |
-| Catalog: semesters | `courses-index` scaffolding, terms and sections, catalog, offerings, teaching, syllabi index, finals; `courses-scraper --mode soc` | 18-20 |
-| Catalog: FCEs and programs | FCE and degree program documents | 21-22 |
-| Web API | Catalog and syllabus serving, personal records, friends, finals, sessions, SEO, OpenAPI | 23-26 |
-| Website foundation | Layout, tokens, components, data layer, ported modules | 27-29 |
-| Website features | Explorer and course page; schedules and finals; plan and record; instructors, profile and friends | 30-39 |
+Every feature in the map above is built; [feature status](features.md) lists where each one lives and what it needs,
+and the per-area pages under `features/` describe them. The work was split into workstreams merged into the
+`courseweave` branch: the catalog builder (decisions 18-22), the web API (23-26), the website foundation (27-31), and
+the explorer, schedules, plan and record, and people areas (32-39).
