@@ -1,106 +1,328 @@
 <script lang="ts">
-  import { BookOpen, CalendarDays, Coins, Globe, GraduationCap, Search } from "@lucide/svelte";
-  import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
-  import RailGroup from "$lib/components/layout/RailGroup.svelte";
+  import { SearchX } from "@lucide/svelte";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
+  import { MediaQuery } from "svelte/reactivity";
   import RailLayout from "$lib/components/layout/RailLayout.svelte";
-  import RailSection from "$lib/components/layout/RailSection.svelte";
+  import { getSession } from "$lib/components/shell/session";
   import Title from "$lib/components/shell/Title.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
-  import MultiSelect from "$lib/components/ui/MultiSelect.svelte";
-  import RangeSlider from "$lib/components/ui/RangeSlider.svelte";
-  import SearchInput from "$lib/components/ui/SearchInput.svelte";
-  import Select from "$lib/components/ui/Select.svelte";
-  import ViewToggle, { storedView, type ListView } from "$lib/components/ui/ViewToggle.svelte";
+  import Skeleton from "$lib/components/ui/Skeleton.svelte";
+  import Spinner from "$lib/components/ui/Spinner.svelte";
+  import { storedView, type ListView } from "$lib/components/ui/ViewToggle.svelte";
+  import { parseCourseCode } from "$lib/core/data";
+  import { departmentName } from "$lib/core/departments";
+  import { FCE_SORTS, hasSectionFilters, type SortKey } from "$lib/core/explorer/filters";
+  import { codeOf } from "$lib/core/requisite-format";
+  import { coursePath } from "$lib/core/routes";
+  import type { Course } from "$lib/core/types";
+  import { ALL_SEMESTERS } from "$lib/state";
+  import CourseDetailPanel from "$lib/features/course/CourseDetailPanel.svelte";
+  import { filterChips } from "$lib/features/explorer/chips";
+  import CourseResults from "$lib/features/explorer/CourseResults.svelte";
+  import { Explorer } from "$lib/features/explorer/explorer.svelte";
+  import ExplorerRail from "$lib/features/explorer/ExplorerRail.svelte";
+  import ExplorerToolbar from "$lib/features/explorer/ExplorerToolbar.svelte";
+  import OtherCourses from "$lib/features/explorer/OtherCourses.svelte";
+  import { clearFilters, SORT_LABELS } from "$lib/features/explorer/query";
 
-  // Layout only: the explorer feature fills these from the catalog and the URL.
-  let query = $state("");
+  const session = getSession();
+  const x = new Explorer();
+  const url = x.url;
+  const query = $derived(url.query);
+
+  $effect(() => url.sync(page.url.searchParams));
+  $effect(() => url.followSearch());
+  $effect(() => () => url.destroy());
+
+  // Wide screens show a course beside the list; narrower ones show it in place of the list.
+  const wide = new MediaQuery("(min-width: 90rem)");
+  const selectedId = $derived(query.course === null ? null : parseCourseCode(query.course));
+  const panelBeside = $derived(selectedId !== null && wide.current);
+  const panelAlone = $derived(selectedId !== null && !wide.current);
+
   let view = $state<ListView>(storedView("courses") ?? "cards");
-  let departments = $state<string[]>([]);
-  let unitsLow = $state(0);
-  let unitsHigh = $state(24);
-  let offeredIn = $state("");
-  let level = $state("");
-  let requirements = $state<string[]>([]);
+  const chart = $derived(query.chart && x.fceMap !== null);
+  let limit = $state(0);
+  let active = $state(-1);
+  let otherLimit = $state(50);
+  $effect.pre(() => {
+    void x.resultsKey;
+    active = -1;
+    otherLimit = 50;
+  });
 
-  const unitPresets = [
-    { label: "6 Units", low: 6, high: 6 },
-    { label: "9 Units", low: 9, high: 9 },
-    { label: "12 Units", low: 12, high: 12 },
-    { label: "15 Units", low: 15, high: 15 },
-  ];
-  const levels = [
-    { value: "100", label: "100 level" },
-    { value: "200", label: "200 level" },
-    { value: "300", label: "300 level" },
-    { value: "400", label: "400 level" },
-    { value: "graduate", label: "Graduate" },
-  ];
-  const filterCount = $derived(
-    departments.length +
-      requirements.length +
-      (unitsLow > 0 || unitsHigh < 24 ? 1 : 0) +
-      (offeredIn === "" ? 0 : 1) +
-      (level === "" ? 0 : 1),
+  /** A course opens in the detail panel; the full page is a link away from there. */
+  const hrefFor = (course: Course): string => url.href({ course: course.code });
+  const closeHref = $derived(url.href({ course: null }));
+
+  $effect(() => {
+    if (panelAlone) window.scrollTo({ top: 0 });
+  });
+
+  // ---- Keyboard: "/" focuses the search; arrows move through the results; Enter opens one ----
+
+  let searchRef = $state<HTMLInputElement>();
+
+  function isEditable(el: EventTarget | null): boolean {
+    return (
+      el instanceof HTMLElement && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))
+    );
+  }
+
+  function onwindowkeydown(event: KeyboardEvent): void {
+    if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey || isEditable(event.target)) return;
+    event.preventDefault();
+    searchRef?.focus();
+    searchRef?.select();
+  }
+
+  function onsearchkeydown(event: KeyboardEvent): void {
+    const results = x.results;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (results.length === 0) return;
+      event.preventDefault();
+      active = event.key === "ArrowDown" ? Math.min(results.length - 1, active + 1) : Math.max(0, active - 1);
+      if (active >= limit) limit = active + 20;
+      const id = results[active]?.id ?? "";
+      requestAnimationFrame(() => document.querySelector(`#result-${id}`)?.scrollIntoView({ block: "nearest" }));
+    } else if (event.key === "Enter") {
+      const course = results[Math.max(0, active)];
+      if (course) void goto(hrefFor(course), { noScroll: true, keepFocus: true });
+    }
+  }
+
+  $effect(() => {
+    const input = searchRef;
+    if (!input) return;
+    input.addEventListener("keydown", onsearchkeydown);
+    return () => input.removeEventListener("keydown", onsearchkeydown);
+  });
+
+  // ---- Toolbar ----
+
+  const termOptions = $derived([
+    ...(x.terms.value ?? []).map((t) => ({ value: t.id, label: t.name })),
+    { value: ALL_SEMESTERS, label: "All semesters" },
+  ]);
+  const sortOptions = $derived(
+    (Object.keys(SORT_LABELS) as SortKey[])
+      .filter((key) => !FCE_SORTS.includes(key) || x.fceMap !== null)
+      .map((key) => ({ value: key, label: SORT_LABELS[key], disabled: key === "relevance" && x.q === "" })),
   );
+  const chipList = $derived(
+    filterChips(
+      { ...query, filters: x.filters },
+      {
+        department: (code) => x.departments.find((d) => d.code === code)?.name ?? departmentName(code),
+        mini: (n) => x.termMeta?.minis.find((m) => String(m.number) === n)?.name ?? `Mini ${n}`,
+        requirement: x.reqName,
+      },
+    ),
+  );
+  const termName = $derived(x.termMeta?.name ?? "this semester");
+  const countText = $derived.by(() => {
+    const n = x.results.length;
+    const base = `${n.toLocaleString("en-US")} ${n === 1 ? "result" : "results"}`;
+    if (x.allMode) return `${base} across all semesters`;
+    const others = x.unoffered?.length ?? 0;
+    return others > 0 ? `${base}, plus ${others.toLocaleString("en-US")} not offered` : base;
+  });
 
   function reset(): void {
-    departments = [];
-    requirements = [];
-    unitsLow = 0;
-    unitsHigh = 24;
-    offeredIn = "";
-    level = "";
+    url.update(clearFilters(query));
   }
+
+  function clearAll(): void {
+    url.searchText = "";
+    url.update({ ...clearFilters(query), q: "" });
+  }
+
+  const emptyText = $derived.by(() => {
+    if (x.q === "") return "No course passes every filter. Remove one to see more.";
+    if (x.filterCount === 0)
+      return `Nothing matches "${x.q}". Try a course number like 15-122, a word from the title, or an instructor's last name.`;
+    const filters = x.filterCount === 1 ? "this filter" : `these ${x.filterCount} filters`;
+    return `Nothing matches "${x.q}" with ${filters}. Remove a filter or try a course number like 15-122.`;
+  });
+  const highlight = $derived(new Set(x.scheduleView?.entries.map((e) => e.course.id) ?? []));
+  const unofferedNote = $derived(
+    x.unoffered === null
+      ? "Loading courses from other semesters and the catalog."
+      : hasSectionFilters(x.filters)
+        ? `Hidden while a day, time, delivery, session or schedule filter is on: those need ${termName}'s sections.`
+        : x.unoffered.length === 0
+          ? "None of them match either."
+          : "Offered in other semesters, or listed in the catalog.",
+  );
+  const emptyIntro = $derived(
+    x.results.length > 0
+      ? undefined
+      : x.q === ""
+        ? `No ${termName} courses pass these filters.`
+        : `No ${termName} courses match "${x.q}".`,
+  );
 </script>
 
-<Title />
+<svelte:window onkeydown={onwindowkeydown} />
 
-<RailLayout storageKey="courses" {filterCount} backLabel="Search">
-  {#snippet rail()}
-    <RailGroup>
-      <RailSection title="Department" icon={GraduationCap} badge={departments.length}>
-        <MultiSelect options={[]} bind:value={departments} label="Departments" placeholder="Any department" />
-      </RailSection>
-      <RailSection title="Units" icon={Coins}>
-        <RangeSlider label="Units" bind:low={unitsLow} bind:high={unitsHigh} presets={unitPresets} />
-      </RailSection>
-      <RailSection title="Offered in" icon={CalendarDays}>
-        <Select bind:value={offeredIn} label="Offered in" placeholder="Any semester" options={[]} />
-      </RailSection>
-      <RailSection title="Course Level" icon={BookOpen}>
-        <Select bind:value={level} label="Course level" placeholder="Any level" options={levels} />
-      </RailSection>
-      <RailSection title="Requirement" icon={Globe} badge={requirements.length}>
-        <MultiSelect
-          options={[]}
-          bind:value={requirements}
-          label="Requirements"
-          placeholder="Any requirement"
-        />
-      </RailSection>
-      <Button variant="secondary" full onclick={reset}>Reset</Button>
-    </RailGroup>
-  {/snippet}
+<Title value={x.allMode ? "All semesters" : x.termMeta?.name} />
 
-  {#snippet header()}
-    <PageToolbar title="Search" hideTitle="desktop" onreset={filterCount > 0 ? reset : undefined}>
-      {#snippet search()}
-        <SearchInput
-          bind:value={query}
-          label="Search courses"
-          placeholder="Search courses by ID, description, name or keyword..."
-        />
-      {/snippet}
-      {#snippet actions()}
-        <ViewToggle pageKey="courses" bind:value={view} />
-      {/snippet}
-    </PageToolbar>
-  {/snippet}
+<svelte:head>
+  {#if query.course !== null}
+    <link rel="canonical" href="{page.url.origin}{coursePath(query.course)}" />
+  {/if}
+</svelte:head>
 
-  <EmptyState
-    icon={Search}
-    title="Courses"
-    description="Courses for the selected semester are listed here, as cards or as a compact list."
+{#snippet toolbar()}
+  <ExplorerToolbar
+    {url}
+    count={x.loading ? undefined : countText}
+    {chipList}
+    onreset={x.filterCount > 0 ? reset : undefined}
+    {termOptions}
+    termValue={x.allMode ? ALL_SEMESTERS : (x.termId ?? "")}
+    onterm={(term) => url.update({ ...query, term }, true)}
+    {sortOptions}
+    sortValue={x.sort}
+    onsort={(sort) => url.update({ ...query, sort })}
+    fceAvailable={x.fceMap !== null}
+    {chart}
+    onchart={(on) => url.update({ ...query, chart: on })}
+    bind:view
+    bind:searchRef
+    allSemesters={x.allMode}
   />
+{/snippet}
+
+{#snippet others()}
+  {#if !x.allMode && x.termId && query.unoffered}
+    <OtherCourses
+      heading="Not offered in {termName}"
+      intro={emptyIntro}
+      note={unofferedNote}
+      busy={x.unoffered === null}
+      matches={(x.unoffered ?? []).slice(0, otherLimit)}
+      total={x.unoffered?.length ?? 0}
+      termId={x.termId}
+      termSpan={x.termSpan}
+    >
+      {#snippet more()}
+        {#if x.unoffered && otherLimit < x.unoffered.length}
+          <div class="mt-3 flex justify-center">
+            <Button onclick={() => (otherLimit += 50)}>Show more</Button>
+          </div>
+        {/if}
+      {/snippet}
+    </OtherCourses>
+  {:else if !x.allMode && x.termId && x.otherMatches.length > 0}
+    <OtherCourses
+      heading="Not offered in {termName}"
+      intro={emptyIntro}
+      note={x.otherMatches.length > 8 ? "Keep typing to narrow these down." : undefined}
+      matches={x.otherMatches.slice(0, 8)}
+      total={x.otherMatches.length}
+      termId={x.termId}
+      termSpan={x.termSpan}
+    />
+  {/if}
+{/snippet}
+
+<RailLayout
+  storageKey="courses"
+  filterCount={x.filterCount}
+  backLabel="Search"
+  header={panelAlone ? undefined : toolbar}
+>
+  {#snippet rail()}
+    <ExplorerRail
+      {query}
+      onchange={(next) => url.update(next)}
+      onreset={reset}
+      departments={x.departments}
+      minis={x.termMeta?.minis ?? []}
+      termName={x.allMode ? null : (x.termMeta?.name ?? null)}
+      fceAvailable={x.fceMap !== null}
+      signedIn={session.status === "signed-in"}
+      cards={view === "cards"}
+    />
+  {/snippet}
+
+  <div class="flex items-start gap-6">
+    <div id="course-results" class="min-w-0 flex-1 {panelAlone ? 'hidden' : ''}" aria-busy={x.loading}>
+      {#if x.error}
+        <EmptyState icon={SearchX} title="Couldn't load courses" description="{x.error} Check your connection and try again.">
+          <Button variant="primary" onclick={() => location.reload()}>Try again</Button>
+        </EmptyState>
+      {:else if x.loading}
+        {#if x.allMode}
+          <p class="mb-4 flex items-center gap-2 text-body-2 text-muted" aria-live="polite">
+            <Spinner size="sm" decorative /> Loading courses from every semester and the catalog
+          </p>
+        {/if}
+        <div class="flex flex-col gap-6" aria-label="Loading courses">
+          {#each [0, 1, 2] as index (index)}
+            <div class="rounded-card border border-pressed bg-surface px-4 py-5 sm:px-9 sm:py-[30px]">
+              <Skeleton variant="text" class="w-2/3" />
+              <Skeleton variant="text" class="mt-2 w-1/3" />
+              <Skeleton variant="text" lines={3} class="mt-5" />
+            </div>
+          {/each}
+        </div>
+      {:else if x.allMode && x.all === undefined}
+        <EmptyState
+          icon={SearchX}
+          title="All semesters isn't available"
+          description="This catalog has no list of offered courses. Pick a semester instead."
+        />
+      {:else if x.results.length === 0}
+        {@render others()}
+        {#if x.otherMatches.length === 0 && !(query.unoffered && (x.unoffered?.length ?? 0) > 0)}
+          <EmptyState icon={SearchX} title="No matching courses" description={emptyText}>
+            <div class="flex flex-wrap justify-center gap-2">
+              {#if x.filterCount > 0}<Button variant="primary" onclick={reset}>Clear filters</Button>{/if}
+              {#if x.q !== "" && x.filterCount > 0}<Button onclick={clearAll}>Clear search and filters</Button>{/if}
+            </div>
+          </EmptyState>
+        {/if}
+      {:else}
+        <CourseResults
+          results={x.results}
+          resetKey="{x.resultsKey}|{view}"
+          {view}
+          {chart}
+          fce={x.fceMap}
+          {highlight}
+          termId={x.allMode ? null : x.termId}
+          contextTermId={x.termId}
+          offeredOf={(id) => x.all?.termsOf.get(id) ?? []}
+          {hrefFor}
+          {selectedId}
+          {active}
+          bind:limit
+          footer={others}
+        />
+      {/if}
+    </div>
+
+    {#if query.course !== null && x.termId !== null}
+      <aside
+        aria-label="Course details"
+        class="min-w-0 rounded-card border border-pressed bg-surface {panelBeside
+          ? 'scrollbar-thin sticky top-[calc(var(--header-h)+1rem)] max-h-[calc(100dvh-var(--header-h)-2rem)] w-[460px] shrink-0 overflow-y-auto overscroll-contain min-[105rem]:w-[500px]'
+          : 'w-full'}"
+      >
+        {#key selectedId}
+          <CourseDetailPanel
+            code={query.course}
+            termId={x.allMode ? null : x.termId}
+            contextTermId={x.termId}
+            {closeHref}
+            courseHref={(courseId) => url.href({ course: codeOf(parseCourseCode(courseId)) })}
+          />
+        {/key}
+      </aside>
+    {/if}
+  </div>
 </RailLayout>
