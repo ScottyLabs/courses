@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { ArrowDown, ArrowUp, Ellipsis, Eye, EyeOff, TriangleAlert, X } from "@lucide/svelte";
+  import { coursePreview } from "$lib/components/course/preview";
   import Checkbox from "$lib/components/ui/Checkbox.svelte";
   import IconButton from "$lib/components/ui/IconButton.svelte";
   import Menu, { type MenuEntry } from "$lib/components/ui/Menu.svelte";
@@ -100,7 +101,7 @@
     <ColorPicker color={entry.color} code={course.code} onchange={oncolor} />
     <div class="min-w-0 flex-1 pt-1 {hidden ? 'opacity-50' : ''}">
       <p class="flex flex-wrap items-baseline gap-x-2">
-        <span class="tabular text-heading-6 font-semibold text-strong">{course.code}</span>
+        <span {...coursePreview(course.id, termId)} class="tabular text-heading-6 font-semibold text-strong">{course.code}</span>
         <span class="text-label-md font-normal text-muted">{unitsText(course.units)}</span>
         {#if !resolved.factorable}
           <span

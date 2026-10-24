@@ -33,6 +33,7 @@
   // features/record/shared.tsx.
   import { Search, X } from "@lucide/svelte";
   import { tick } from "svelte";
+  import { coursePreview } from "$lib/components/course/preview";
   import { searchCourses } from "$lib/core/search";
   import type { RecordData } from "./record-data.svelte";
 
@@ -117,7 +118,7 @@
       aria-labelledby="{id}-label"
       class="flex h-10 min-w-0 items-center gap-2 rounded-field border border-line-strong bg-paper pr-1 pl-4"
     >
-      <span class="tabular shrink-0 text-label-lg text-strong">{info.code}</span>
+      <span {...coursePreview(value)} class="tabular shrink-0 text-label-lg text-strong">{info.code}</span>
       <span class="min-w-0 flex-1 truncate text-body-2 text-ink">{info.title ?? "Not in the catalog"}</span>
       <button
         bind:this={clearButton}

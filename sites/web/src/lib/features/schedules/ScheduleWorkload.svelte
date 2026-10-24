@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { LockKeyhole, LogIn } from "@lucide/svelte";
+  import { coursePreview } from "$lib/components/course/preview";
   import Button from "$lib/components/ui/Button.svelte";
   import { catalog, resource, session } from "$lib/data";
   import type { Term } from "$lib/core/data";
@@ -96,7 +97,7 @@
       {#each load.rows as row (row.entry.course.id)}
         {@const mini = row.mini !== null}
         <li class="grid grid-cols-[4.25rem_minmax(0,1fr)_4.75rem] items-center gap-2 text-label-md">
-          <span class="tabular font-semibold text-strong">{row.entry.course.code}</span>
+          <span {...coursePreview(row.entry.course.id, term.meta.id)} class="tabular font-semibold text-strong">{row.entry.course.code}</span>
           {#if row.hours !== null}
             <WorkloadMeter hours={row.hours} units={row.entry.course.units} {mini} />
           {:else}

@@ -6,6 +6,7 @@
 -->
 <script lang="ts">
   import { ChevronLeft, ChevronRight, Lock, LockOpen } from "@lucide/svelte";
+  import { coursePreview } from "$lib/components/course/preview";
   import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Checkbox from "$lib/components/ui/Checkbox.svelte";
@@ -348,7 +349,7 @@
                   <span aria-hidden="true" class="course-swatch mt-1 h-4 w-1 shrink-0 rounded-full"></span>
                   <div class="min-w-0 flex-1 text-body-2">
                     <p class="flex flex-wrap items-baseline gap-x-2">
-                      <span class="tabular font-semibold text-strong">{e.course.code}</span>
+                      <span {...coursePreview(e.course.id, term.meta.id)} class="tabular font-semibold text-strong">{e.course.code}</span>
                       <span class="font-semibold text-ink">{choiceLabel(chosen)}</span>
                       {#if changed}
                         <Chip size="sm" tone="neutral">{e.section ? `was ${choiceLabel(e)}` : "new pick"}</Chip>

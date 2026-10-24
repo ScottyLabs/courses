@@ -25,7 +25,13 @@
       {#each incoming as e (e.id)}
         {@const info = e.courseId === null ? null : page.lookup(e.courseId)}
         <li class="flex min-h-10 items-center gap-1.5 px-2 md:min-h-8">
-          <span class="tabular shrink-0 text-label-lg text-ink">{info?.code ?? "Units"}</span>
+          {#if e.courseId !== null && info}
+            <a href={page.href(e.courseId)} class="tabular shrink-0 text-label-lg text-ink hover:text-accent-ink hover:underline"
+              >{info.code}</a
+            >
+          {:else}
+            <span class="tabular shrink-0 text-label-lg text-ink">Units</span>
+          {/if}
           <span class="min-w-0 flex-1 truncate text-body-2 text-muted">
             {e.label ?? info?.title ?? e.institution ?? "General credit"}
           </span>

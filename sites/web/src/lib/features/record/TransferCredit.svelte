@@ -9,6 +9,7 @@
   import TextInput from "$lib/components/ui/TextInput.svelte";
   import type { Option } from "$lib/components/ui/types";
   import { transferEntry, unitsError } from "$lib/core/record/forms";
+  import { coursePath } from "$lib/core/routes";
   import { termLabel } from "$lib/core/requisites";
   import { record } from "$lib/state";
   import CoursePicker from "./CoursePicker.svelte";
@@ -107,7 +108,7 @@
         <li class="flex items-start gap-3 px-4 py-3">
           <div class="min-w-0 flex-1">
             <p class="flex min-w-0 items-baseline gap-2">
-              {#if info}<span class="tabular shrink-0 text-label-lg text-strong">{info.code}</span>{/if}
+              {#if info && e.courseId !== null}<a href={coursePath(e.courseId)} class="tabular shrink-0 text-label-lg text-strong hover:text-accent-ink hover:underline">{info.code}</a>{/if}
               <span class="min-w-0 truncate text-body-2 text-ink">{e.label ?? info?.title ?? "Transfer credit"}</span>
             </p>
             <p class="text-body-2 text-muted">
