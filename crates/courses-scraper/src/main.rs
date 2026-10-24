@@ -56,6 +56,14 @@ struct Args {
     #[arg(long, value_enum, default_value_t = Mode::Courses, env = "MODE")]
     mode: Mode,
 
+    /// Refresh just one absolute term, e.g. S27. Does not use the historical plan-window cap.
+    #[arg(long)]
+    term: Option<String>,
+
+    /// Read the Cookie request header from a private local file, never command-line text.
+    #[arg(long)]
+    cookie_file: Option<PathBuf>,
+
     #[arg(long, env = "INCREMENTAL")]
     incremental: bool,
 }
@@ -70,9 +78,37 @@ fn main() -> Result<()> {
 
     // Personal credentials come from plain env: workflow env in CI, the
     // devenv shell's secretspec dev profile (.env via local provider) in dev
-    let cookie_header = std::env::var("COOKIE_HEADER")
-        .ok()
-        .filter(|s| !s.is_empty());
+    let cookie_header = match &args.cookie_file {
+        Some(path) => Some(
+            std::fs::read_to_string(path)
+                .context("reading cookie file")?
+                .trim()
+                .to_owned(),
+        ),
+        None => std::env::var("COOKIE_HEADER")
+            .ok()
+            .filter(|s| !s.is_empty()),
+    };
+    if let Some(term) = &args.term {
+        anyhow::ensure!(
+            args.mode == Mode::Courses,
+            "--term is supported only with --mode courses"
+        );
+        let (year, sem) = parse_target_term(term)?;
+        let season = match sem {
+            Sem::Fall => "fall",
+            Sem::Spring => "spring",
+            Sem::Summer => "summer_1",
+        };
+        let published = fetch_soc(season)?.is_some_and(|soc| soc.matches_term(year, sem));
+        anyhow::ensure!(
+            published,
+            "The public Schedule of Classes does not yet publish {term}; no authenticated requests were made"
+        );
+    }
+    if args.term.is_some() && args.incremental {
+        anyhow::bail!("A term refresh must not skip existing records; omit --incremental");
+    }
     let canvas_token = std::env::var("CANVAS_TOKEN").ok().filter(|s| !s.is_empty());
     let ldap_password = std::env::var("CMU_LDAP_PASSWORD")
         .ok()
@@ -160,6 +196,20 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn parse_target_term(term: &str) -> Result<(u32, Sem)> {
+    let bytes = term.as_bytes();
+    if bytes.len() != 3 || !bytes[1..].iter().all(u8::is_ascii_digit) {
+        anyhow::bail!("Use a term such as S27, F26, or M27");
+    }
+    let sem = match bytes[0] {
+        b'S' => Sem::Spring,
+        b'F' => Sem::Fall,
+        b'M' => Sem::Summer,
+        _ => anyhow::bail!("Unknown term season"),
+    };
+    Ok((2000 + term[1..].parse::<u32>()?, sem))
+}
+
 fn scrape_syllabi(
     canvas: &Canvas,
     args: &Args,
@@ -239,15 +289,43 @@ fn scrape_courses(
         })
         .collect();
 
-    let courses: HashSet<String> = fce
-        .keys()
-        .chain(soc.values().flat_map(|s| s.codes.iter()))
-        .cloned()
-        .collect();
-
+    let target = args.term.as_deref().map(parse_target_term).transpose()?;
+    let courses: HashSet<String> = if let Some((year, sem)) = target {
+        soc.values()
+            .filter(|s| s.matches_term(year, sem))
+            .flat_map(|s| s.codes.iter())
+            .cloned()
+            .collect()
+    } else {
+        fce.keys()
+            .chain(soc.values().flat_map(|s| s.codes.iter()))
+            .cloned()
+            .collect()
+    };
+    anyhow::ensure!(
+        !courses.is_empty(),
+        "No published courses found; refusing an empty refresh"
+    );
     let tasks: Vec<Task> = courses
         .into_par_iter()
-        .flat_map_iter(|c| course_tasks(&c, &fce, &soc, anchor))
+        .flat_map_iter(|c| {
+            if let Some((year, sem)) = target {
+                vec![
+                    Task::Info(c.clone()),
+                    Task::Sections {
+                        course: c,
+                        lyear: sem.ay_start(year) - anchor + 1,
+                        sem_id: match sem {
+                            Sem::Fall => 1,
+                            Sem::Spring => 2,
+                            Sem::Summer => 3,
+                        },
+                    },
+                ]
+            } else {
+                course_tasks(&c, &fce, &soc, anchor)
+            }
+        })
         .collect();
     let total = tasks.len();
     info!(total, concurrency = args.concurrency, "scraping courses");
@@ -255,39 +333,64 @@ fn scrape_courses(
     let done = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
 
-    pool.install(|| {
-        tasks.into_par_iter().for_each(|task| {
-            let result = match &task {
-                Task::Info(course) => stellic.save_info(course, args.incremental),
-                Task::Sections {
-                    course,
-                    lyear,
-                    sem_id,
-                } => stellic.save_sections(course, *lyear, *sem_id, args.incremental),
-            };
-            let n = done.fetch_add(1, Ordering::Relaxed) + 1;
-
-            if let Err(e) = result {
+    let run_task = |task: &Task| -> Result<()> {
+        match task {
+            Task::Info(course) => stellic.save_info(course, args.incremental),
+            Task::Sections {
+                course,
+                lyear,
+                sem_id,
+            } => stellic.save_sections(
+                course,
+                *lyear,
+                *sem_id,
+                args.incremental,
+                target.map(|(year, _)| year),
+            ),
+        }
+    };
+    if target.is_some() {
+        // Explicit refreshes are serial regardless of the pool setting. Stop
+        // the whole run on the first failed request, including 401/403/429.
+        for task in &tasks {
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            done.fetch_add(1, Ordering::Relaxed);
+            if let Err(error) = run_task(task) {
                 failed.fetch_add(1, Ordering::Relaxed);
-                debug!(error = %e, task = ?task, "task failed");
+                warn!(%error, "targeted refresh stopped on first failure");
+                break;
             }
-
-            if n.is_multiple_of(500) {
-                info!(
-                    done = n,
-                    total,
-                    failed = failed.load(Ordering::Relaxed),
-                    "progress"
-                );
-            }
+        }
+    } else {
+        pool.install(|| {
+            tasks.par_iter().for_each(|task| {
+                done.fetch_add(1, Ordering::Relaxed);
+                if let Err(error) = run_task(task) {
+                    failed.fetch_add(1, Ordering::Relaxed);
+                    debug!(%error, "course request failed");
+                }
+            })
         });
-    });
+    }
 
     info!(
         done = done.load(Ordering::Relaxed),
         failed = failed.load(Ordering::Relaxed),
         "courses complete"
     );
+    let failures = failed.load(Ordering::Relaxed);
+    let root = args.export_root.join(&stellic.username);
+    std::fs::create_dir_all(&root)?;
+    std::fs::write(
+        root.join("scrape-manifest.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "target_term": args.term, "tasks": total, "completed": done.load(Ordering::Relaxed), "failed": failures,
+            "completed_unix_seconds": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_secs()
+        }))?,
+    )?;
+    if failures > 0 {
+        anyhow::bail!("{failures} course requests failed; this scrape is incomplete")
+    }
     Ok(())
 }
 
@@ -338,4 +441,18 @@ fn scrape_programs(
         "requirements complete"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod term_tests {
+    use super::*;
+    #[test]
+    fn spring_2027_uses_2026_academic_year_and_spring_semester() {
+        let (year, sem) = parse_target_term("S27").unwrap();
+        assert_eq!(year, 2027);
+        assert_eq!(sem, Sem::Spring);
+        assert_eq!(sem.ay_start(year), 2026);
+        assert!(parse_target_term("S2027").is_err());
+        assert!(parse_target_term("X27").is_err());
+    }
 }

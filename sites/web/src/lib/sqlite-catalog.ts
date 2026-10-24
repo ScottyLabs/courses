@@ -1,27 +1,16 @@
-import type { AsyncDuckDBConnection } from "@duckdb/duckdb-wasm";
 import type { Course, CourseQuery, Gened, Instructor, Term } from "./contracts";
 import type { LocalCatalog } from "./data-source";
 
-// SQL parameters are always bound; no user input becomes SQL syntax.
-type SqlConnection = Pick<AsyncDuckDBConnection, "prepare">;
-async function rows(
-  connection: SqlConnection,
-  sql: string,
-  params: (string | number)[] = [],
-) {
-  const statement = await connection.prepare(sql);
-  try {
-    return (await statement.query(...params)).toArray();
-  } finally {
-    await statement.close();
-  }
+export type SqlConnection = { query(sql: string, params?: (string | number)[]): Promise<Record<string, any>[]> };
+async function rows(connection: SqlConnection, sql: string, params: (string | number)[] = []) {
+  return connection.query(sql, params);
 }
 
-function payload<T>(row: { payload_json: string }): T {
+function payload<T>(row: Record<string, any>): T {
   return JSON.parse(row.payload_json) as T;
 }
 
-export async function createDuckDBCatalog(
+export async function createSQLiteCatalog(
   connection: SqlConnection,
   dispose: () => void,
 ): Promise<LocalCatalog> {
@@ -30,7 +19,7 @@ export async function createDuckDBCatalog(
     "SELECT schema_version FROM catalog_metadata",
   );
   if (metadata.length !== 1 || metadata[0].schema_version !== 1) {
-    throw new Error("Unsupported DuckDB catalog schema");
+    throw new Error("Unsupported SQLite catalog schema");
   }
   const coverageRows = await rows(
     connection,
@@ -65,7 +54,7 @@ export async function createDuckDBCatalog(
       const params: (string | number)[] = [term];
       if (query.search?.trim()) {
         where.push(
-          "(contains(lower(code || ' ' || name || ' ' || description), ?) OR contains(replace(code, '-', ''), ?))",
+          "(instr(lower(code || ' ' || name || ' ' || description), ?) > 0 OR instr(replace(code, '-', ''), ?) > 0)",
         );
         params.push(
           query.search.trim().toLowerCase(),
@@ -73,8 +62,8 @@ export async function createDuckDBCatalog(
         );
       }
       if (query.department) {
-        where.push("(lower(department) = lower(?) OR starts_with(code, ?))");
-        params.push(query.department, query.department);
+        where.push("(lower(department) = lower(?) OR substr(code,1,length(?)) = ?)");
+        params.push(query.department, query.department, query.department);
       }
       if (query.level) {
         where.push(query.level === "500" ? "level >= ?" : "level = ?");
@@ -85,7 +74,7 @@ export async function createDuckDBCatalog(
         params.push(Number(query.units));
       }
       if (query.offered_in) {
-        where.push("list_contains(offered_in, ?)");
+        where.push("instr('|' || offered_in || '|', '|' || ? || '|') > 0");
         params.push(query.offered_in.toLowerCase());
       }
       if (query.min_fce !== "" && query.min_fce !== undefined) {
@@ -129,7 +118,7 @@ export async function createDuckDBCatalog(
       if (!covered("instructors")) return undefined;
       const result = await rows(
         connection,
-        "SELECT payload_json FROM catalog_instructors WHERE contains(lower(name || ' ' || coalesce(department, '')), ?) ORDER BY name, id",
+        "SELECT payload_json FROM catalog_instructors WHERE instr(lower(name || ' ' || coalesce(department, '')), ?) > 0 ORDER BY name, id",
         [search.trim().toLowerCase()],
       );
       return {

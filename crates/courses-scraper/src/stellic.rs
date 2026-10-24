@@ -253,6 +253,7 @@ impl Stellic {
         lyear: i32,
         sem_id: u8,
         incremental: bool,
+        expected_year: Option<u32>,
     ) -> Result<()> {
         if incremental
             && self
@@ -276,6 +277,33 @@ impl Stellic {
             .is_some_and(|a| !a.is_empty());
         if !nonempty {
             return Ok(());
+        }
+
+        // A successful HTTP response can still be for a different plan term.
+        // Do not publish stale sections as the explicitly requested semester.
+        if let Some(year) = expected_year {
+            for entry in json["data_list"].as_array().into_iter().flatten() {
+                for group in entry["section_groups"].as_array().into_iter().flatten() {
+                    for section in group["sections"].as_array().into_iter().flatten() {
+                        if let Some(date) = section["start_date"].as_str() {
+                            let parts: Vec<_> = date.split('-').collect();
+                            let actual_year = parts.first().and_then(|v| v.parse::<u32>().ok());
+                            let month =
+                                parts.get(1).and_then(|v| v.parse::<u8>().ok()).unwrap_or(0);
+                            let actual_sem = match month {
+                                1..=4 => 2,
+                                5..=7 => 3,
+                                8..=12 => 1,
+                                _ => 0,
+                            };
+                            anyhow::ensure!(
+                                actual_year == Some(year) && actual_sem == sem_id,
+                                "section dates do not match requested term for {course}"
+                            );
+                        }
+                    }
+                }
+            }
         }
 
         if let Some(arr) = json.get_mut("data_list").and_then(|d| d.as_array_mut()) {

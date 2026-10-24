@@ -69,6 +69,26 @@
   let draft = $state<Schedule>({ id: 'local', name: 'Untitled', term_id: '', items: [] });
   let sharedView = $state(false);
   let message = $state('');
+  let programs = $state<{id: string; name: string; audit_name: string}[]>([]);
+  let programSearch = $state('');
+  let programDetails = $state<Awaited<ReturnType<typeof data.program>> | null>(null);
+  let programError = $state('');
+  async function findPrograms() {
+    try { programs = (await data.programs(programSearch)).items; programError = ''; }
+    catch (cause) { programError = reason(cause); }
+  }
+  async function chooseProgram(id: string) {
+    saveDraft({ ...draft, program_id: id || undefined });
+    if (!id) { programDetails = null; return; }
+    try { programDetails = await data.program(id); programError = ''; }
+    catch (cause) { programError = reason(cause); }
+  }
+  function requirementText(tree: unknown): string {
+    if (!tree || typeof tree !== 'object') return '';
+    const node = tree as { screen_name?: string; constraints?: { type_string?: string }[]; choices?: unknown[] };
+    return [node.screen_name, ...(node.constraints ?? []).map((c) => c.type_string), ...(node.choices ?? []).map(requirementText)].filter(Boolean).join('\n');
+  }
+
   let mobileMenu = $state(false);
   let filtersOpen = $state(false);
   let darkMode = $state(false);
@@ -88,10 +108,6 @@
   const visibleGeneds = $derived(geneds.filter((item) => `${item.name} ${item.description ?? ''}`.toLowerCase().includes(genedQuery.toLowerCase())));
   const visibleFinals = $derived(finals.filter((item) => `${item.course_code} ${item.course_name}`.toLowerCase().includes(finalsQuery.toLowerCase())));
   const weekdays = ['M', 'T', 'W', 'R', 'F'];
-  const previewCourses: Course[] = [
-    { code: '15-251', name: 'Great Ideas in Theoretical Computer Science', description: 'This course is about how to use theoretical ideas to formulate and solve problems in computer science. It integrates mathematical material with general problem solving techniques and computer science applications. Examples are drawn from algorithms, complexity theory, game theory, probability theory, graph theory, automata theory, algebra, cryptography, and combinatorics. Assignments involve both mathematical proofs and programming. NOTE: students must achieve a C or better in order to use this course to satisfy the pre-requisite for any subsequent Computer Science course.', units: 12, department: 'Computer Science', offered_terms: [], gened_tags: ['SCS Dept'], prerequisites: 'All Satisfied', corequisites: [], instructors: ['Computer Science', 'Staff'], fce: { hours_per_week: 14.5 } },
-    { code: '15-122', name: 'Principles of Imperative Computation', description: 'For students with a basic understanding of programming, this course introduces imperative programming and methods for ensuring the correctness of programs.', units: 12, department: 'Computer Science', offered_terms: [], gened_tags: ['Course Website', 'SCS Dept'], prerequisites: 'All Satisfied', corequisites: ['All Satisfied'], instructors: ['Computer Science', 'Staff'], fce: { hours_per_week: 15.5 } }
-  ];
   const events = $derived(draft.items.flatMap((item) => {
     const course = scheduleCourses[item.course_code];
     return (course?.sections ?? []).filter((section) => item.section_ids.includes(section.id)).flatMap((section) =>
@@ -103,7 +119,7 @@
   function conflicts(event: (typeof events)[number]) { return events.some((other) => other !== event && other.day === event.day && minutes(other.start) < minutes(event.end) && minutes(event.start) < minutes(other.end)); }
 
   function reason(value: unknown) {
-    if (value instanceof ApiError && [404, 501, 502, 503].includes(value.status)) return 'The course service is unavailable or this endpoint is pending. See the frontend API contract in the docs.';
+    if (value instanceof ApiError && [404, 501, 502, 503].includes(value.status)) return 'This service is currently unavailable. Please try again later.';
     if (value instanceof ApiError && value.status === 401) return 'Sign in with your CMU account to view this information.';
     return value instanceof Error ? value.message : 'Unable to load data. Please try again.';
   }
@@ -116,14 +132,18 @@
     draft = next;
     localStorage.setItem('cmucourses-draft', JSON.stringify(next));
   }
-  function toggleSaved(course: Course) {
-    savedCourses = savedCourses.some((item) => item.code === course.code)
-      ? savedCourses.filter((item) => item.code !== course.code)
-      : [...savedCourses, course];
-    localStorage.setItem('cmucourses-saved', JSON.stringify(savedCourses));
+  async function toggleSaved(course: Course) {
+    const exists = savedCourses.some((item) => item.code === course.code);
+    try {
+      if (user) {
+        if (exists) await data.unsaveCourse(course.code); else await data.saveCourse(course.code);
+      }
+      savedCourses = exists ? savedCourses.filter((item) => item.code !== course.code) : [...savedCourses, course];
+      if (!user) localStorage.setItem('cmucourses-saved', JSON.stringify(savedCourses.map(({ code, name, description, units, department, offered_terms, gened_tags }) => ({ code, name, description, units, department, offered_terms, gened_tags }))));
+    } catch (cause) { message = reason(cause); }
   }
   async function refreshUser() {
-    try { user = await data.me(); authError = false; }
+    try { user = await data.me(); authError = false; try { savedCourses = await data.savedCourses(); } catch (cause) { message = reason(cause); savedCourses = []; } }
     catch (cause) { user = null; authError = !(cause instanceof ApiError && cause.status === 401); }
     finally { authLoading = false; }
   }
@@ -145,14 +165,7 @@
       const response = await data.courses({ search: query, department, level, units, offered_in: offeredIn, min_fce: minFce, term, view: courseTab, page, page_size: 12 });
       if (id === requestId) { courses = response.items; total = response.total; }
     } catch (cause) { if (id === requestId) {
-      courses = previewCourses.filter((course) =>
-        `${course.code} ${course.name} ${course.description}`.toLowerCase().includes(query.toLowerCase()) &&
-        (!department || course.department.toLowerCase().includes(department.toLowerCase()) || course.code.startsWith(department)) &&
-        (!level || course.code.slice(3, 4) === level.slice(0, 1)) &&
-        (!units || course.units === Number(units)) &&
-        (!offeredIn || course.offered_terms.some((offering) => offering.toLowerCase().includes(offeredIn.toLowerCase()))) &&
-        (!minFce || (course.fce?.overall_course ?? 0) >= Number(minFce))
-      );
+      courses = [];
       total = courses.length; error = reason(cause);
     } }
     finally { if (id === requestId) loading = false; }
@@ -190,10 +203,34 @@
     catch (cause) { friendError = reason(cause); }
   }
   async function loadSchedules() { if (!user) return; try { schedules = await data.schedules(); } catch (cause) { error = reason(cause); } }
+  let scheduleRequestId = 0;
   async function loadScheduleDetails() {
+    const request = ++scheduleRequestId;
+    const selectedTerm = draft.term_id || term;
     const missing = draft.items.map((item) => item.course_code).filter((code) => !scheduleCourses[code]);
-    const found = await Promise.all(missing.map((code) => data.course(code, draft.term_id || term).catch(() => null)));
+    const found = await Promise.all(missing.map((code) => data.course(code, selectedTerm).catch(() => null)));
+    if (request !== scheduleRequestId || selectedTerm !== (draft.term_id || term)) return;
     scheduleCourses = { ...scheduleCourses, ...Object.fromEntries(found.filter((course): course is Course => course !== null).map((course) => [course.code, course])) };
+  }
+  async function openSchedule(selected: Schedule) {
+    scheduleCourses = {};
+    programDetails = null;
+    programError = '';
+    term = selected.term_id;
+    saveDraft(selected);
+    void loadScheduleDetails();
+    if (selected.program_id) {
+      try {
+        const details = await data.program(selected.program_id);
+        if (draft.program_id === selected.program_id) programDetails = details;
+      } catch (cause) { programError = reason(cause); }
+    }
+  }
+  function changeScheduleTerm() {
+    scheduleCourses = {};
+    saveDraft({ ...draft, term_id: term, items: draft.items.map((item) => ({ ...item, section_ids: [] })) });
+    void loadScheduleDetails();
+    message = 'Semester changed. Select sections again; remove courses not offered this term before saving.';
   }
   function go(next: View) {
     view = next; mobileMenu = false; error = '';
@@ -206,6 +243,7 @@
     if (next === 'schedule') { loadSchedules(); loadScheduleDetails(); }
   }
   function addCourse(course: Course) {
+    if (draft.items.length && draft.term_id && term && draft.term_id !== term) { message = 'Choose the schedule’s semester before adding this course, or start a new schedule.'; return; }
     scheduleCourses = { ...scheduleCourses, [course.code]: course };
     if (!selectedCodes.includes(course.code)) saveDraft({ ...draft, term_id: term || draft.term_id, items: [...draft.items, { course_code: course.code, section_ids: [] }] });
     message = `${course.code} added to your schedule draft.`;
@@ -228,7 +266,7 @@
     if (!draft.term_id && !term) { message = 'Choose a term before sharing.'; return; }
     try {
       const base = draft.id === 'local' ? await data.createSchedule(draft.name, draft.term_id || term) : draft;
-      const saved = await data.saveSchedule({ ...draft, id: base.id, term_id: draft.term_id || term });
+      const saved = await data.saveSchedule({ ...draft, id: base.id, revision: base.revision, term_id: draft.term_id || term });
       const shareId = saved.share_id ?? (await data.shareSchedule(saved.id)).share_id;
       saveDraft({ ...saved, share_id: shareId });
       await navigator.clipboard.writeText(`${location.origin}${location.pathname}?view=schedule&share=${encodeURIComponent(shareId)}`);
@@ -243,12 +281,16 @@
     }
     try {
       const base = draft.id === 'local' ? await data.createSchedule(draft.name, draft.term_id || term) : draft;
-      saveDraft(await data.saveSchedule({ ...draft, id: base.id, term_id: draft.term_id || term }));
+      saveDraft(await data.saveSchedule({ ...draft, id: base.id, revision: base.revision, term_id: draft.term_id || term }));
       await loadSchedules(); message = 'Schedule saved.';
     } catch (cause) { message = reason(cause); }
   }
+  async function revokeScheduleShare() {
+    try { await data.revokeScheduleShare(draft.id); saveDraft({ ...draft, share_id: undefined }); message = 'Share link disabled.'; }
+    catch (cause) { message = reason(cause); }
+  }
   async function deleteSchedule(id: string) {
-    try { await data.deleteSchedule(id); schedules = schedules.filter((item) => item.id !== id); } catch (cause) { message = reason(cause); }
+    try { await data.deleteSchedule(id); schedules = schedules.filter((item) => item.id !== id); if (draft.id === id) await openSchedule({ id: 'local', name: 'Untitled', term_id: term, items: [] }); message = 'Schedule deleted.'; } catch (cause) { message = reason(cause); }
   }
   async function uploadFinals(file: File | undefined) {
     if (!file) return;
@@ -284,9 +326,10 @@
     const requested = new URLSearchParams(location.search).get('view');
     if (navigation.some((item) => item.id === requested)) view = requested as View;
     try { const stored = localStorage.getItem('cmucourses-draft'); if (stored) { const parsed = JSON.parse(stored); if (Array.isArray(parsed.items)) draft = parsed; } } catch { /* damaged draft */ }
-    try { const stored = localStorage.getItem('cmucourses-saved'); if (stored) { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) savedCourses = parsed; } } catch { /* damaged saved list */ }
+    try { const stored = localStorage.getItem('cmucourses-saved'); if (stored) { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) savedCourses = parsed.map(({ code, name, description, units, department, offered_terms, gened_tags }) => ({ code, name, description, units, department, offered_terms, gened_tags })); } } catch { /* damaged saved list */ }
     try { const stored = localStorage.getItem('cmucourses-recent-searches'); if (stored) { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) recentSearches = parsed; } } catch { /* damaged recent searches */ }
-    await Promise.all([refreshUser(), loadCourses(), loadTerms()]);
+    await Promise.all([refreshUser(), loadTerms()]);
+    if (view === 'courses') await loadCourses();
     const share = new URLSearchParams(location.search).get('share');
     if (share) { try { draft = { ...(await data.sharedSchedule(share)), share_id: share }; sharedView = true; view = 'schedule'; } catch (cause) { message = reason(cause); } }
     if (view !== 'courses') go(view);
@@ -323,10 +366,10 @@
         <button class="reset-button" onclick={() => { department = ''; level = ''; units = ''; offeredIn = ''; minFce = ''; queueCourses(); }}>Reset</button>
         <div class="aggregate"><h2>Aggregate FCEs</h2><label>Semesters to show <select aria-label="FCE semesters" bind:value={minFce} onchange={queueCourses}><option value="">None</option><option value="3">3.0+</option><option value="4">4.0+</option><option value="4.5">4.5+</option></select></label><div class="checks"><label><input type="checkbox" checked />Spring</label><label><input type="checkbox" />Summer</label><label><input type="checkbox" checked />Fall</label></div></div>
       </aside>
-      <div class="work-area"><div class="catalog-search"><div class="mobile-search-title"><h1>Search</h1></div><div class="search-line"><img src={searchIcon} alt="" /><input class="desktop-search-input" aria-label="Search courses" placeholder="Search courses by ID, description, name or keyword..." bind:value={query} oninput={queueCourses} /><input class="mobile-search-input" aria-label="Search courses" placeholder="Search courses" bind:value={query} oninput={queueCourses} onfocus={() => mobileSearchFocused = true} onkeydown={(event) => { if (event.key === 'Enter') rememberSearch(query); if (event.key === 'Escape') mobileSearchFocused = false; }} /></div>{#if mobileSearchFocused && query.trim()}<div class="mobile-suggestions">{#each mobileSuggestions as suggestion}<button onpointerdown={(event) => { event.preventDefault(); query = suggestion.code; rememberSearch(query); }}>{suggestion.code}: {suggestion.name}</button>{/each}{#if recentSearches.length}<div class="suggestions-label">◷ &nbsp; Recent Searches</div>{#each recentSearches as recent}<button onpointerdown={(event) => { event.preventDefault(); query = recent; rememberSearch(recent); }}>× &nbsp; {recent}</button>{/each}{/if}</div>{/if}<div class="mobile-filter-row"><button onclick={() => filtersOpen = true}>☰ &nbsp; Filter {Number(Boolean(department)) + Number(Boolean(units)) + Number(Boolean(level)) + Number(Boolean(offeredIn)) || ''}</button><span>{total.toLocaleString()} {total === 1 ? 'result' : 'results'}</span></div>{#if department || units || level || offeredIn}<div class="mobile-active-filters">{#if department}<button onclick={() => { department = ''; queueCourses(); }}>{department} ×</button>{/if}{#if units}<button onclick={() => { units = ''; queueCourses(); }}>{units} Units ×</button>{/if}{#if level}<button onclick={() => { level = ''; queueCourses(); }}>{level} level ×</button>{/if}{#if offeredIn}<button onclick={() => { offeredIn = ''; queueCourses(); }}>{offeredIn} ×</button>{/if}<button class="mobile-filter-reset" onclick={() => { department = ''; units = ''; level = ''; offeredIn = ''; queueCourses(); }}>Reset</button></div>{/if}<div class="search-options"><div><span>{loading ? 'Searching…' : `${total.toLocaleString()} ${total === 1 ? 'result' : 'results'}`}</span><div class="active-filters">{#if department}<button onclick={() => { department = ''; queueCourses(); }}>{department} ×</button>{/if}{#if units}<button onclick={() => { units = ''; queueCourses(); }}>{units} Units ×</button>{/if}</div></div><select aria-label="Show courses" bind:value={courseSort} onchange={() => { courseTab = courseSort === 'fces' ? 'fces' : 'all'; queueCourses(); }}><option value="relevance">Show</option><option value="fces">FCEs</option><option value="all">All courses</option></select></div></div><div class="course-results">{#if error}<p class="preview-notice">Preview courses shown while the catalog API is unavailable. <button onclick={loadCourses}>Retry</button></p>{/if}{#if !loading && !courses.length}<div class="status-panel"><h3>No courses found</h3><p>Try another search or reset your filters.</p></div>{:else}{#each courses as course}<article class="figma-course-card"><div class="course-main"><button class="course-title" onclick={() => openCourse(course.code)}><strong>{course.code}</strong> {course.name}</button><p class="course-department">{course.department}</p><div class="course-tags">{#each course.gened_tags?.slice(0, 3) ?? [] as tag}<span><img src={externalIcon} alt="" />{tag}</span>{/each}</div><div class="requirements"><span><b>Prerequisites:</b> {#if course.prerequisites?.toLowerCase().includes('satisfied')}<img src={checkIcon} alt="" />{/if}{course.prerequisites || 'None'}</span><span><b>Corequisites:</b> {#if course.corequisites?.some((value) => value.toLowerCase().includes('satisfied'))}<img src={checkIcon} alt="" />{/if}{course.corequisites?.join(', ') || 'None'}</span></div></div><div class="course-data"><span>{course.units} units</span><span class="icon-value"><img src={clockIcon} alt="" />{course.fce?.hours_per_week?.toFixed(1) ?? '—'} hrs/week</span><label class="icon-value"><img src={calendarIcon} alt="" /><select aria-label={`Term for ${course.code}`} onchange={(event) => { term = event.currentTarget.value; queueCourses(); }}><option value="">Select term</option>{#each terms as option}<option value={option.id} selected={term === option.id}>{option.label}</option>{/each}</select></label></div><div class="course-card-actions"><button aria-label={`${savedCourses.some((item) => item.code === course.code) ? 'Unsave' : 'Save'} ${course.code}`} onclick={() => toggleSaved(course)}><img src={starIcon} alt="" /></button><div class="course-avatars"><span>{course.instructors?.[0]?.[0] ?? 'C'}</span><span>{course.instructors?.[1]?.[0] ?? 'S'}</span><small>+{Math.max(0,(course.instructors?.length ?? 0)-2)}</small></div></div><p class:expanded={expandedCourses.includes(course.code)} class="course-description">{course.description}</p><button class="expand-course" onclick={() => expandedCourses = expandedCourses.includes(course.code) ? expandedCourses.filter((code) => code !== course.code) : [...expandedCourses, course.code]}>{expandedCourses.includes(course.code) ? '⌃ Collapse' : '⌄ Expand All'}</button></article>{/each}{#if total > 12}<div class="pager"><button disabled={page === 1} onclick={() => { page--; loadCourses(); }}>Previous</button><span>Page {page} of {Math.ceil(total / 12)}</span><button disabled={page >= Math.ceil(total / 12)} onclick={() => { page++; loadCourses(); }}>Next</button></div>{/if}{/if}</div></div>
+      <div class="work-area"><div class="catalog-search"><div class="mobile-search-title"><h1>Search</h1></div><div class="search-line"><img src={searchIcon} alt="" /><input class="desktop-search-input" aria-label="Search courses" placeholder="Search courses by ID, description, name or keyword..." bind:value={query} oninput={queueCourses} /><input class="mobile-search-input" aria-label="Search courses" placeholder="Search courses" bind:value={query} oninput={queueCourses} onfocus={() => mobileSearchFocused = true} onkeydown={(event) => { if (event.key === 'Enter') rememberSearch(query); if (event.key === 'Escape') mobileSearchFocused = false; }} /></div>{#if mobileSearchFocused && query.trim()}<div class="mobile-suggestions">{#each mobileSuggestions as suggestion}<button onpointerdown={(event) => { event.preventDefault(); query = suggestion.code; rememberSearch(query); }}>{suggestion.code}: {suggestion.name}</button>{/each}{#if recentSearches.length}<div class="suggestions-label">◷ &nbsp; Recent Searches</div>{#each recentSearches as recent}<button onpointerdown={(event) => { event.preventDefault(); query = recent; rememberSearch(recent); }}>× &nbsp; {recent}</button>{/each}{/if}</div>{/if}<div class="mobile-filter-row"><button onclick={() => filtersOpen = true}>☰ &nbsp; Filter {Number(Boolean(department)) + Number(Boolean(units)) + Number(Boolean(level)) + Number(Boolean(offeredIn)) || ''}</button><span>{total.toLocaleString()} {total === 1 ? 'result' : 'results'}</span></div>{#if department || units || level || offeredIn}<div class="mobile-active-filters">{#if department}<button onclick={() => { department = ''; queueCourses(); }}>{department} ×</button>{/if}{#if units}<button onclick={() => { units = ''; queueCourses(); }}>{units} Units ×</button>{/if}{#if level}<button onclick={() => { level = ''; queueCourses(); }}>{level} level ×</button>{/if}{#if offeredIn}<button onclick={() => { offeredIn = ''; queueCourses(); }}>{offeredIn} ×</button>{/if}<button class="mobile-filter-reset" onclick={() => { department = ''; units = ''; level = ''; offeredIn = ''; queueCourses(); }}>Reset</button></div>{/if}<div class="search-options"><div><span>{loading ? 'Searching…' : `${total.toLocaleString()} ${total === 1 ? 'result' : 'results'}`}</span><div class="active-filters">{#if department}<button onclick={() => { department = ''; queueCourses(); }}>{department} ×</button>{/if}{#if units}<button onclick={() => { units = ''; queueCourses(); }}>{units} Units ×</button>{/if}</div></div><select aria-label="Show courses" bind:value={courseSort} onchange={() => { courseTab = courseSort === 'fces' ? 'fces' : 'all'; queueCourses(); }}><option value="relevance">Show</option><option value="fces">FCEs</option><option value="all">All courses</option></select></div></div><div class="course-results">{#if error}<p class="preview-notice">{error} <button onclick={loadCourses}>Retry</button></p>{/if}{#if !loading && !courses.length}<div class="status-panel"><h3>No courses found</h3><p>Try another search or reset your filters.</p></div>{:else}{#each courses as course}<article class="figma-course-card"><div class="course-main"><button class="course-title" onclick={() => openCourse(course.code)}><strong>{course.code}</strong> {course.name}</button><p class="course-department">{course.department}</p><div class="course-tags">{#each course.gened_tags?.slice(0, 3) ?? [] as tag}<span><img src={externalIcon} alt="" />{tag}</span>{/each}</div><div class="requirements"><span><b>Prerequisites:</b> {#if course.prerequisites?.toLowerCase().includes('satisfied')}<img src={checkIcon} alt="" />{/if}{course.prerequisites || 'None'}</span><span><b>Corequisites:</b> {#if course.corequisites?.some((value) => value.toLowerCase().includes('satisfied'))}<img src={checkIcon} alt="" />{/if}{course.corequisites?.join(', ') || 'None'}</span></div></div><div class="course-data"><span>{course.units} units</span><span class="icon-value"><img src={clockIcon} alt="" />{course.fce?.hours_per_week?.toFixed(1) ?? '—'} hrs/week</span><label class="icon-value"><img src={calendarIcon} alt="" /><select aria-label={`Term for ${course.code}`} onchange={(event) => { term = event.currentTarget.value; queueCourses(); }}><option value="">Select term</option>{#each terms as option}<option value={option.id} selected={term === option.id}>{option.label}</option>{/each}</select></label></div><div class="course-card-actions"><button aria-label={`${savedCourses.some((item) => item.code === course.code) ? 'Unsave' : 'Save'} ${course.code}`} onclick={() => toggleSaved(course)}><img src={starIcon} alt="" /></button><div class="course-avatars"><span>{course.instructors?.[0]?.[0] ?? 'C'}</span><span>{course.instructors?.[1]?.[0] ?? 'S'}</span><small>+{Math.max(0,(course.instructors?.length ?? 0)-2)}</small></div></div><p class:expanded={expandedCourses.includes(course.code)} class="course-description">{course.description}</p><button class="expand-course" onclick={() => expandedCourses = expandedCourses.includes(course.code) ? expandedCourses.filter((code) => code !== course.code) : [...expandedCourses, course.code]}>{expandedCourses.includes(course.code) ? '⌃ Collapse' : '⌄ Expand All'}</button></article>{/each}{#if total > 12}<div class="pager"><button disabled={page === 1} onclick={() => { page--; loadCourses(); }}>Previous</button><span>Page {page} of {Math.ceil(total / 12)}</span><button disabled={page >= Math.ceil(total / 12)} onclick={() => { page++; loadCourses(); }}>Next</button></div>{/if}{/if}</div></div>
     {:else if view === 'schedule'}
-      <aside class="filter-rail schedule-rail"><div class="rail-heading"><h2>Schedule</h2><button onclick={() => saveDraft({ id: 'local', name: 'Untitled', term_id: term, items: [] })}>⊕</button></div><div class="schedule-rail-section"><label for="schedule-select">Schedule</label><select id="schedule-select" onchange={(event) => { const selected = schedules.find((item) => item.id === event.currentTarget.value); if (selected) { saveDraft(selected); loadScheduleDetails(); } }}><option value="">Select Schedule</option>{#each schedules as saved}<option value={saved.id}>{saved.name}</option>{/each}</select></div><div class="schedule-rail-section"><h2>Schedule Calendar</h2><label for="schedule-term">Semester</label><select id="schedule-term" bind:value={term} onchange={() => { draft.term_id = term; loadScheduleDetails(); }}><option value="">Select Semester</option>{#each terms as option}<option value={option.id}>{option.label}</option>{/each}</select>{#each draft.items as item}<div class="schedule-choice"><label><input type="checkbox" checked />{item.course_code} (Select Section)</label><div>{#each ['A','B','C','D','E'] as letter}<button onclick={() => openCourse(item.course_code)}>{letter}</button>{/each}</div></div>{/each}</div><div class="aggregate"><h2>Aggregate FCEs</h2><label>Semesters to show <select><option>None</option></select></label><div class="checks"><label><input type="checkbox" checked />Spring</label><label><input type="checkbox" />Summer</label><label><input type="checkbox" checked />Fall</label></div></div></aside>
-      <div class="work-area"><div class="schedule-top"><div class="schedule-title"><input aria-label="Schedule name" bind:value={draft.name} onchange={() => saveDraft(draft)} /><span>✎</span></div><div class="search-line"><img src={searchIcon} alt="" /><input aria-label="Search courses to add" placeholder="Search courses by ID, description, name or keyword..." bind:value={query} oninput={queueCourses} onkeydown={(event) => { if (event.key === 'Enter') go('courses'); }} /></div><div class="schedule-chips">{#each draft.items as item}<button onclick={() => saveDraft({ ...draft, items: draft.items.filter((entry) => entry.course_code !== item.course_code) })}>{item.course_code} ×</button>{/each}<select aria-label="Schedule actions" onchange={(event) => { if (event.currentTarget.value === 'save') saveSchedule(); if (event.currentTarget.value === 'share') copyShare(); if (event.currentTarget.value === 'finals') go('finals'); }}><option value="">Show</option><option value="save">Save schedule</option><option value="share">Copy share link</option><option value="finals">Final Schedule</option></select></div><p class="workload-label">Total Workload</p><p class="workload-value">{draft.items.reduce((sum, item) => sum + (scheduleCourses[item.course_code]?.units ?? 0), 0)} Units <span>|</span> {draft.items.reduce((sum, item) => sum + (scheduleCourses[item.course_code]?.fce?.hours_per_week ?? 0), 0).toFixed(2)} hrs/week</p>{#if message}<p class="notice">{message}</p>{/if}</div><div class="weekly-calendar"><div class="hour-spacer"></div>{#each weekdays as day}<div class="calendar-heading">{({M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'} as Record<string,string>)[day]}</div>{/each}{#each Array.from({length:13}, (_,i) => i+8) as hour}<div class="hour-label">{hour > 12 ? hour-12 : hour} {hour < 12 ? 'AM' : 'PM'}</div>{#each weekdays as day}<div class="calendar-cell">{#each events.filter((event) => event.day === day && Math.floor(minutes(event.start)/60) === hour) as event}<div class:conflict={conflicts(event)} class="calendar-event"><b>{event.code}</b><span>{event.start}–{event.end}</span></div>{/each}</div>{/each}{/each}</div></div>
+      <aside class="filter-rail schedule-rail"><div class="rail-heading"><h2>Schedule</h2><button onclick={() => openSchedule({ id: 'local', name: 'Untitled', term_id: term, items: [] })}>⊕</button></div><div class="schedule-rail-section"><label for="schedule-select">Schedule</label><select id="schedule-select" onchange={(event) => { const selected = schedules.find((item) => item.id === event.currentTarget.value); if (selected) void openSchedule(selected); }}><option value="">Select Schedule</option>{#each schedules as saved}<option value={saved.id}>{saved.name}</option>{/each}</select></div><div class="schedule-rail-section"><h2>Schedule Calendar</h2><label for="schedule-term">Semester</label><select id="schedule-term" bind:value={term} onchange={changeScheduleTerm}><option value="">Select Semester</option>{#each terms as option}<option value={option.id}>{option.label}</option>{/each}</select>{#each draft.items as item}<div class="schedule-choice"><label><input type="checkbox" checked />{item.course_code} (Select Section)</label><div>{#each ['A','B','C','D','E'] as letter}<button onclick={() => openCourse(item.course_code)}>{letter}</button>{/each}</div></div>{/each}</div><div class="aggregate"><h2>Aggregate FCEs</h2><label>Semesters to show <select><option>None</option></select></label><div class="checks"><label><input type="checkbox" checked />Spring</label><label><input type="checkbox" />Summer</label><label><input type="checkbox" checked />Fall</label></div></div></aside>
+      <div class="work-area"><div class="schedule-top"><div class="schedule-title"><input aria-label="Schedule name" bind:value={draft.name} onchange={() => saveDraft(draft)} /><span>✎</span></div><div class="search-line"><img src={searchIcon} alt="" /><input aria-label="Search courses to add" placeholder="Search courses by ID, description, name or keyword..." bind:value={query} oninput={queueCourses} onkeydown={(event) => { if (event.key === 'Enter') go('courses'); }} /></div><div class="schedule-chips">{#each draft.items as item}<button onclick={() => saveDraft({ ...draft, items: draft.items.filter((entry) => entry.course_code !== item.course_code) })}>{item.course_code} ×</button>{/each}<select aria-label="Schedule actions" onchange={(event) => { if (event.currentTarget.value === 'save') saveSchedule(); if (event.currentTarget.value === 'share') copyShare(); if (event.currentTarget.value === 'finals') go('finals'); if (event.currentTarget.value === 'delete') deleteSchedule(draft.id); if (event.currentTarget.value === 'revoke') revokeScheduleShare(); event.currentTarget.value = '';  }}><option value="">Show</option><option value="save">Save schedule</option><option value="share">Copy share link</option><option value="finals">Final Schedule</option>{#if user && draft.id !== 'local' && !sharedView}<option value="delete">Delete schedule</option>{#if draft.share_id}<option value="revoke">Disable share link</option>{/if}{/if}</select></div><p class="workload-label">Total Workload</p><p class="workload-value">{draft.items.reduce((sum, item) => sum + (scheduleCourses[item.course_code]?.units ?? 0), 0)} Units <span>|</span> {draft.items.reduce((sum, item) => sum + (scheduleCourses[item.course_code]?.fce?.hours_per_week ?? 0), 0).toFixed(2)} hrs/week</p>{#if message}<p class="notice">{message}</p>{/if}</div><details class="program-requirements" ontoggle={(event) => { if (event.currentTarget.open && draft.program_id) void data.program(draft.program_id).then((value) => programDetails = value).catch((cause) => programError = reason(cause)); }}><summary>Major requirements</summary><p>Choose a catalog or entry-year requirement set to reference while planning.</p><form onsubmit={(event) => { event.preventDefault(); findPrograms(); }}><input aria-label="Search major requirements" bind:value={programSearch} placeholder="Search majors, minors, or entry year" /><button type="submit">Find programs</button></form><select aria-label="Program requirements" value={draft.program_id ?? ''} onchange={(event) => chooseProgram(event.currentTarget.value)}><option value="">Choose a program</option>{#each programs as program}<option value={program.id}>{program.name} {program.audit_name ?? ''}</option>{/each}</select>{#if programError}<p>{programError}</p>{/if}{#if programDetails}<h3>{programDetails.name}</h3>{#if programDetails.source_url}<a href={programDetails.source_url} target="_blank" rel="noreferrer">Official catalog {programDetails.catalog_year ?? ''}</a>{/if}<p>Reference requirements; completion and substitutions must be confirmed with your advisor.</p><pre style="white-space: pre-wrap; max-height: 24rem; overflow: auto">{programDetails.requirements_text ?? requirementText(programDetails.tree)}</pre>{/if}</details><div class="weekly-calendar"><div class="hour-spacer"></div>{#each weekdays as day}<div class="calendar-heading">{({M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'} as Record<string,string>)[day]}</div>{/each}{#each Array.from({length:13}, (_,i) => i+8) as hour}<div class="hour-label">{hour > 12 ? hour-12 : hour} {hour < 12 ? 'AM' : 'PM'}</div>{#each weekdays as day}<div class="calendar-cell">{#each events.filter((event) => event.day === day && Math.floor(minutes(event.start)/60) === hour) as event}<div class:conflict={conflicts(event)} class="calendar-event"><b>{event.code}</b><span>{event.start}–{event.end}</span></div>{/each}</div>{/each}{/each}</div></div>
     {:else if view === 'finals'}
       <aside class="filter-rail"><div class="rail-heading"><h2>Filter by</h2></div><div class="rail-section"><label for="final-dept"><img src={graduationIcon} alt="" />Department</label><input id="final-dept" placeholder="Department" bind:value={department} /></div></aside><div class="work-area finals-area"><div class="finals-header"><h1>Final Schedule</h1><p>1. Download Calendar Export From SIO<br />2. Import the .ics file below</p><div><input type="file" accept=".ics,text/calendar" bind:this={finalUpload} hidden onchange={(event) => uploadFinals(event.currentTarget.files?.[0])} /><button class="update-button" onclick={() => finalUpload?.click()}>↥ Upload Schedule</button><button class="outline-button" disabled={!finals.length} onclick={exportFinals}>↓ SIO Export</button></div><div class="search-line"><img src={searchIcon} alt="" /><input aria-label="Search finals" placeholder="Search by course ID, name or keyword..." bind:value={finalsQuery} /></div><small>{visibleFinals.length} results</small></div>{#if error}<div class="status-panel">{error}</div>{:else}<div class="finals-table"><div class="finals-row finals-head"><span>Course</span><span>Day</span><span>Start Time</span><span>End Time</span><span>Location</span></div>{#each visibleFinals as exam}<div class="finals-row"><strong>{exam.course_code} {exam.course_name}</strong><span>{new Date(exam.starts_at).toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</span><span>{new Date(exam.starts_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</span><span>{new Date(exam.ends_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</span><span>{exam.location || 'TBA'}</span></div>{/each}</div>{/if}</div>
     {:else if view === 'saved' || view === 'profile'}

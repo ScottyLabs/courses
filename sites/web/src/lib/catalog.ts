@@ -1,6 +1,6 @@
 import { ApiError } from "./contracts";
 
-const PREFIX = "catalog-v1-";
+const PREFIX = "catalog-sqlite-v1-";
 const MAX_BYTES = 128 * 1024 * 1024;
 
 async function version(signal: AbortSignal): Promise<string> {
@@ -75,7 +75,7 @@ async function readLimited(
 export async function loadCatalog(scope: string, signal: AbortSignal) {
   const hash = await version(signal);
   const prefix = `${PREFIX}${await digest(scope)}-`;
-  const filename = `${prefix}${await digest(hash)}.duckdb`;
+  const filename = `${prefix}${await digest(hash)}.sqlite`;
   const root = await directory();
   signal.throwIfAborted();
   let bytes: Uint8Array<ArrayBuffer> | undefined;
@@ -109,11 +109,19 @@ export async function loadCatalog(scope: string, signal: AbortSignal) {
     }
   }
   signal.throwIfAborted();
+  if (/^[a-f0-9]{64}$/.test(hash)) {
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const actual = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    if (actual !== hash) {
+      await remove(root, filename);
+      throw new Error("Catalog checksum mismatch; retry after publication completes");
+    }
+  }
   const validatedBytes = bytes;
   return {
     bytes,
     invalidate: () => remove(root, filename),
-    // Call only after DuckDB has opened the file and validated the schema.
+    // Call only after SQLite has opened the file and validated the schema.
     async commit() {
       if (!root || fromCache) return;
       signal.throwIfAborted();
@@ -144,7 +152,7 @@ export async function clearCatalogCache() {
   if (!root) return;
   try {
     for await (const name of root.keys()) {
-      if (name.startsWith(PREFIX)) await remove(root, name);
+      if (name.startsWith(PREFIX) || name.startsWith("catalog-v1-")) await remove(root, name);
     }
   } catch { /* best effort */ }
 }

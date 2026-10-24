@@ -211,3 +211,19 @@ test("a private API 401 disables local data; an initial anonymous identity does 
   publicResult.resolve(result(3));
   deepEqual(await pending, result(3));
 });
+
+test("anonymous users warm a public catalog without delaying or cancelling API reads", async () => {
+  const loading = deferred<LocalCatalog>();
+  let receivedUser: User | null | undefined;
+  const client = createDataClient({ ...api,
+    me: async () => { throw new ApiError(401,"Signed out"); },
+    courses: async () => result(7),
+  }, (user) => { receivedUser=user; return loading.promise; });
+  const loaded=ready(client);
+  await rejects(client.me());
+  equal(receivedUser,null);
+  equal((await client.courses({})).total,7);
+  loading.resolve(local()); await loaded;
+  equal((await client.courses({})).total,2);
+  client.resetLocalCatalog();
+});

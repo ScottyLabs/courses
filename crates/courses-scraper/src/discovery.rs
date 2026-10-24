@@ -88,6 +88,12 @@ pub struct Soc {
     pub codes: HashSet<String>,
 }
 
+impl Soc {
+    pub fn matches_term(&self, year: u32, sem: Sem) -> bool {
+        self.term == (year, sem) && !self.codes.is_empty()
+    }
+}
+
 fn dashed(num: &str) -> Option<String> {
     (num.len() == 5 && num.bytes().all(|b| b.is_ascii_digit()))
         .then(|| format!("{}-{}", &num[..2], &num[2..]))
@@ -187,4 +193,15 @@ pub fn course_tasks(
     }
 
     tasks
+}
+
+#[cfg(test)]
+mod publication_tests {
+    use super::*;
+    #[test]
+    fn old_feed_does_not_establish_new_term_publication() {
+        let soc = parse_soc("Semester: Spring 2026\n\t15122\tComputation").unwrap();
+        assert!(soc.matches_term(2026, Sem::Spring));
+        assert!(!soc.matches_term(2027, Sem::Spring));
+    }
 }

@@ -21,7 +21,7 @@ export interface LocalCatalog {
 }
 
 export type LocalCatalogFactory = (
-  user: User,
+  user: User | null,
   signal: AbortSignal,
 ) => Promise<LocalCatalog>;
 export type CatalogState = {

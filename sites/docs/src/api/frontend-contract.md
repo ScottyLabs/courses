@@ -1,5 +1,9 @@
 # Frontend API contract
 
+> Implementation update (2026-10-23): core catalog, auth, schedule, saved-course,
+> and requirements routes now exist. See [SQLite backend](./sqlite-backend.md)
+> for the current behavior and deferred routes. Older DuckDB notes below are historical.
+
 The Svelte frontend calls same-origin JSON routes defined in
 `sites/web/src/lib/contracts.ts`. **This document is a backend implementation
 request; these routes have not been implemented here.** The current Rust web API

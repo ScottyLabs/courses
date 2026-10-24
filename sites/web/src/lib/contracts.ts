@@ -107,6 +107,8 @@ export type Schedule = {
   items: ScheduleItem[];
   share_id?: string;
   updated_at?: string;
+  revision?: number;
+  program_id?: string;
 };
 
 export class ApiError extends Error {
@@ -147,6 +149,11 @@ const query = (params: Record<string, string | number | undefined>) => {
 };
 
 export const api = {
+  savedCourses: (status = "saved") => json<Course[]>(`/api/profile/courses?${query({ status })}`),
+  saveCourse: (code: string) => json(`/api/profile/courses/${encodeURIComponent(code)}`, { method: "PUT", body: JSON.stringify({ status: "saved" }) }),
+  unsaveCourse: (code: string) => json<void>(`/api/profile/courses/${encodeURIComponent(code)}`, { method: "DELETE" }),
+  programs: (search = "") => json<{ items: { id: string; name: string; audit_name: string }[]; total: number }>(`/api/programs?${query({ search })}`),
+  program: (id: string) => json<{ id: string; name: string; tree: unknown; requirements_text?: string; source_url?: string; catalog_year?: string }>(`/api/programs/${encodeURIComponent(id)}`),
   me: () => json<User>("/api/me"),
   terms: () => json<Term[]>("/api/terms"),
   courses: (params: CourseQuery) =>
@@ -191,6 +198,7 @@ export const api = {
         method: "POST",
       },
     ),
+  revokeScheduleShare: (id: string) => json<void>(`/api/schedules/${encodeURIComponent(id)}/share`, { method: "DELETE" }),
   friends: () => json<Friend[]>("/api/profile/friends"),
   addFriend: (andrewId: string) =>
     json<Friend>("/api/profile/friends", {

@@ -4,22 +4,12 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+rusqlite = { version = "0.38", features = ["bundled"] }
+sha2 = "0.10"
 anyhow = "1.0.102"
-arc-swap = "1.9.1"
-aws-sdk-s3 = { version = "1.152.0", default-features = false, features = [
-  "default-https-client",
-  "http-1x",
-  "rt-tokio",
-  "sigv4a",
-] }
 axum = "0.8.9"
 axum-oidc = { git = "https://codeberg.org/pfzetto/axum-oidc", rev = "007135e2c26830f6c89d1659302c228076c7afa7" }
 base64 = "0.22.1"
-bytes = "1.11.1"
-reqwest = { version = "0.13.3", features = ["stream"] }
-secrecy = "0.10.3"
-secretspec = { version = "0.13.0", default-features = false }
-secretspec-derive = "0.13.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 tokio = { version = "1.52.1", features = ["full"] }
@@ -32,7 +22,3 @@ utoipa = { version = "5.4.0", features = ["axum_extras"] }
 utoipa-axum = "0.2.0"
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 uuid = { version = "1.23.0", features = ["v4", "v7", "serde"] }
-
-# machete does not detect uses inside the declare_secrets! macro expansion
-[package.metadata.cargo-machete]
-ignored = ["secrecy"]

@@ -1,4 +1,4 @@
-//! OIDC authentication: group claims on the session drive authorization, and
+//! OIDC authentication: verified CMU email claims establish membership, and
 //! the `CurrentUser` extractor turns a valid session into an authenticated
 //! principal (or a `401`).
 
@@ -18,13 +18,11 @@ pub struct OidcConfig {
     pub client_secret: String,
     pub app_url: String,
     pub oauth_relay_url: String,
-    pub project_group: String,
     pub project_admin_group: String,
 }
 
-/// Group paths that authorize catalog access
+/// Group path granting administrative capabilities
 pub struct AuthConfig {
-    pub project_group: String,
     pub project_admin_group: String,
 }
 
@@ -49,14 +47,6 @@ impl CurrentUser {
     pub fn is_admin(&self, cfg: &AuthConfig) -> bool {
         self.groups.contains(&cfg.project_admin_group)
     }
-
-    pub fn in_project_group(&self, cfg: &AuthConfig) -> bool {
-        self.groups.contains(&cfg.project_group)
-    }
-
-    pub fn can_create(&self, cfg: &AuthConfig) -> bool {
-        self.is_admin(cfg) || self.in_project_group(cfg)
-    }
 }
 
 impl<S> FromRequestParts<S> for CurrentUser
@@ -70,6 +60,15 @@ where
             .await
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
+        // Only a verified university email from the configured, verified OIDC issuer
+        // is accepted. Project groups alone do not establish CMU affiliation.
+        let cmu_email = verified_cmu_email(
+            claims.email().map(|email| email.as_str()),
+            claims.email_verified() == Some(true),
+        );
+        if !cmu_email {
+            return Err(StatusCode::FORBIDDEN);
+        }
         let subject = claims.subject().to_string();
         let name = claims
             .name()
@@ -103,9 +102,35 @@ pub struct UserInfo {
 )]
 pub async fn me(user: CurrentUser, Extension(auth): Extension<Arc<AuthConfig>>) -> Json<UserInfo> {
     Json(UserInfo {
-        can_create: user.can_create(&auth),
+        can_create: true,
         is_admin: user.is_admin(&auth),
         name: user.name,
         subject: user.subject,
     })
+}
+
+fn verified_cmu_email(email: Option<&str>, verified: bool) -> bool {
+    verified
+        && email.is_some_and(|email| {
+            email
+                .to_ascii_lowercase()
+                .rsplit_once('@')
+                .is_some_and(|(local, domain)| {
+                    !local.is_empty() && (domain == "cmu.edu" || domain.ends_with(".cmu.edu"))
+                })
+        })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn university_identity_requires_verified_exact_domain() {
+        assert!(verified_cmu_email(Some("user@andrew.cmu.edu"), true));
+        assert!(verified_cmu_email(Some("user@CMU.EDU"), true));
+        assert!(!verified_cmu_email(Some("user@cmu.edu.evil.test"), true));
+        assert!(!verified_cmu_email(Some("user@notcmu.edu"), true));
+        assert!(!verified_cmu_email(Some("user@cmu.edu"), false));
+        assert!(!verified_cmu_email(None, true));
+    }
 }

@@ -6,9 +6,14 @@ Course browsing app with a Svelte frontend and Rust API.
 
 Log in to OpenBao and set up devenv by following kennel's [local development](https://docs.kennel.scottylabs.org/guides/secrets.html#local-development) and [devenv setup](https://docs.kennel.scottylabs.org/guides/deploying.html#2-set-up-devenv) guides. The `dev` profile loads secrets automatically.
 
-The API also needs a published `catalog.bin` in the configured `CDN_S3_BUCKET`.
-If startup reports `NoSuchKey`, ask a maintainer to confirm the catalog location
-or publish it using the `Scrape and Publish Catalog` workflow.
+The browser-facing API reads audience-separated SQLite catalogs from
+`data/catalog` and stores personal schedules/saved courses in
+`data/private/users.sqlite`. See [backend setup and API](sites/docs/src/api/sqlite-backend.md)
+and [data audit](sites/docs/src/api/data-audit.md).
+
+Build the local catalog with `python3 scripts/import_catalog.py data/raw` after
+copying the supplied source exports to `data/raw`. No S3 credentials are required
+for the web API's catalog.
 
 ```sh
 git clone ssh://forgejo@git.cmu.dev/ScottyLabs/courses.git

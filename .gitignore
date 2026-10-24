@@ -30,3 +30,13 @@ sites/docs-migrating-wip/book/
 
 # OS
 .DS_Store
+
+# Local source exports and persistent personal data (never serve as static files)
+/data/catalog/
+/data/raw/
+/data/private/
+/data/programs-current/
+
+# Python import and test caches
+__pycache__/
+*.py[cod]

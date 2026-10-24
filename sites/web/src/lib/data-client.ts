@@ -45,6 +45,23 @@ export function createDataClient(
     publish({ status: "idle" });
   }
 
+  function warmPublic() {
+    if (scope === "public" && state.status !== "unavailable") return;
+    if (scope) reset();
+    scope = "public";
+    checkedAt = Date.now();
+    controller = new AbortController();
+    const signal = controller.signal;
+    const started = generation;
+    publish({ status: "loading" });
+    void loadLocal(null, signal).then((loaded) => {
+      if (signal.aborted || started !== generation) { loaded.dispose(); return; }
+      local = loaded; publish({ status: "ready" });
+    }).catch((cause) => {
+      if (!signal.aborted && started === generation) publish({ status: "unavailable", error: String(cause) });
+    });
+  }
+
   async function me() {
     if (identityRequest) return identityRequest;
     const started = generation;
@@ -88,7 +105,10 @@ export function createDataClient(
       }
       return user;
     }).catch((cause) => {
-      if (started === generation && scope) reset();
+      if (started === generation) {
+        if (cause instanceof ApiError && cause.status === 401) warmPublic();
+        else if (scope) reset();
+      }
       throw cause;
     })
       .finally(() => {
@@ -103,7 +123,12 @@ export function createDataClient(
   ): Promise<Awaited<ReturnType<RemoteApi[K]>>> {
     if (local) {
       // Recheck the session before using protected cached data after the TTL.
-      if (Date.now() - checkedAt >= SESSION_CHECK_MS) await me();
+      if (Date.now() - checkedAt >= SESSION_CHECK_MS) {
+        try { await me(); } catch (cause) {
+          if (!(cause instanceof ApiError && cause.status === 401 && scope === "public")) throw cause;
+          checkedAt = Date.now();
+        }
+      }
       const provider = local;
       const started = generation;
       if (provider) {

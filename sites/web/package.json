@@ -5,7 +5,8 @@
   "type": "module",
   "dependencies": {
     "@lucide/svelte": "1.56.0",
-    "@duckdb/duckdb-wasm": "1.33.1-dev57.0"
+    "@types/sql.js": "1.4.9",
+    "sql.js": "1.13.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "3.0.10",
