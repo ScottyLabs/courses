@@ -1,35 +1,34 @@
 <script lang="ts">
-	import './layout.css';
-	import { page } from '$app/state';
-	import Header from '$lib/components/Header.svelte';
-	import Footer from '$lib/components/Footer.svelte';
+  import "./layout.css";
+  import type { Snippet } from "svelte";
+  import AppFooter from "$lib/components/shell/AppFooter.svelte";
+  import AppHeader from "$lib/components/shell/AppHeader.svelte";
+  import { createStubSession, setSession } from "$lib/components/shell/session";
+  import { applyTheme, theme } from "$lib/components/shell/theme.svelte";
+  import Toaster from "$lib/components/ui/Toaster.svelte";
 
-	let { children } = $props();
+  let { children }: { children: Snippet } = $props();
+
+  // The shell reads the session through context. The data layer replaces this
+  // stub with the real signed-in session.
+  setSession(createStubSession());
+
+  $effect(() => {
+    applyTheme(theme.dark);
+  });
 </script>
 
-<svelte:head>
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-		rel="stylesheet"
-	/>
-</svelte:head>
-
-{#if page.url.pathname !== '/'}<Header />{/if}
-{@render children()}
-{#if page.url.pathname !== '/'}<Footer />{/if}
-
-<style>
-	:global(body) {
-		margin: 0;
-		padding: 0;
-
-		min-height: 100dvh;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-
-		font-family: 'Inter', sans-serif;
-	}
-</style>
+<div class="flex min-h-dvh flex-col">
+  <a
+    href="#main"
+    class="sr-only z-50 rounded-full bg-surface px-4 py-2 text-label-lg text-ink shadow-popover focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+  >
+    Skip to content
+  </a>
+  <AppHeader />
+  <main id="main" tabindex="-1" class="flex min-w-0 flex-1 flex-col outline-none">
+    {@render children()}
+  </main>
+  <AppFooter />
+</div>
+<Toaster />
