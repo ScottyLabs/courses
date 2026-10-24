@@ -3,9 +3,9 @@
   // with details to expand: the prerequisite expression, corequisites, anti-requisites, warnings and buttons to mark
   // requisites waived or undo it. Checked against the academic record, the active degree plan and the semester's
   // active schedule. Courseweave's features/record/RequisiteStatus.tsx; for the course page and its detail panel.
-  import { Check, ChevronDown, Clock, Info, TriangleAlert } from "@lucide/svelte";
+  import { ChevronDown, Info, TriangleAlert } from "@lucide/svelte";
   import Button from "$lib/components/ui/Button.svelte";
-  import { LEVEL_STYLE, summarizeCheck } from "$lib/core/record/check-summary";
+  import { summarizeCheck } from "$lib/core/record/check-summary";
   import { codeOf } from "$lib/core/requisite-format";
   import { checkCourse, describeRequisite } from "$lib/core/requisites";
   import { profilePath } from "$lib/core/routes";
@@ -15,6 +15,7 @@
   import { getCourseHref } from "./links";
   import { termRequisites } from "./requisite-context.svelte";
   import RequisiteExpression from "./RequisiteExpression.svelte";
+  import RequisiteLevelIcon from "./RequisiteLevelIcon.svelte";
 
   let {
     courseId,
@@ -37,9 +38,6 @@
   const entry = $derived(index.value?.courses[courseId]);
   const check = $derived(ctx ? checkCourse(courseId, entry, ctx) : null);
   const summary = $derived(check ? summarizeCheck(check, entry) : null);
-  const icons = { check: Check, clock: Clock, info: Info, "triangle-alert": TriangleAlert };
-  const style = $derived(summary ? LEVEL_STYLE[summary.level] : null);
-  const Icon = $derived(style ? icons[style.icon] : Check);
   const expandable = $derived(
     summary !== null && check !== null && (summary.level !== "none" || check.issues.length > 0),
   );
@@ -79,7 +77,7 @@
   <div aria-live="polite">
     {#if index.status === "error"}
       <p class="text-body-2 text-muted">Requisites didn't load: {index.error}</p>
-    {:else if !summary || !style || !check}
+    {:else if !summary || !check}
       <p class="min-h-6 text-body-2 text-muted">Checking requisites&hellip;</p>
     {:else if index.status === "ready" && !entry}
       <p class="text-body-2 text-muted">No requisite information in the catalog.</p>
@@ -94,7 +92,7 @@
             > to check them.
           </p>
         {:else}
-          <Icon aria-hidden="true" class="mt-[3px] size-4 shrink-0 {style.color}" />
+          <RequisiteLevelIcon level={summary.level} class="mt-[3px] size-4" />
           <p class="min-w-0 flex-1 text-body-2 {summary.level === 'problem' ? 'text-danger' : 'text-ink'}">
             {summary.text}
           </p>
