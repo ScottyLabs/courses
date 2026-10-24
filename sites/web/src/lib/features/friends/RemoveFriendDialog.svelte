@@ -45,8 +45,8 @@
   size="sm"
 >
   <p class="text-body-2 text-ink">
-    You'll stop seeing what {shown?.name ?? "they"} share, and they'll stop seeing what you share. They won't be notified. You
-    can add each other again later.
+    You'll stop seeing what {shown === null ? "they share" : `${shown.name} shares`}, and they'll stop seeing what you
+    share. They won't be notified. You can add each other again later.
   </p>
   {#if error}<p class="mt-3 text-body-2 text-danger" role="alert">{error}</p>{/if}
   {#snippet footer()}

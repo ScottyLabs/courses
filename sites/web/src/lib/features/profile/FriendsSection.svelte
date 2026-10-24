@@ -31,6 +31,14 @@
     if (friends.status === "idle") void friends.load();
   });
 
+  // "Change what friends see" in Settings links to #sharing, which appears once friends load.
+  let scrolled = false;
+  $effect(() => {
+    if (scrolled || friends.status !== "ready" || location.hash !== "#sharing") return;
+    scrolled = true;
+    requestAnimationFrame(() => document.getElementById("sharing")?.scrollIntoView({ block: "start" }));
+  });
+
   const terms = resource(() => catalog.terms());
   let chosenTerm = $state<string | null>(null);
   const termId = $derived(

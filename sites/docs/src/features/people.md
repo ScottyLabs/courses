@@ -83,3 +83,17 @@ Friends are new in CMU Courses; the Figma's "Profile Page (Friends)" sets the lo
   (`GET /api/friends/invites/{token}`, [ADR 38](../decisions/0038-show-an-invites-sender-before-it-is-accepted.md)),
   what friends can see, and Accept. It handles the student's own link, existing friends, pending requests and links
   that expired or were used.
+
+## Settings
+
+`/profile/settings` (`lib/features/profile/SettingsSection.svelte`) works signed in or out.
+
+- **Account**: name, Andrew ID and email from `GET /api/me`, whether everything is saved (`personal.status`, with a
+  retry after an error), and Sign out, which saves first. Signed out, it explains what signing in adds.
+- **Appearance**: the theme, for this device.
+- **Calendar**: Courseweave's calendar display options (section, meeting time, room) in `preferences`, saved to the
+  account, or kept in the tab until sign-in.
+- **Friends and sharing**: what friends can see now, linking to the switches on Friends.
+- **Your data**: what's stored in the account and what stays on the device, and "Delete my data"
+  (`DELETE /api/account` through `personal.deleteAccount()`), which lists what is removed before it deletes
+  everything and signs out on every device.
