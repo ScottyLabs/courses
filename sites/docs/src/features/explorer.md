@@ -18,8 +18,9 @@ course components other pages reuse. They port Courseweave's explorer, catalog a
 | `ExplorerToolbar.svelte`, `chips.ts` | Search, result count, removable filter chips, semester, sort, the FCE chart and the cards/list switch |
 | `CourseResults.svelte` | Cards (20 at a time), rows (100 at a time) or the hours chart; more load as the end of the list scrolls into view |
 
-Selecting a course opens it in the detail panel (`?course=15-122`): beside the list from 1440px wide, in place of the
-list below that. The panel's Expand goes to the full course page. "/" focuses the search, the arrow keys move through
+Selecting a course opens it in the detail panel (`?course=15-122`) beside the list from 1024px wide. Below 1440px the
+filter rail collapses to its strip while a course is open (`RailLayout`'s `autoCollapse`); showing the rail again puts
+the course in place of the list. Below 1024px the course replaces the list. The panel's Expand goes to the full course page. "/" focuses the search, the arrow keys move through
 the results from the search field and Enter opens the highlighted one.
 
 Signed out, the requirement filter, FCE filters and the FCE parts of cards are replaced by sign-in prompts; the list,
@@ -32,12 +33,18 @@ share. Each component needs only a course (or its id) and a semester:
 
 - `CourseCard` (the Figma card: requisite status with a popover of the expression as status chips, semester select,
   save star, friends taking it; expanded, the FCE aggregate and table), `CourseRow` in a `CourseList` (Courseweave's
-  compact rows) and `CourseCardSmall` (the Figma's small card, used for saved courses).
-- `RequisiteExpression`, `RequisiteSummary`, `RequisiteTreeNode`, `RequiresAndUnlocks`, `UnlocksList`,
-  `CourseChipList`.
-- `FceAggregate`, `FceTable`, `CourseFcePanel`, `FceHistory`, `LineChart`, `HoursScatter`, `WorkloadMeter`,
-  `InstructorFceBadge`.
+  compact rows) and `CourseCardSmall` (the Figma's small card, for saved courses and the record's Courses Taken and
+  Currently Taking, with `deptLabel`, `children` and `footer` slots).
+- `RequisiteStatus` (the requisite line with its details and waivers, on the course page, the panel and the schedule
+  rail's checks), `RequisiteLevelIcon`, `RequisiteExpression`, `RequisiteSummary`, `RequisiteTreeNode`,
+  `RequiresAndUnlocks`, `UnlocksList`, `CourseChipList`.
+- `FceAggregate`, `FceStats` (the Figma's stat boxes), `FceTable` (with optional course and instructor columns,
+  `showCourse`, `showInstructor`), `FceAggregateSettings` (the rails' "Aggregate FCEs" group: one setting,
+  `cmucourses:fce-aggregate`, shared by the Courses and Instructors rails), `CourseFcePanel`, `FceHistory`,
+  `LineChart`, `HoursScatter`, `WorkloadMeter`, `InstructorFceBadge`; `fce-aggregate.ts` and `fce-format.ts`.
 - `SaveButton`, `FriendsTaking` (from `GET /api/friends/courses?term=`), `MemberSignIn`.
+- `course-search.ts` (catalog search for the plan's "Add a course", the record's course picker and the requisite
+  explorer) and `links.ts` (`setCourseHref()`, so the Courses page's panel opens course links in place).
 
 Course previews ([decision 41](../decisions/0041-preview-every-course-link.md)): `CoursePreviewLayer`, mounted once in
 the root layout, shows a card about a course (units, title, description, prerequisites, the student's requisite status,
@@ -53,7 +60,7 @@ semester), which load each document once however many components ask
 cards aggregate FCEs on this device.
 
 The profile's Saved Courses section (`lib/features/profile/SavedSection.svelte`) lists saved courses as small cards or
-rows, with department and level filters.
+rows, with department and level filters in the section's title band (`profileBand()`).
 
 ## Course page
 

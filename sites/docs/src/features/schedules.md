@@ -37,10 +37,11 @@ and delete. A semester without a schedule shows "Schedule 1", created on the fir
 - **Toolbar**: the course search (`AddCourseSearch.svelte`: arrowing or hovering previews a course's sections, Enter
   adds it with sections that fit), removable course chips, Generate, Finals, Export and Show (the calendar display
   menu), then the total units, expected hours a week from FCEs (signed in), the factorable and pass/fail split, the
-  over-54-units warning and the conflict count.
+  over-54-units warning and the conflict count. On phones Generate, Finals, Export and Show are icon buttons beside
+  the "Courses" sheet button, and the chips get their own row (`PageToolbar`'s `actionsLayout`).
 - **Rail**: the semester, the courses (`CourseEntryRow.svelte`: color, lecture and recitation pickers with times,
   rooms, instructors' FCEs and conflicts, pass/fail, hide, remove, move up or down), saved courses offered this
-  semester with quick add, the requisite check against the record (`RequisiteSummary.svelte`, built on
+  semester with quick add, the requisite check against the record (`ScheduleRequisiteSummary.svelte`, built on
   `core/record/context.ts`), the FCE workload by course and by half of the semester, and a friend's schedule to
   compare. At phone width the rail is the "Courses" sheet.
 - **Calendar**: clicking a course outlines its other lectures (or recitations); clicking an outline switches to it.
@@ -49,7 +50,7 @@ and delete. A semester without a schedule shows "Schedule 1", created on the fir
 - **Generator** (`ScheduleGenerator.svelte`): every conflict-free arrangement, ranked by start and end times, days
   off, gaps, lunch and days on campus, with courses left out or locked; apply it or save it as a new schedule.
 - **Export** (`ExportMenu.svelte`): a .ics file, a PNG of the week, the course list as text, sharing, and "Send to
-  Stellic or SIO" (`SendToStellicDialog.svelte`). That dialog only hands the student a script to run in their own
+  Stellic or SIO" (`components/stellic/SendToStellicDialog.svelte`). That dialog only hands the student a script to run in their own
   signed-in Stellic or SIO tab, which shows what it will add and changes nothing until they confirm; this site never
   talks to Stellic or SIO. It takes `mode="plan"` for a degree plan.
 - **Sharing** (`ShareDialog.svelte`, [decision 35](../decisions/0035-share-schedules-by-token-or-by-a-link-that-carries-it.md)):

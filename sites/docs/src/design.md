@@ -102,6 +102,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `AvatarGroup` | `people`, `max`, `size`, `label` | "+N" after `max` |
 | `StarRating` | `value`, `max`, `size`, `showValue`, `label` | Partial stars for FCE rates |
 | `StatBox` | `value`, `unit`, `label`, `variant` outline, plain; children | The "15.19 hrs/wk Workload" boxes |
+| `CopyField` | `value`, `label`, `rows`, `copyLabel`, `variant`, `hint` | A read-only field with a Copy button (share and invite links); `download(blob, name)` in `ui/download.ts` saves a file |
 | `DataTable` | `columns`, `rows`, `caption`, `variant` well (FCE), outline (finals); `cell` and `title` snippets | Scrolls horizontally; plain tables can use the `data-table` classes |
 | `Spinner`, `Skeleton`, `EmptyState` | `size`; `variant`, `lines`; `title`, `description`, `icon`, actions as children | |
 
@@ -136,12 +137,17 @@ a sheet opened from the toolbar's Filter button, which shows the active filter c
 ```
 
 `RailGroup`s stack with dividers between them; `RailSection` is a collapsible filter with an icon, label and chevron.
+`RailLayout`'s `autoCollapse` folds the rail to its strip while something sits beside the results (the Courses page's
+course panel below 1440px), with `bind:railCollapsed` to follow it.
 `PageToolbar` has slots for the title, an intro, the search field, the result count, removable chips (plus a Reset
-pill on phones) and right-aligned actions.
+pill on phones) and right-aligned actions; `actionsLayout` (`auto`, `inline`, `row`) chooses whether the actions share
+the Filter button's row on phones.
 
 **Profile layout** (`/profile/[[section]]`). The profile rail: avatar, name, department and the section list (Saved
 Courses, Currently Taking, Courses Taken, Schedules, Friends, Settings) with the active row filled. The section title,
-`actions` and `filters` sit in a white band, or on the page background with `band={false}` as on Friends. On phones
+`actions` and `filters` sit in a white band, or on the page background with `band={false}` as on Friends. A section
+hands its own actions and filters to the band with `profileBand(() => ({ actions, filters }))` from
+`$lib/components/layout`, using snippets declared in its markup. On phones
 the sections become an accordion with the open one's content under it.
 
 **Plan layout** (`/plan`, [decision 36](decisions/0036-lay-out-the-degree-plan-beside-its-requirements.md)). A

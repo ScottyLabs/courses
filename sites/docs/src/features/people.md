@@ -17,9 +17,8 @@ signed out, the pages ask the visitor to sign in, and a non-CMU account is told 
 | `lib/features/instructors/scope.svelte.ts` | State the pages share: semester, filters (in the URL), documents, results, the open instructor |
 | `lib/features/instructors/InstructorResults.svelte` | `/instructors`: cards or rows |
 | `lib/features/instructors/InstructorDetail.svelte` | `/instructors/<slug>`: aggregate data, evaluations by section, teaching, evaluation history |
-| `lib/features/instructors/fce-aggregate.ts` | Loading an instructor's FCE rows, the aggregate window and figures (tested) |
-| `lib/features/instructors/aggregate-settings.svelte.ts` | The rail's "Aggregate FCEs" choices, kept on the device |
-| `lib/components/instructor/` | Instructor card and row, FCE stat boxes and table, the trend chart |
+| `lib/components/instructor/` | Instructor card and row, and `instructor-fce.ts`: loading an instructor's FCE rows (tested) |
+| `lib/components/course/` | What instructors share with courses: the aggregate window and figures (`fce-aggregate.ts`), the "Aggregate FCEs" settings, stat boxes (`FceStats`), the FCE table and the trend chart |
 
 The layout keeps the list's state while the student opens instructors. In the list view on screens 1280 pixels wide
 or more, an open instructor shows beside Courseweave's rows, which stay in their own scrolling column; in the cards
@@ -41,7 +40,8 @@ documents of the courses the FCE index lists for that person, so a long list onl
 The rail's "Aggregate FCEs" settings choose what the stat boxes average: the most recent N semesters with responses
 ("Semesters to show", empty for all; default 2) in the chosen seasons (default spring and fall). On an instructor's
 page, "Courses" narrows it to some of their courses. Means are weighted by responses, as Courseweave's summaries are.
-The settings are a device convenience in localStorage (`cmucourses:fce-aggregate`), shared by both pages.
+The settings are a device convenience in localStorage (`cmucourses:fce-aggregate`), shared by both instructor pages
+and the Courses rail, whose cards average the same way.
 
 ### Instructor page
 
