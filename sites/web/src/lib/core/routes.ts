@@ -46,8 +46,9 @@ export function sharedSchedulePath(token: string): string {
   return `/schedules/shared/${encodeURIComponent(token)}`;
 }
 
+/** The final exams of the schedule shown for a semester: a dialog on the schedules page. */
 export function finalsPath(term?: string | null): string {
-  return withTerm("/finals", term);
+  return withTerm("/schedules", term, { finals: "1" });
 }
 
 export function planPath(planId?: string | null): string {

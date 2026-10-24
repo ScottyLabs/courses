@@ -226,6 +226,61 @@
   }
 }
 
+/*
+ * Course colors (core/colors.ts): ten palette hues, one per course in a schedule, set on an element as
+ * `--course: var(--cN)` by courseColorStyle(). `course-tint` is a block tinted with it, `course-swatch` a dot or
+ * stripe, `hatch` the striped fill of a previewed section. Dark values are lighter so they read on dark surfaces.
+ */
+@layer base {
+  :root,
+  .light {
+    --c0: #d63a52;
+    --c1: #c98a00;
+    --c2: #1e8f50;
+    --c3: #00818a;
+    --c4: #2350a0;
+    --c5: #2683c6;
+    --c6: #7a4fb0;
+    --c7: #6a8424;
+    --c8: #b45a22;
+    --c9: #546679;
+    --block-tint: 18%;
+    --block-text-mix: 64%;
+  }
+
+  .dark {
+    --c0: #f0647a;
+    --c1: #e8b23a;
+    --c2: #4cc27f;
+    --c3: #35b8bf;
+    --c4: #7a9ef0;
+    --c5: #5ab4f0;
+    --c6: #b08ae6;
+    --c7: #a6c25a;
+    --c8: #e89260;
+    --c9: #97a8bb;
+    --block-tint: 24%;
+    --block-text-mix: 78%;
+  }
+}
+
+@utility course-tint {
+  background: color-mix(in oklab, var(--course) var(--block-tint), var(--color-surface));
+  color: color-mix(in oklab, var(--course) var(--block-text-mix), var(--color-strong));
+}
+
+@utility course-swatch {
+  background: var(--course);
+}
+
+@utility hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--course, var(--color-muted)) 22%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+}
+
 @utility scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: var(--color-pressed) transparent;
