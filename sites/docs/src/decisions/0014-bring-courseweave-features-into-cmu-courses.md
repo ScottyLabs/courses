@@ -4,8 +4,8 @@ Date: 2026-10-24
 
 ## Status
 
-Accepted; amended by [decision 40](0040-follow-courseweaves-interaction-design.md), which makes Courseweave's screens the
-reference for layout and interaction.
+Accepted; amended by [decision 40](0040-follow-courseweaves-interaction-design.md), which keeps the Figma as the base but lets
+screens borrow Courseweave's patterns where they fit the features better.
 
 ## Context
 

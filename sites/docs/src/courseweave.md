@@ -26,10 +26,10 @@ Courseweave's source is the reference implementation: when this page says "as Co
 
 ## Design
 
-Courseweave's screens are the reference for layout and interaction
-([decision 40](decisions/0040-follow-courseweaves-interaction-design.md)). The
-[Figma redesign](https://www.figma.com/design/vsvdhGC2QP5fsvG0Pl7W6v/CMUCourses-Redesign--summer-25---Copy-?node-id=502-10393)
-sets the visual identity: Inter, a pale blue-gray page, white cards with thin borders, pill buttons, a header with centered
+The [Figma redesign](https://www.figma.com/design/vsvdhGC2QP5fsvG0Pl7W6v/CMUCourses-Redesign--summer-25---Copy-?node-id=502-10393)
+is the base, though screens needn't match it one to one: where a Courseweave pattern fits a feature better, we use it
+in the same design system ([decision 40](decisions/0040-follow-courseweaves-interaction-design.md)). The Figma sets
+the look: Inter, a pale blue-gray page, white cards with thin borders, pill buttons, a header with centered
 icon-and-label navigation, a collapsible filter rail on the left and the ScottyLabs footer.
 
 Tokens, from the file's variables:

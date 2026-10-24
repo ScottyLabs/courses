@@ -1,4 +1,4 @@
-# 40. Follow Courseweave's interaction design where it differs from the Figma
+# 40. Adapt the Figma design to the features, borrowing from Courseweave
 
 Date: 2026-10-24
 
@@ -12,20 +12,20 @@ the layout to follow.
 
 The Figma redesign is from summer 2025 and predates most of the features CMU Courses is gaining: requisite checks,
 the degree plan, the academic record, the schedule generator and the all-semesters views. Its screens were drawn for a
-smaller product. Courseweave's screens were built and refined around those features, and the project owner prefers
-many of its choices.
+smaller product. Courseweave's screens were built around those features, and the project owner likes many of its
+choices.
 
 ## Decision
 
-- Courseweave's UI is the reference for layout and interaction: the explorer's compact list with a detail panel
-  beside it, the course page, the filter panel, the schedule planner, the degree plan, the record and the instructors
-  page.
-- The design system keeps the CMU Courses identity from the Figma: colors, type, the header and navigation, buttons,
-  chips and the course card.
-- The Figma's course cards stay as one of the two views every course and instructor list offers. The other is
-  Courseweave's compact rows.
+- The Figma design stays the base: its look and its layout language (the header and navigation, the left rail,
+  course cards, toolbars, the profile layout).
+- Screens don't have to match the Figma one to one. Where a Courseweave pattern serves a feature better, such as a
+  detail panel beside the course list on wide screens, schedule tabs, or denser course page sections, we use it,
+  built from the CMU Courses design system.
+- Screens the Figma doesn't have, such as the degree plan and the record, follow Courseweave's structure in the same
+  design system.
 
 ## Consequences
 
-- Screens can differ from the Figma file, which is no longer the specification
-- New features follow Courseweave's patterns, so the product stays consistent as it grows
+- Screens can differ from the Figma file, which is a starting point rather than a specification
+- Every screen still uses the same components and tokens, so the product looks like one design
