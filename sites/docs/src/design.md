@@ -60,6 +60,9 @@ subtree can show the other theme.
   `aria-hidden="true"`; icon-only buttons use `IconButton`, which requires a `label`.
 - Focus shows the global 2px accent ring. Do not remove outlines without a visible replacement.
 - Source files are ASCII: write symbols as icons or HTML entities.
+- Course links preview their course on hover, focus or a long press (`CoursePreviewLayer`, decision 41). Mark a code
+  that isn't a link with `coursePreview(id)` from `$lib/components/course/preview`, and a course's own card or row
+  link with `data-course-preview="off"`.
 - Device conveniences (theme, cards or list, a hidden rail) go through `readLocal`/`writeLocal` in
   `lib/components/ui/storage.ts`, which survive blocked storage. Personal data never goes to localStorage
   ([decision 17](decisions/0017-store-personal-data-on-the-server.md)).
@@ -82,9 +85,9 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `Switch` | `bind:checked`, `label`, `hideLabel`, `icon`, `tone` accent, neutral | |
 | `RangeSlider` | `bind:low`, `bind:high`, `min`, `max`, `step`, `label`, `presets` | Two thumbs; presets are the unit pills |
 | `ToggleChips` | `bind:value` (array), `options`, `multiple`, `label` | Pressable pills, such as days |
-| `Chip` | `tone` outline, soft, neutral, ok, warn, accent, strong; `size` xs, sm, md; `icon`, `href`, `onremove`, `onclick` | `onremove` makes a removable filter chip |
+| `Chip` | `tone` outline, soft, neutral, ok, warn, accent, strong; `size` xs, sm, md; `icon`, `href`, `onremove`, `onclick`, `attrs` | `onremove` makes a removable filter chip; `attrs` adds attributes such as `coursePreview()` |
 | `StatusChip` | `status` satisfied, planned, in-progress, unsatisfied | Check, arrow or x on the status colors |
-| `CourseChip` | `code`, `title`, `status`, `tone` | Links to `/course/[code]` |
+| `CourseChip` | `code`, `title`, `status`, `tone`, `href`, `link` | Links to `/course/[code]`; shows the course preview |
 | `Card` | `as`, `href`, `padding` none, sm, md, lg; `interactive` | White card with the Figma border |
 | `Dialog` | `bind:open`, `title`, `description`, `size`, `dismissible`, `footer` snippet | Modal; traps focus, Escape, scroll lock, returns focus |
 | `Sheet` | `bind:open`, `title`, `side` left, right, bottom; `backLabel` | Full screen on phones; content stays mounted |

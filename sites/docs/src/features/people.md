@@ -48,7 +48,8 @@ The settings are a device convenience in localStorage (`cmucourses:fce-aggregate
 - The Figma card: aggregate data in the well, then every evaluated section in the window, or every semester with
   "Every semester" on; semester, course, section, workload, ratings, respondents and response rate.
 - In a semester: Courseweave's teaching table (course, title, section, meeting times, rooms, co-instructors), class
-  hours a week and "Teaches with". Courseweave's weekly timetable waits for the shared `WeekGrid`.
+  hours a week and "Teaches with", then the weekly timetable on the shared `WeekGrid`: a color per course, each class
+  opening its course, sections without a set time listed under it.
 - In all semesters: what they taught each semester, linking to that semester's view.
 - Evaluation history: recent teaching rating, courses evaluated, teaching rating by semester and a per-course table.
 
@@ -78,8 +79,8 @@ Friends are new in CMU Courses; the Figma's "Profile Page (Friends)" sets the lo
   this tab.
 - **Sharing**: "What friends can see" holds the two switches, share my courses and share my schedules, each saying
   exactly what friends see; both start off. The settings link here (`/profile/friends#sharing`).
-- **A friend's schedule** opens in a dialog: semester, schedule (when they share several), and each course with its
-  chosen sections and meeting times, pass/fail and hidden courses noted.
+- **A friend's schedule** opens in a dialog: semester, schedule (when they share several), their week as a calendar,
+  and each course with its chosen sections and meeting times, pass/fail and hidden courses noted.
 - **The invite page** asks a signed-out visitor to sign in without naming the sender, then shows who sent it
   (`GET /api/friends/invites/{token}`, [ADR 38](../decisions/0038-show-an-invites-sender-before-it-is-accepted.md)),
   what friends can see, and Accept. It handles the student's own link, existing friends, pending requests and links

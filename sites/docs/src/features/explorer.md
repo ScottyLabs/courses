@@ -39,6 +39,13 @@ share. Each component needs only a course (or its id) and a semester:
   `InstructorFceBadge`.
 - `SaveButton`, `FriendsTaking` (from `GET /api/friends/courses?term=`), `MemberSignIn`.
 
+Course previews ([decision 41](../decisions/0041-preview-every-course-link.md)): `CoursePreviewLayer`, mounted once in
+the root layout, shows a card about a course (units, title, description, prerequisites, the student's requisite status,
+the semester's meetings, FCE hours) when the pointer rests on or keyboard focus reaches any link to a course page, the
+requisite explorer or the Courses page's panel, in the link's `term`; on a touch screen, pressing and holding the link
+opens it at the bottom of the screen with "Open course". Codes that aren't links opt in with `coursePreview(id, term)`
+from `preview.ts` (or `attrs` on `Chip`); a course's own card or row opts out with `data-course-preview="off"`.
+
 They load what they show through `data.svelte.ts` (catalog index, a semester, offerings, descriptions, FCEs,
 syllabi, friends taking a course) and `requisite-context.svelte.ts` (the student's requisite context for a
 semester), which load each document once however many components ask
@@ -69,18 +76,22 @@ adding it to the semester's active schedule with any section or recitation (`Cou
 requisite status checked against the student's record, plan and schedules (with waivers through
 `record.setOverride`), the catalog description and requisites, which of the active degree plan's requirements it
 counts toward, the semesters offering it, FCE summary, trend charts and history tables, past syllabi (PDF preview in a
-dialog, downloads), and the prerequisite tree beside what it unlocks. The schedules feature's `WeekGrid` will sit
-beside the sections; the page leaves a slot for it.
+dialog, downloads), and the prerequisite tree beside what it unlocks. Beside the sections (from 1024px; after them on
+narrower screens) the semester's active schedule shows as a week calendar (`ScheduleCalendar.svelte`, on the shared
+`WeekGrid`): the course placed, or previewed hatched while the student points at, focuses or (on a touch screen) taps a
+section row, else the section it would be added with; a line under it says what it shows and names conflicts.
 
 Signed out, public term documents have no instructors or rooms, so the sections say "Sign in to see instructors and
 rooms" once; FCEs, syllabi and requirement matches show a sign-in prompt (`MemberSignIn`) in place of the data.
 
-"Back to plan" appears when the student came from the degree plan (`planOrigin()`); otherwise the back link returns to
-the course list as it was. `CourseHead.svelte` sets the title, a meta description from the catalog description and
+The back link returns to the page the course was opened from (`originBack()` in `state/nav-origin.ts`): "Back to
+plan", "Back to schedule", "Back to courses" (the list as it was), "Back to instructor(s)", "Back to profile" or "Back
+to requisites"; opened fresh, it goes to the semester's course list. `CourseHead.svelte` sets the title, a meta description from the catalog description and
 the canonical `/course/<code>` link; the web API renders the same tags on the server
 ([decision 25](../decisions/0025-render-course-head-tags-on-the-server.md)).
 
-`CourseDetailPanel.svelte` stacks the same sections into a side panel for the Courses page (`?course=` there). Course
+`CourseDetailPanel.svelte` stacks the same sections into a side panel for the Courses page (`?course=` there), with
+the calendar before the sections. Course
 links inside a view go through `setCourseHref()` (`links.ts`), so the panel can open them in place.
 
 ## Requisite explorer
