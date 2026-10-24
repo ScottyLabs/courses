@@ -12,6 +12,7 @@
     label,
     href,
     size = "md",
+    attrs,
     class: className = "",
     children,
   }: {
@@ -20,6 +21,8 @@
     label?: string;
     href?: string;
     size?: ChipSize;
+    /** Extra attributes for the chip's element. */
+    attrs?: Record<string, string>;
     class?: string;
     children?: Snippet;
   } = $props();
@@ -33,6 +36,6 @@
   const look = $derived(looks[status]);
 </script>
 
-<Chip tone={look.tone} icon={look.icon} {href} {size} class={className}>
+<Chip tone={look.tone} icon={look.icon} {href} {size} {attrs} class={className}>
   {#if children}{@render children()}{:else}{label}{/if}<span class="sr-only">, {look.text}</span>
 </Chip>

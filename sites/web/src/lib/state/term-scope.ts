@@ -30,3 +30,13 @@ export function resolveTerm(
   if (built(lastTerm)) return lastTerm;
   return terms[0]?.id ?? null;
 }
+
+/** Options for a semester picker with an all-semesters view: every built semester, newest first, then "All semesters". */
+export function semesterOptions(
+  terms: readonly TermIndexEntry[],
+): { value: string; label: string }[] {
+  return [
+    ...terms.map((term) => ({ value: term.id, label: term.name })),
+    { value: ALL_SEMESTERS, label: "All semesters" },
+  ];
+}

@@ -214,6 +214,19 @@
     display: none !important;
   }
 
+  /* Pressing and holding a course link on a touch screen opens its preview (CoursePreviewLayer), not the
+     browser's link menu or a text selection. */
+  @media (pointer: coarse) {
+    a[href^="/course/"],
+    a[href^="/requisites/"],
+    a[href*="course="],
+    [data-course-preview]:not([data-course-preview="off"]) {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

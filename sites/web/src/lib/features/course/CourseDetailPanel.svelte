@@ -21,10 +21,11 @@
   import CourseSections from "./CourseSections.svelte";
   import CourseSyllabi from "./CourseSyllabi.svelte";
   import { CourseSchedule } from "./course-schedule.svelte";
-  import { defaultCourseHref, setCourseHref, type CourseHref } from "./links";
+  import { defaultCourseHref, setCourseHref, type CourseHref } from "$lib/components/course/links";
   import NotOfferedHere from "./NotOfferedHere.svelte";
-  import RequisiteStatus from "./RequisiteStatus.svelte";
+  import RequisiteStatus from "$lib/components/course/RequisiteStatus.svelte";
   import ScheduleActions from "./ScheduleActions.svelte";
+  import ScheduleCalendar from "./ScheduleCalendar.svelte";
 
   let {
     code,
@@ -154,7 +155,7 @@
       <CountsToward {courseId} termId={termId ?? contextTermId} />
 
       {#if course && term?.value}
-        <!-- The schedules feature's WeekGrid (lib/components/calendar) goes here: this course placed or previewed. -->
+        <ScheduleCalendar {sched} headingId="panel-calendar" />
         <CourseSections {course} {sched} meta={term.value.meta} />
       {/if}
 

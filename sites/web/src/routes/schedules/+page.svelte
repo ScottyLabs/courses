@@ -2,6 +2,7 @@
   import { CalendarClock, CalendarDays, Info, LogIn, RotateCw, WandSparkles } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { coursePreview } from "$lib/components/course/preview";
   import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
   import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
   import RailGroup from "$lib/components/layout/RailGroup.svelte";
@@ -27,7 +28,7 @@
   import type { FriendSchedule } from "$lib/api/types";
   import FinalsDialog from "$lib/features/finals/FinalsDialog.svelte";
   import AddCourseSearch from "$lib/features/schedules/AddCourseSearch.svelte";
-  import CopyField from "$lib/features/schedules/CopyField.svelte";
+  import CopyField from "$lib/components/ui/CopyField.svelte";
   import CourseEntryRow from "$lib/features/schedules/CourseEntryRow.svelte";
   import DisplayMenu from "$lib/features/schedules/DisplayMenu.svelte";
   import ExportMenu from "$lib/features/schedules/ExportMenu.svelte";
@@ -40,12 +41,12 @@
     type CalendarSelection,
     type Preview,
   } from "$lib/features/schedules/planner";
-  import RequisiteSummary from "$lib/features/schedules/RequisiteSummary.svelte";
+  import ScheduleRequisiteSummary from "$lib/features/schedules/ScheduleRequisiteSummary.svelte";
   import SavedCourses from "$lib/features/schedules/SavedCourses.svelte";
   import ScheduleGenerator from "$lib/features/schedules/ScheduleGenerator.svelte";
   import ScheduleTabs from "$lib/features/schedules/ScheduleTabs.svelte";
   import ScheduleWorkload from "$lib/features/schedules/ScheduleWorkload.svelte";
-  import SendToStellicDialog from "$lib/features/schedules/SendToStellicDialog.svelte";
+  import SendToStellicDialog from "$lib/components/stellic/SendToStellicDialog.svelte";
   import ShareDialog from "$lib/features/schedules/ShareDialog.svelte";
   import { pageTerm } from "$lib/features/schedules/term-page.svelte";
   import WorkloadTotals from "$lib/features/schedules/WorkloadTotals.svelte";
@@ -263,7 +264,7 @@
       </RailGroup>
       {#if view.entries.length > 0}
         <RailGroup title="Requisites">
-          <RequisiteSummary entries={view.entries} {term} />
+          <ScheduleRequisiteSummary entries={view.entries} {term} />
         </RailGroup>
       {/if}
       <RailGroup title="Workload">
@@ -281,7 +282,7 @@
     {#if term && view}
       <h1 class="sr-only">Schedules: {active?.name ?? "Schedule 1"}, {term.meta.name}</h1>
       <ScheduleTabs {term} {activeId} onshare={() => (shareOpen = true)} ontarget={target} />
-      <PageToolbar class="mt-4">
+      <PageToolbar class="mt-4" actionsLayout="inline">
         {#snippet search()}
           <AddCourseSearch
             {term}
@@ -296,6 +297,7 @@
               label={e.course.code}
               onremove={() => schedules.removeCourse(target(), e.course.id)}
               removeLabel="Remove {e.course.code} from the schedule"
+              attrs={coursePreview(e.course.id, termId)}
               class={e.entry.hidden ? "opacity-60" : ""}
             >
               <span class="inline-flex items-center gap-1.5" style={courseColorStyle(e.entry.color)}>
@@ -305,13 +307,20 @@
           {/each}
         {/snippet}
         {#snippet actions()}
+          <!-- Phones show these as icon buttons; the names stay for screen readers. -->
           <Button
             icon={WandSparkles}
-            class="h-10 lg:h-9"
+            class="h-10 max-sm:w-10 max-sm:px-0 lg:h-9"
+            title="Generate schedules"
             disabled={view.entries.length === 0}
-            onclick={() => (generatorOpen = true)}>Generate</Button
+            onclick={() => (generatorOpen = true)}><span class="max-sm:sr-only">Generate</span></Button
           >
-          <Button icon={CalendarClock} class="h-10 lg:h-9" onclick={() => setFinals(true)}>Finals</Button>
+          <Button
+            icon={CalendarClock}
+            class="h-10 max-sm:w-10 max-sm:px-0 lg:h-9"
+            title="Final exams"
+            onclick={() => setFinals(true)}><span class="max-sm:sr-only">Finals</span></Button
+          >
           {#if active}
             <ExportMenu
               schedule={active}

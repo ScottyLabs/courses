@@ -9,6 +9,7 @@
   import { awardFor, EXAM_SOURCES, EXAMS, examById, type ExamBoard } from "$lib/core/exam-credit";
   import { codeOf } from "$lib/core/requisite-format";
   import { COLLEGES, type RecordEntry } from "$lib/core/state/record";
+  import { coursePath } from "$lib/core/routes";
   import { record } from "$lib/state";
   import ManualExamForm from "./ManualExamForm.svelte";
   import type { RecordData } from "./record-data.svelte";
@@ -145,7 +146,7 @@
           <ul class="flex flex-col gap-1">
             {#each result.award.courses as c (c.courseId)}
               <li class="flex min-w-0 items-baseline gap-2">
-                <span class="tabular shrink-0 text-label-lg text-strong">{codeOf(c.courseId)}</span>
+                <a href={coursePath(c.courseId)} class="tabular shrink-0 text-label-lg text-strong hover:text-accent-ink hover:underline">{codeOf(c.courseId)}</a>
                 <span class="min-w-0 flex-1 text-body-2 text-ink">{c.title}</span>
                 <span class="shrink-0 text-body-2 text-muted">
                   {result.award.waiverOnly === true ? "No units" : `${c.units} units`}
@@ -212,9 +213,13 @@
                 >{/if}
             </p>
             <p class="text-body-2 text-ink">
-              {#each entries as e, i (e.id)}{i > 0 ? ", " : ""}<span class="tabular font-semibold text-strong"
-                  >{data.lookup(e.courseId ?? "").code}</span
-                >{e.source === "waiver" ? " (placement, no credit)" : ""}{/each}
+              {#each entries as e, i (e.id)}{i > 0 ? ", " : ""}{#if e.courseId === null}<span class="tabular font-semibold text-strong"
+                    >{data.lookup("").code}</span
+                  >{:else}<a
+                    href={coursePath(e.courseId)}
+                    class="tabular font-semibold text-strong hover:text-accent-ink hover:underline"
+                    >{data.lookup(e.courseId).code}</a
+                  >{/if}{e.source === "waiver" ? " (placement, no credit)" : ""}{/each}
               <span class="text-muted"> for {units} units</span>
             </p>
           </div>

@@ -45,7 +45,7 @@ describe("signed out", () => {
 });
 
 describe("signing in", () => {
-  it("saves the signed-out drafts to the account and clears them", async () => {
+  it("saves the signed-out drafts to the account once the student adds them, and clears them", async () => {
     const h = await harness();
     const id = h.personal.schedules.createSchedule("S27", "Draft schedule");
     h.personal.schedules.addCourse(id, "15122");
@@ -74,6 +74,16 @@ describe("signing in", () => {
     h.server.signedIn = true;
     const back = await h.reload();
     expect(back.personal.mode).toBe("account");
+    // Nothing joins the account until the student says so.
+    expect(back.personal.heldDrafts).toEqual({ schedules: 1, plans: 1, record: true, saved: 1 });
+    expect(back.personal.onboardingDue).toBe(false);
+    await back.env.advance(DEBOUNCE_MS);
+    expect(back.server.schedules.records.size).toBe(0);
+    expect(back.server.plans.records.size).toBe(0);
+    expect([...back.server.saved.courses.keys()]).toEqual(["76101"]);
+
+    back.personal.acceptDrafts();
+    expect(back.personal.heldDrafts).toBeNull();
     await back.env.advance(DEBOUNCE_MS);
 
     expect(back.server.schedules.records.get(id)).toMatchObject({

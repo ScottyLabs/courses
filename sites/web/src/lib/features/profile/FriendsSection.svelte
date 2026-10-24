@@ -1,12 +1,6 @@
-<script lang="ts" module>
-  import FriendsActions from "$lib/features/friends/FriendsActions.svelte";
-
-  // The Friends heading's buttons; the profile page puts them beside the section title.
-  export { friendsActions };
-</script>
-
 <script lang="ts">
   import { RotateCw, Users } from "@lucide/svelte";
+  import { profileBand } from "$lib/components/layout/profile-band.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import Select from "$lib/components/ui/Select.svelte";
@@ -15,6 +9,7 @@
   import { catalog, resource } from "$lib/data";
   import { record, schedules } from "$lib/state";
   import FriendCard from "$lib/features/friends/FriendCard.svelte";
+  import FriendsActions from "$lib/features/friends/FriendsActions.svelte";
   import FriendScheduleDialog from "$lib/features/friends/FriendScheduleDialog.svelte";
   import { friendDialogs } from "$lib/features/friends/dialogs.svelte";
   import { friends } from "$lib/features/friends/instance.svelte";
@@ -26,6 +21,9 @@
   // Profile, Friends (new in CMU Courses; Figma "Profile Page (Friends)"): requests, friend cards with what each
   // friend shares, and the student's own sharing settings.
   let { title: _title }: { title: string } = $props();
+
+  // "Share Link" and "Add Friends" beside the section title.
+  profileBand(() => ({ actions: friendsActions }));
 
   $effect(() => {
     if (friends.status === "idle") void friends.load();

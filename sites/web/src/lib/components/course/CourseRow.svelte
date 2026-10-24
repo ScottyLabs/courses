@@ -59,6 +59,7 @@
   <span class="min-w-0">
     <a
       {href}
+      data-course-preview="off"
       aria-current={selected ? "true" : undefined}
       class="title block text-body-1 font-medium text-ink outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:rounded-tag focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent"
       >{course.title}</a

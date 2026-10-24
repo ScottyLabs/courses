@@ -6,6 +6,7 @@
   import { CalendarArrowDown, ChevronDown, ClipboardList, Image, Link2, Send, Share } from "@lucide/svelte";
   import { calendarPng } from "$lib/components/calendar/calendar-image";
   import Button from "$lib/components/ui/Button.svelte";
+  import { download } from "$lib/components/ui/download";
   import Menu, { type MenuEntry } from "$lib/components/ui/Menu.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
   import type { Term } from "$lib/core/data";
@@ -14,7 +15,6 @@
   import type { ScheduleView } from "$lib/core/state/schedule-view";
   import type { Schedule } from "$lib/core/state/store";
   import { preferences } from "$lib/state";
-  import { download } from "./download";
   import { courseListText, fileName } from "./planner";
 
   let {
@@ -90,6 +90,9 @@
 
 <Menu items={menuItems} label="Export {schedule.name}">
   {#snippet trigger(props)}
-    <Button {...props} icon={Share} trailingIcon={ChevronDown} class="h-10 lg:h-9">Export</Button>
+    <Button {...props} icon={Share} class="h-10 max-sm:w-10 max-sm:px-0 lg:h-9" title="Export">
+      <span class="max-sm:sr-only">Export</span>
+      <ChevronDown aria-hidden="true" class="max-sm:hidden" />
+    </Button>
   {/snippet}
 </Menu>

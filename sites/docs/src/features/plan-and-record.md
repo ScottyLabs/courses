@@ -51,12 +51,15 @@ keyboard or a touch screen. On phones, past semesters start collapsed.
 Course links go to `/course/<code>?term=<semester>` (`courseHref()`), so the course page offers "Back to plan"
 (`planOrigin()`).
 
-Signed out, plans are drafts in the tab, saved to the account on signing in, and the program picker and requirements
-say degree programs need a CMU sign-in
+Signed out, plans are drafts in the tab, which the student can add to the account on signing in
+([decision 42](../decisions/0042-ask-before-adding-signed-out-drafts-to-an-account.md)), and the program picker and
+requirements say degree programs need a CMU sign-in
 ([decision 37](../decisions/0037-let-signed-out-visitors-draft-a-degree-plan.md)).
 
 Pure helpers with tests: `grid.ts` (year rows), `rows.ts` (a course row's facts, where a drop lands, nudging),
-`course-search.ts` (catalog search for "Add a course") and `audit/programs.ts` (program search and labels).
+`audit/programs.ts` (program search and labels); "Add a course" searches with the shared
+`components/course/course-search.ts`. "Send to Stellic" opens the schedules' dialog
+(`components/stellic/SendToStellicDialog.svelte`) with `mode="plan"`.
 
 ## Academic record
 
@@ -64,9 +67,10 @@ The academic record lives in the profile, ported from Courseweave's record page 
 components are in `sites/web/src/lib/features/record/`, the logic in `lib/core` (`sio-record.ts`, `stellic-plan.ts`,
 `exam-credit.ts`, `core/record/*`, `core/state/record.ts`) and the data in the `record` store.
 
-- **Courses Taken** (`features/profile/TakenSection.svelte`) is the whole record, in Courseweave's order: the actions
-  (import from SIO or Stellic, export and import a backup in Courseweave's JSON format, with merge or replace, and
-  clear the record), the empty-record start with the import and links to add by hand, the student's college, first
+- **Courses Taken** (`features/profile/TakenSection.svelte`) is the whole record, in Courseweave's order. The profile's
+  title band holds the actions (import from SIO or Stellic, and under More: export and import a backup in
+  Courseweave's JSON format, with merge or replace, and clear the record) and the courses' filters
+  (`TakenFilters.svelte`, sharing `taken-list.svelte.ts` with the list); then the empty-record start with the import and links to add by hand, the student's college, first
   semester and expected graduation beside the unit totals and QPA, then the courses taken, exam credit, transfer credit,
   and placements and requisite overrides. Courses taken look like the Figma's Courses Taken page: department, course
   level and semester filters, and cards (with grade and semester) or a list (`ViewToggle`, `profile-taken`), grouped
@@ -75,7 +79,8 @@ components are in `sites/web/src/lib/features/record/`, the logic in `lib/core` 
   score and shows what CMU awards from the registrar's charts, checking college eligibility, with a form for credit the
   charts don't cover.
 - **Currently Taking** (`TakingSection.svelte`) is this semester's courses from the record, with their sections and
-  meeting times from the semester's active schedule, as cards or a list with department and level filters. When the
+  meeting times from the semester's active schedule, as cards or a list with department and level filters in the
+  title band. When the
   active schedule has courses the record lacks, it offers to add them.
 - **Import** (`SioImportButton.svelte`, `ImportReview.svelte`): an SIO unofficial academic record PDF or a Stellic plan
   PDF is read in the browser by pdf.js, which loads in its own chunk only when a file is chosen
@@ -84,11 +89,9 @@ components are in `sites/web/src/lib/features/record/`, the logic in `lib/core` 
   with what's already in the record unchecked, an option to update the profile, and the lines that couldn't be read.
   A Stellic plan also becomes a new degree plan. The degree plan's first run and its options menu use the same button.
 - **Onboarding** (`RecordOnboarding.svelte`, mounted once in the root layout): new students are asked once, after their
-  account's data has loaded, to import their record or add it by hand (`personal.onboardingDue`,
+  account's data has loaded and any signed-out drafts were added or discarded, to import their record or add it by hand (`personal.onboardingDue`,
   `personal.markOnboardingAsked()`); not on the Courses Taken page itself. `RecordPrompt.svelte` nudges again on the
   degree plan while the record is empty, until it's hidden (`preferences.hideOnboardingPrompt()`).
-- **Requisite status** (`RequisiteStatus.svelte`): the requisite line with its details and waivers, for the course and
-  schedule pages.
 
 Pure helpers with tests: `core/record/taken-list.ts` (which entries each list shows, filters, grouping, the courses
 taken this semester) and `core/record/grades.ts` (grade choices and notes).

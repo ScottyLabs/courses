@@ -1,8 +1,8 @@
 <script lang="ts">
-  // Asks new students (and each new account) to add their academic record, once. The root layout mounts it; it opens
-  // when personal.onboardingDue says so, except on Courses Taken, which asks on its own, and stays open once shown so
-  // a record imported from it can show its confirmation. Courseweave's RecordOnboarding (features/record/RecordStart.tsx)
-  // and the Onboarding wrapper in its App.tsx.
+  // Asks new students (each new account) to add their academic record, once. The root layout mounts it; it opens
+  // when personal.onboardingDue says so and someone is signed in, except on Courses Taken, which asks on its own, and
+  // stays open once shown so a record imported from it can show its confirmation. Courseweave's RecordOnboarding
+  // (features/record/RecordStart.tsx) and the Onboarding wrapper in its App.tsx.
   import { Check, FileText, PencilLine } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
@@ -19,8 +19,10 @@
   let open = $state(false);
   let imported = $state<string | null>(null);
 
+  // Only signed in: a signed-out visitor, often arriving on a course page from a search, keeps a record only for the
+  // tab, and the plan's record prompt still offers it.
   $effect(() => {
-    if (personal.onboardingDue && page.url.pathname !== RECORD_PAGE) open = true;
+    if (personal.onboardingDue && session.status === "signed-in" && page.url.pathname !== RECORD_PAGE) open = true;
   });
 
   const firstName = $derived(session.user?.name.split(/\s+/u)[0]);

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { BookmarkPlus } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
+  import { profileBand } from "$lib/components/layout/profile-band.svelte";
   import CourseCardSmall from "$lib/components/course/CourseCardSmall.svelte";
   import CourseList from "$lib/components/course/CourseList.svelte";
   import CourseRow from "$lib/components/course/CourseRow.svelte";
@@ -21,6 +23,11 @@
   let view = $state<ListView>(storedView("saved") ?? "cards");
   let department = $state("");
   let level = $state("");
+  // Phones get the taller field selects (40px tap targets); wider screens the Figma's compact filter boxes.
+  const wide = new MediaQuery("(min-width: 40rem)");
+
+  // The filters, count and cards/list switch sit in the section's title band, as in the Figma.
+  profileBand(() => ({ filters: saved.ids.length > 0 ? savedFilters : undefined }));
 
   const index = $derived(catalogIndex());
   const offered = $derived(offerings());
@@ -61,6 +68,35 @@
   );
 </script>
 
+{#snippet savedFilters()}
+  <div class="grid w-full grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
+    <Select
+      variant={wide.current ? "compact" : "field"}
+      label="Department"
+      options={[{ value: "", label: "Any department" }, ...departmentOptions]}
+      bind:value={department}
+      class="min-w-0 sm:w-[11.75rem]"
+    />
+    <Select
+      variant={wide.current ? "compact" : "field"}
+      label="Course level"
+      options={[
+        { value: "", label: "Any level" },
+        { value: "U", label: "Undergraduate" },
+        { value: "G", label: "Graduate" },
+      ]}
+      bind:value={level}
+      class="min-w-0 sm:w-[11.75rem]"
+    />
+    <div class="col-span-2 flex items-center justify-between gap-3 sm:ml-auto">
+      <p class="text-label-md text-muted" aria-live="polite">
+        {shown.length === courses.length ? `${courses.length} saved` : `${shown.length} of ${courses.length} saved`}
+      </p>
+      <ViewToggle pageKey="saved" bind:value={view} />
+    </div>
+  </div>
+{/snippet}
+
 <h2 class="sr-only">{title}</h2>
 
 {#if saved.ids.length === 0}
@@ -72,31 +108,6 @@
     <Button variant="primary" href={coursesPath()}>Browse courses</Button>
   </EmptyState>
 {:else}
-  <div class="mb-6 flex flex-wrap items-center gap-3">
-    <Select
-      variant="compact"
-      label="Department"
-      options={[{ value: "", label: "Any department" }, ...departmentOptions]}
-      bind:value={department}
-      class="w-[11.75rem]"
-    />
-    <Select
-      variant="compact"
-      label="Course level"
-      options={[
-        { value: "", label: "Any level" },
-        { value: "U", label: "Undergraduate" },
-        { value: "G", label: "Graduate" },
-      ]}
-      bind:value={level}
-      class="w-[11.75rem]"
-    />
-    <p class="text-label-md text-muted" aria-live="polite">
-      {shown.length === courses.length ? `${courses.length} saved` : `${shown.length} of ${courses.length} saved`}
-    </p>
-    <ViewToggle pageKey="saved" bind:value={view} class="ml-auto" />
-  </div>
-
   {#if loading}
     <div class="grid gap-6 xl:grid-cols-2">
       {#each saved.ids.slice(0, 4) as id (id)}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { CalendarX, EyeOff } from "@lucide/svelte";
+  import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
   import Chip from "$lib/components/ui/Chip.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import Select from "$lib/components/ui/Select.svelte";
@@ -7,11 +8,13 @@
   import { api, type Friend } from "$lib/api";
   import { catalog, resource } from "$lib/data";
   import { sectionLabel } from "$lib/core/blocks";
+  import { partBlocks } from "$lib/core/planner/format";
   import { coursePath } from "$lib/core/routes";
-  import { resolveEntries, unitTotals } from "$lib/core/state/schedule-view";
+  import { buildScheduleView, unitTotals } from "$lib/core/state/schedule-view";
   import { normalizeSchedule } from "$lib/core/sync-merge";
   import { formatDays, formatLocation, formatTimeRange, formatUnits } from "$lib/core/time";
   import type { Meeting, TermIndexEntry } from "$lib/core/types";
+  import { tbaItems } from "$lib/features/schedules/planner";
   import { friendlyError } from "./friends";
 
   // A friend's schedules marked visible to friends, for one semester, as a list of courses with their sections and
@@ -37,7 +40,12 @@
   );
   let chosen = $state<string | null>(null);
   const schedule = $derived(list.find((s) => s.id === chosen) ?? list[0] ?? null);
-  const entries = $derived(term.value && schedule ? resolveEntries(schedule, term.value) : []);
+  const view = $derived(term.value && schedule ? buildScheduleView(schedule, term.value) : null);
+  const entries = $derived(view?.entries ?? []);
+  // Their week: the chosen sections of courses on their calendar, in their colors.
+  const blocks = $derived(
+    (view?.placed ?? []).flatMap((e) => e.parts.flatMap((p) => partBlocks(e.course, p, e.entry.color))),
+  );
   const visible = $derived(entries.filter((e) => !e.entry.hidden));
   const hidden = $derived(entries.filter((e) => e.entry.hidden));
   const units = $derived(unitTotals(entries));
@@ -106,6 +114,18 @@
       {#if visible.length === 0}
         <p class="mt-3 text-body-2 text-muted">This schedule has no courses on its calendar yet.</p>
       {:else}
+        {#if view !== null && view.placed.length > 0}
+          <div class="mt-3 rounded-card border border-pressed bg-surface p-1.5 sm:p-2">
+            <WeekGrid
+              {blocks}
+              compact
+              view="week"
+              tba={tbaItems(view, termId)}
+              tbaDescription=""
+              label="{friend.name}'s {schedule.name} calendar"
+            />
+          </div>
+        {/if}
         <ul class="mt-3 flex flex-col gap-2">
           {#each visible as item (item.course.id)}
             <li class="rounded-card border border-pressed bg-surface p-3">

@@ -1,23 +1,38 @@
 <script lang="ts">
+  // FCE rows as the Figma's table in a gray well: semester, the course (instructor pages), section, the instructor
+  // (course pages), workload, ratings, respondents and response rate.
+  import type { Snippet } from "svelte";
   import DataTable, { type Column } from "$lib/components/ui/DataTable.svelte";
   import { instructorSlug } from "$lib/core/data";
   import { termName, type FceRow } from "$lib/core/fce";
   import { displayFceName } from "$lib/core/fce-names";
-  import { instructorPath } from "$lib/core/routes";
+  import { codeOf } from "$lib/core/requisite-format";
+  import { coursePath, instructorPath } from "$lib/core/routes";
+  import { responseRate } from "./fce-aggregate";
+  import { NO_VALUE, cellNumber } from "./fce-format";
+
+  type Row = FceRow & { courseId?: string };
 
   let {
     rows,
     caption = "Course evaluations by section",
+    title,
+    empty = "No evaluations match these options.",
     showCourse = false,
-    courseLabel,
+    showInstructor = true,
     class: className = "",
   }: {
     /** FCE rows, in the order to show them. */
-    rows: readonly FceRow[];
+    rows: readonly Row[];
+    /** Describes the table for screen readers. */
     caption?: string;
-    /** Instructor pages add a course column; pass `courseLabel` to fill it. */
+    /** Heading inside the well. */
+    title?: Snippet;
+    empty?: string;
+    /** A column linking each row's course (instructor pages); rows need `courseId`. */
     showCourse?: boolean;
-    courseLabel?: (row: FceRow) => string;
+    /** A column linking each row's instructor (course pages). */
+    showInstructor?: boolean;
     class?: string;
   } = $props();
 
@@ -25,33 +40,22 @@
     { key: "term", label: "Semester" },
     ...(showCourse ? [{ key: "course", label: "Course" }] : []),
     { key: "section", label: "Section" },
-    { key: "instructor", label: "Instructor" },
+    ...(showInstructor ? [{ key: "instructor", label: "Instructor" }] : []),
     { key: "hours", label: "Workload" },
     { key: "teaching", label: "Teaching" },
     { key: "course-rate", label: "Course Rate" },
     { key: "responses", label: "Respondents" },
-    { key: "rate", label: "Resp. Rate" },
+    { key: "rate", label: "Response Rate" },
   ]);
 
-  function value(row: FceRow, key: string): string {
-    switch (key) {
-      case "term":
-        return termName(row.term);
-      case "section":
-        return row.section;
-      case "hours":
-        return row.responses > 0 && row.hours !== null ? row.hours.toFixed(2) : "-";
-      case "teaching":
-        return row.responses > 0 && row.teachingRate !== null ? row.teachingRate.toFixed(2) : "-";
-      case "course-rate":
-        return row.responses > 0 && row.courseRate !== null ? row.courseRate.toFixed(2) : "-";
-      case "responses":
-        return String(row.responses);
-      case "rate":
-        return row.enrolled > 0 ? `${((row.responses / row.enrolled) * 100).toFixed(1)}%` : "-";
-      default:
-        return "";
-    }
+  /** A figure, or a dash for sections nobody answered. */
+  function figure(row: Row, value: number | null): string {
+    return row.responses > 0 ? cellNumber(value) : NO_VALUE;
+  }
+
+  function percent(row: Row): string {
+    const rate = responseRate(row);
+    return rate === null ? NO_VALUE : `${rate.toFixed(1)}%`;
   }
 </script>
 
@@ -59,29 +63,38 @@
   {columns}
   {rows}
   {caption}
-  variant="well"
-  empty="No evaluations match these options."
-  rowKey={(row, index) => `${row.term}-${row.section}-${row.instructor}-${index}`}
+  {title}
+  {empty}
+  rowKey={(row, index) => `${row.term}-${row.courseId ?? ""}-${row.section}-${row.instructor}-${index}`}
   class={className}
 >
   {#snippet cell(row, column)}
-    {#if column.key === "instructor"}
+    {#if column.key === "term"}
+      {termName(row.term)}
+    {:else if column.key === "course"}
+      {#if row.courseId}<a href={coursePath(row.courseId)}>{codeOf(row.courseId)}</a>{:else}{NO_VALUE}{/if}
+    {:else if column.key === "section"}
+      {row.section}{#if row.mini !== null}&nbsp;<span class="text-label-md text-muted">mini</span>{/if}
+    {:else if column.key === "instructor"}
       {#if row.instructor}
-        {@const name = displayFceName(row.instructor)}
         <a
-          href={instructorPath(instructorSlug(name))}
+          href={instructorPath(instructorSlug(displayFceName(row.instructor)))}
           class="underline decoration-line-strong underline-offset-2 hover:text-accent-ink hover:decoration-current"
           >{row.instructor}</a
         >
       {:else}
-        -
+        {NO_VALUE}
       {/if}
-    {:else if column.key === "course"}
-      {courseLabel?.(row) ?? ""}
-    {:else if column.key === "section" && row.mini !== null}
-      {row.section} <span class="text-label-md text-muted">mini</span>
+    {:else if column.key === "hours"}
+      {figure(row, row.hours)}
+    {:else if column.key === "teaching"}
+      {figure(row, row.teachingRate)}
+    {:else if column.key === "course-rate"}
+      {figure(row, row.courseRate)}
+    {:else if column.key === "responses"}
+      {row.responses}
     {:else}
-      {value(row, column.key)}
+      {percent(row)}
     {/if}
   {/snippet}
 </DataTable>

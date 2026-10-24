@@ -1,8 +1,9 @@
 <script lang="ts">
-  // A course being taken this semester (Figma "Profile Page (Currently Taking)"): code and title, department, the
-  // sections and meeting times chosen in the active schedule, units and FCE hours. `list` is the compact row.
-  import { CalendarDays, Clock, IterationCcw, SquareArrowOutUpRight } from "@lucide/svelte";
-  import IconButton from "$lib/components/ui/IconButton.svelte";
+  // A course being taken this semester (Figma "Profile Page (Currently Taking)"), as the shared small course card:
+  // code and title, department, the sections and meeting times chosen in the active schedule, units and FCE hours.
+  // `list` is the compact row.
+  import { CalendarDays, Clock, Coins } from "@lucide/svelte";
+  import CourseCardSmall from "$lib/components/course/CourseCardSmall.svelte";
   import { formatHours } from "$lib/core/fce";
   import { partLabel, timesAndRoom } from "$lib/core/planner/format";
   import { departmentKey, departmentLabel } from "$lib/core/record/taken-list";
@@ -78,7 +79,7 @@
 {#snippet stats()}
   <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-body-2 text-ink">
     <span class="inline-flex items-center gap-1.5">
-      <IterationCcw aria-hidden="true" class="size-4" />
+      <Coins aria-hidden="true" class="size-4" />
       <span class="tabular">{fmt(units)} units</span>
     </span>
     {#if hours !== null}
@@ -101,20 +102,13 @@
     <div class="md:text-right">{@render stats()}</div>
   </li>
 {:else}
-  <article class="flex min-w-0 flex-col gap-2 rounded-card border border-pressed bg-surface p-4 sm:px-5">
-    <div class="flex items-start gap-2">
-      <h3 class="min-w-0 flex-1 text-heading-6 text-strong">
-        <a {href} class="hover:underline">
-          <span class="tabular font-semibold">{info.code}</span>
-          <span class="ml-1.5 font-normal text-ink">{entry.label ?? info.title ?? "Not in the catalog"}</span>
-        </a>
-      </h3>
-      <IconButton {href} label="Open {info.code}" icon={SquareArrowOutUpRight} class="-my-2 -mr-2" />
-    </div>
-    {#if facts.dept}
-      <p class="-mt-1 text-body-2 text-muted">{departmentLabel(departmentKey(id, facts))}</p>
-    {/if}
-    {@render meetings()}
-    <div class="mt-auto">{@render stats()}</div>
-  </article>
+  <CourseCardSmall
+    courseId={id}
+    termId={entry.term ?? null}
+    title={entry.label ?? info.title ?? "Not in the catalog"}
+    {units}
+    deptLabel={departmentLabel(departmentKey(id, facts))}
+  >
+    <div class="my-1">{@render meetings()}</div>
+  </CourseCardSmall>
 {/if}

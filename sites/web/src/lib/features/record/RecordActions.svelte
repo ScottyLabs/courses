@@ -1,10 +1,12 @@
 <script lang="ts">
-  // The record's actions: import from SIO or Stellic (the empty record's panel offers it instead), back up to a JSON
-  // file and restore one (merging or replacing), and clear the record. Courseweave's Header in
-  // features/record/RecordPage.tsx.
-  import { Download, Trash2, Upload } from "@lucide/svelte";
+  // The record's actions, beside the Courses Taken title: import from SIO or Stellic (the empty record's panel offers
+  // it instead), and under More, back up to a JSON file, restore one (merging or replacing) and clear the record.
+  // Courseweave's Header in features/record/RecordPage.tsx.
+  import { ChevronDown, Download, Ellipsis, Trash2, Upload } from "@lucide/svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
+  import { download } from "$lib/components/ui/download";
+  import Menu, { type MenuEntry } from "$lib/components/ui/Menu.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
   import { exportRecord, parseRecordExport, type RecordData } from "$lib/core/state/record";
   import { record } from "$lib/state";
@@ -18,15 +20,10 @@
 
   const empty = $derived(record.isEmpty && Object.keys(record.profile).length === 0);
 
-  function download(): void {
+  function exportBackup(): void {
     const data = exportRecord(record.data);
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `cmucourses-record-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    download(blob, `cmucourses-record-${new Date().toISOString().slice(0, 10)}.json`);
   }
 
   async function onFile(file: File): Promise<void> {
@@ -60,17 +57,37 @@
     pendingOpen = false;
   }
 
+  const moreItems = $derived<MenuEntry[]>([
+    { label: "Export backup", icon: Download, disabled: empty, onselect: exportBackup },
+    { label: "Import backup", icon: Upload, onselect: () => fileInput?.click() },
+    ...(empty
+      ? []
+      : [
+          "separator" as const,
+          { label: "Clear record", icon: Trash2, danger: true, onselect: () => (confirmClear = true) },
+        ]),
+  ]);
 </script>
 
+<div class="flex flex-col gap-2 sm:items-end">
 <div class="flex flex-wrap items-center gap-2">
   {#if !record.isEmpty}
     <SioImportButton variant="primary" onimported={(message) => toast(message, { kind: "success" })} />
   {/if}
-  <Button icon={Download} disabled={empty} onclick={download}>Export backup</Button>
-  <Button icon={Upload} onclick={() => fileInput?.click()}>Import backup</Button>
-  {#if !empty}
-    <Button variant="danger" icon={Trash2} onclick={() => (confirmClear = true)}>Clear record</Button>
-  {/if}
+  <Menu items={moreItems} label="More record actions">
+    {#snippet trigger(props)}
+      <Button
+        {...props}
+        icon={Ellipsis}
+        aria-label="More record actions"
+        title="Back up, restore or clear your record"
+        class="max-sm:w-10 max-sm:px-0"
+      >
+        <span class="max-sm:sr-only">More</span>
+        <ChevronDown aria-hidden="true" class="max-sm:hidden" />
+      </Button>
+    {/snippet}
+  </Menu>
   <input
     bind:this={fileInput}
     type="file"
@@ -86,8 +103,9 @@
   />
 </div>
 {#if error !== null}
-  <p role="alert" class="mt-2 text-body-2 text-danger">{error}</p>
+  <p role="alert" class="max-w-[48ch] text-body-2 text-danger">{error}</p>
 {/if}
+</div>
 
 <Dialog bind:open={pendingOpen} title="Import backup" size="sm" onclose={() => (pending = null)}>
   <p class="text-body-2 text-ink">

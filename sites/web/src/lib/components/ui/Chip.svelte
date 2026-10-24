@@ -20,6 +20,7 @@
     onclick,
     pressed,
     title,
+    attrs = {},
     class: className = "",
     children,
   }: {
@@ -45,6 +46,8 @@
     onclick?: (event: MouseEvent) => void;
     pressed?: boolean;
     title?: string;
+    /** Extra attributes for the chip's element, such as a course preview (`coursePreview()`). */
+    attrs?: Record<string, string>;
     class?: string;
     children?: Snippet;
   } = $props();
@@ -89,6 +92,7 @@
 
 {#if onremove}
   <button
+    {...attrs}
     type="button"
     class={classes}
     aria-label={removeLabel ?? (label === undefined ? "Remove filter" : `Remove ${label}`)}
@@ -100,6 +104,7 @@
   </button>
 {:else if href !== undefined}
   <a
+    {...attrs}
     {href}
     class={classes}
     {title}
@@ -110,9 +115,9 @@
     {#if external}<span class="sr-only">(opens in a new tab)</span>{/if}
   </a>
 {:else if onclick}
-  <button type="button" class={classes} {title} aria-pressed={pressed} {onclick}>
+  <button {...attrs} type="button" class={classes} {title} aria-pressed={pressed} {onclick}>
     {@render body()}
   </button>
 {:else}
-  <span class={classes} {title}>{@render body()}</span>
+  <span {...attrs} class={classes} {title}>{@render body()}</span>
 {/if}

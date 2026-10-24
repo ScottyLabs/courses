@@ -60,6 +60,9 @@ subtree can show the other theme.
   `aria-hidden="true"`; icon-only buttons use `IconButton`, which requires a `label`.
 - Focus shows the global 2px accent ring. Do not remove outlines without a visible replacement.
 - Source files are ASCII: write symbols as icons or HTML entities.
+- Course links preview their course on hover, focus or a long press (`CoursePreviewLayer`, decision 41). Mark a code
+  that isn't a link with `coursePreview(id)` from `$lib/components/course/preview`, and a course's own card or row
+  link with `data-course-preview="off"`.
 - Device conveniences (theme, cards or list, a hidden rail) go through `readLocal`/`writeLocal` in
   `lib/components/ui/storage.ts`, which survive blocked storage. Personal data never goes to localStorage
   ([decision 17](decisions/0017-store-personal-data-on-the-server.md)).
@@ -82,9 +85,9 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `Switch` | `bind:checked`, `label`, `hideLabel`, `icon`, `tone` accent, neutral | |
 | `RangeSlider` | `bind:low`, `bind:high`, `min`, `max`, `step`, `label`, `presets` | Two thumbs; presets are the unit pills |
 | `ToggleChips` | `bind:value` (array), `options`, `multiple`, `label` | Pressable pills, such as days |
-| `Chip` | `tone` outline, soft, neutral, ok, warn, accent, strong; `size` xs, sm, md; `icon`, `href`, `onremove`, `onclick` | `onremove` makes a removable filter chip |
+| `Chip` | `tone` outline, soft, neutral, ok, warn, accent, strong; `size` xs, sm, md; `icon`, `href`, `onremove`, `onclick`, `attrs` | `onremove` makes a removable filter chip; `attrs` adds attributes such as `coursePreview()` |
 | `StatusChip` | `status` satisfied, planned, in-progress, unsatisfied | Check, arrow or x on the status colors |
-| `CourseChip` | `code`, `title`, `status`, `tone` | Links to `/course/[code]` |
+| `CourseChip` | `code`, `title`, `status`, `tone`, `href`, `link` | Links to `/course/[code]`; shows the course preview |
 | `Card` | `as`, `href`, `padding` none, sm, md, lg; `interactive` | White card with the Figma border |
 | `Dialog` | `bind:open`, `title`, `description`, `size`, `dismissible`, `footer` snippet | Modal; traps focus, Escape, scroll lock, returns focus |
 | `Sheet` | `bind:open`, `title`, `side` left, right, bottom; `backLabel` | Full screen on phones; content stays mounted |
@@ -99,6 +102,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `AvatarGroup` | `people`, `max`, `size`, `label` | "+N" after `max` |
 | `StarRating` | `value`, `max`, `size`, `showValue`, `label` | Partial stars for FCE rates |
 | `StatBox` | `value`, `unit`, `label`, `variant` outline, plain; children | The "15.19 hrs/wk Workload" boxes |
+| `CopyField` | `value`, `label`, `rows`, `copyLabel`, `variant`, `hint` | A read-only field with a Copy button (share and invite links); `download(blob, name)` in `ui/download.ts` saves a file |
 | `DataTable` | `columns`, `rows`, `caption`, `variant` well (FCE), outline (finals); `cell` and `title` snippets | Scrolls horizontally; plain tables can use the `data-table` classes |
 | `Spinner`, `Skeleton`, `EmptyState` | `size`; `variant`, `lines`; `title`, `description`, `icon`, actions as children | |
 
@@ -133,12 +137,17 @@ a sheet opened from the toolbar's Filter button, which shows the active filter c
 ```
 
 `RailGroup`s stack with dividers between them; `RailSection` is a collapsible filter with an icon, label and chevron.
+`RailLayout`'s `autoCollapse` folds the rail to its strip while something sits beside the results (the Courses page's
+course panel below 1440px), with `bind:railCollapsed` to follow it.
 `PageToolbar` has slots for the title, an intro, the search field, the result count, removable chips (plus a Reset
-pill on phones) and right-aligned actions.
+pill on phones) and right-aligned actions; `actionsLayout` (`auto`, `inline`, `row`) chooses whether the actions share
+the Filter button's row on phones.
 
 **Profile layout** (`/profile/[[section]]`). The profile rail: avatar, name, department and the section list (Saved
 Courses, Currently Taking, Courses Taken, Schedules, Friends, Settings) with the active row filled. The section title,
-`actions` and `filters` sit in a white band, or on the page background with `band={false}` as on Friends. On phones
+`actions` and `filters` sit in a white band, or on the page background with `band={false}` as on Friends. A section
+hands its own actions and filters to the band with `profileBand(() => ({ actions, filters }))` from
+`$lib/components/layout`, using snippets declared in its markup. On phones
 the sections become an accordion with the open one's content under it.
 
 **Plan layout** (`/plan`, [decision 36](decisions/0036-lay-out-the-degree-plan-beside-its-requirements.md)). A
@@ -167,6 +176,6 @@ interface ShellSession {
 }
 ```
 
-The root layout calls `setSession(...)`, currently with `createStubSession()` (always signed out); the data layer
-replaces that with the real session, backed by runes state. Pages read it with `getSession()`, and `SignInPrompt`
+The root layout calls `setSession(...)` with the data layer's session (`shellSession()` in `$lib/state`), backed by
+runes state. Pages read it with `getSession()`, and `SignInPrompt`
 shows the sign-in state for pages that need an account. Set each page's title with `<Title value="Instructors" />`.

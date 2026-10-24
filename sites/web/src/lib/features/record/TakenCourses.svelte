@@ -1,26 +1,17 @@
 <script lang="ts">
-  // CMU courses on the record: add one (or paste a list), then filter by department, level and semester and see them
-  // as cards or a compact list, grouped by semester, with grades editable. Courseweave's TakenSection
-  // (features/record/TakenSection.tsx), shown the way the Figma's Courses Taken page shows courses.
+  // CMU courses on the record: add one (or paste a list), then see them as cards or a compact list, grouped by
+  // semester, with grades editable. The department, level and semester filters and the cards/list switch are in the
+  // profile's title band (TakenFilters). Courseweave's TakenSection (features/record/TakenSection.tsx), shown the way
+  // the Figma's Courses Taken page shows courses.
   import { Plus } from "@lucide/svelte";
-  import { MediaQuery } from "svelte/reactivity";
   import Button from "$lib/components/ui/Button.svelte";
   import Select from "$lib/components/ui/Select.svelte";
   import TextInput from "$lib/components/ui/TextInput.svelte";
-  import ViewToggle, { storedView, type ListView } from "$lib/components/ui/ViewToggle.svelte";
+  import { storedView } from "$lib/components/ui/ViewToggle.svelte";
   import type { Option } from "$lib/components/ui/types";
   import { currentTerm } from "$lib/core/degree/hooks";
   import { parsePastedCourses, takenEntry, unitsError } from "$lib/core/record/forms";
-  import {
-    ALL_FILTERS,
-    departmentOptions,
-    groupByTerm,
-    levelOptions,
-    matchesFilters,
-    semesterOptions,
-    takenEntries,
-    type ListFilters,
-  } from "$lib/core/record/taken-list";
+  import { groupByTerm, matchesFilters, takenEntries } from "$lib/core/record/taken-list";
   import { codeOf } from "$lib/core/requisite-format";
   import { termLabel } from "$lib/core/requisites";
   import { entryUnits } from "$lib/core/state/record";
@@ -31,13 +22,9 @@
   import RecordSection from "./RecordSection.svelte";
   import TakenCard from "./TakenCard.svelte";
   import TakenRow from "./TakenRow.svelte";
+  import { clearTakenFilters, takenFiltered, takenList } from "./taken-list.svelte";
 
   let { data }: { data: RecordData } = $props();
-
-  let view = $state<ListView>(storedView("profile-taken") ?? "cards");
-  let filters = $state<ListFilters>({ ...ALL_FILTERS });
-  // Phones get the taller field selects (40px tap targets); wider screens the Figma's compact filter boxes.
-  const wide = new MediaQuery("(min-width: 40rem)");
 
   // ---- Adding ----
   let courseId = $state<string | null>(null);
@@ -94,13 +81,9 @@
 
   // ---- Showing ----
   const facts = (id: string): ReturnType<RecordData["facts"]> => data.facts(id);
-  const shown = $derived(taken.filter((e) => matchesFilters(e, filters, facts)));
+  const shown = $derived(taken.filter((e) => matchesFilters(e, takenList.filters, facts)));
   const groups = $derived(groupByTerm(shown));
-  const all = (label: string): Option => ({ value: "", label });
-  const deptChoices = $derived<Option[]>([all("All departments"), ...departmentOptions(taken, facts)]);
-  const levelChoices = $derived<Option[]>([all("All levels"), ...levelOptions(taken, facts)]);
-  const semesterChoices = $derived<Option[]>([all("All semesters"), ...semesterOptions(taken, termLabel)]);
-  const filtered = $derived(filters.department !== "" || filters.level !== "" || filters.semester !== "");
+  const view = $derived(takenList.view ?? storedView("profile-taken") ?? "cards");
   const fmt = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 </script>
 
@@ -172,29 +155,15 @@
     {/if}
   </div>
 
-  {#if taken.length > 0}
-    <div class="flex flex-wrap items-end gap-3">
-      <Select label="Department" variant={wide.current ? "compact" : "field"} class="w-full sm:w-52" options={deptChoices} bind:value={filters.department} />
-      <Select label="Course level" variant={wide.current ? "compact" : "field"} class="w-full sm:w-44" options={levelChoices} bind:value={filters.level} />
-      <Select label="Semester" variant={wide.current ? "compact" : "field"} class="w-full sm:w-44" options={semesterChoices} bind:value={filters.semester} />
-      <div class="ml-auto flex items-center gap-3">
-        <p class="text-label-md text-muted" aria-live="polite">
-          {shown.length} of {taken.length} {taken.length === 1 ? "course" : "courses"}
-        </p>
-        <ViewToggle pageKey="profile-taken" bind:value={view} />
-      </div>
-    </div>
-  {/if}
-
   {#if taken.length === 0}
     <p class="rounded-card border border-dashed border-line-strong px-4 py-5 text-body-2 text-muted">
       Nothing here yet. Add the courses you've taken so prerequisites can be checked in your schedules and degree plan.
     </p>
   {:else if shown.length === 0}
     <div class="flex flex-wrap items-center gap-3 rounded-card border border-dashed border-line-strong px-4 py-5">
-      <p class="text-body-2 text-muted">No courses on your record match these filters.</p>
-      {#if filtered}
-        <Button size="sm" variant="secondary" onclick={() => (filters = { ...ALL_FILTERS })}>Clear filters</Button>
+      <p class="text-body-2 text-muted">No courses on your record match the filters at the top of the page.</p>
+      {#if takenFiltered()}
+        <Button size="sm" variant="secondary" onclick={clearTakenFilters}>Clear filters</Button>
       {/if}
     </div>
   {:else}

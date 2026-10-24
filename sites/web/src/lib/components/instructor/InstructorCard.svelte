@@ -3,10 +3,11 @@
   import Card from "../ui/Card.svelte";
   import { catalog, resource } from "$lib/data";
   import { departmentName } from "$lib/core/departments";
-  import { aggregateChoices } from "$lib/features/instructors/aggregate-settings.svelte";
-  import { aggregate, loadInstructorFce, windowRows } from "$lib/features/instructors/fce-aggregate";
-  import FceRowsTable from "./FceRowsTable.svelte";
-  import FceStats from "./FceStats.svelte";
+  import { aggregateFce, selectFceRows } from "../course/fce-aggregate";
+  import { fceOptions } from "../course/fce-options.svelte";
+  import FceStats from "../course/FceStats.svelte";
+  import FceTable from "../course/FceTable.svelte";
+  import { loadInstructorFce } from "./instructor-fce";
 
   let {
     name,
@@ -31,8 +32,8 @@
   // FCE rows load once the card comes near the viewport, so a long list only fetches what is seen.
   let near = $state(false);
   const fce = resource(() => (near ? loadInstructorFce(catalog, name) : null));
-  const rows = $derived(fce.value === undefined || fce.value === null ? [] : windowRows(fce.value.rows, aggregateChoices.value));
-  const stats = $derived(fce.value ? aggregate(rows) : null);
+  const rows = $derived(fce.value === undefined || fce.value === null ? [] : selectFceRows(fce.value.rows, fceOptions.value));
+  const stats = $derived(fce.value ? aggregateFce(rows) : null);
   const loading = $derived(!near || (fce.status === "loading" && fce.value === undefined));
   const headingId = $props.id();
 
@@ -77,10 +78,12 @@
   {:else if !loading}
     <p class="mt-6 rounded-card bg-surface-2 px-4 py-3 text-body-1 text-strong">
       Aggregate Data <span class="text-body-2 text-muted"
-        >(data from {stats?.semesters ?? 0} {stats?.semesters === 1 ? "semester" : "semesters"})</span
+        >(data from {stats?.terms.length ?? 0} {stats?.terms.length === 1 ? "semester" : "semesters"})</span
       >
     </p>
-    <FceRowsTable
+    <FceTable
+      showCourse
+      showInstructor={false}
       {rows}
       caption="Course evaluations for {name} in the aggregate's semesters"
       empty="No evaluations in the chosen semesters and seasons"

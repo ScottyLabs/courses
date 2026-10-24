@@ -76,7 +76,11 @@
             <li class="flex items-start gap-3 px-3 py-2">
               <div class="min-w-0 flex-1">
                 <p class="flex min-w-0 items-baseline gap-2">
-                  <span class="tabular shrink-0 text-label-lg text-strong">{info.code}</span>
+                  {#if e.courseId === null}
+                    <span class="tabular shrink-0 text-label-lg text-strong">{info.code}</span>
+                  {:else}
+                    <a href={coursePath(e.courseId)} class="tabular shrink-0 text-label-lg text-strong hover:text-accent-ink hover:underline">{info.code}</a>
+                  {/if}
                   <span class="min-w-0 truncate text-body-2 text-ink">{info.title ?? ""}</span>
                 </p>
                 {#if e.note}<p class="text-body-2 text-muted">{e.note}</p>{/if}

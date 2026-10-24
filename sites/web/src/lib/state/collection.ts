@@ -8,6 +8,7 @@ import type { Cell } from "../data/cell.ts";
 import {
   DEFAULT_DEBOUNCE_MS,
   draftKey,
+  heldKey,
   parseStored,
   pendingKey,
   readCollectionCopy,
@@ -31,6 +32,12 @@ export interface CollectionAdapter<T extends { id: string }> {
   normalize(raw: unknown): T | null;
   /** This device's copy combined with the server's, when the edits that made it aren't known. */
   merge(local: T, remote: T): T;
+  /**
+   * A signed-out draft record the account doesn't have, joining the account's `existing` records on sign-in: the
+   * record to add (renamed so no two share a name) and whether to save it now, or null to leave it out (an empty
+   * default the account already has one of). Without it, drafts are added as they are.
+   */
+  adoptDraft?(value: T, existing: readonly T[]): { value: T; save: boolean } | null;
 }
 
 export class CollectionStore<T extends { id: string }> {
@@ -41,6 +48,8 @@ export class CollectionStore<T extends { id: string }> {
   readonly #mode: Cell<StoreMode>;
   readonly #status: Cell<SaveStatus>;
   readonly #error: Cell<string | null>;
+  /** Signed-out drafts waiting for the student to add them to the account or discard them. */
+  readonly #held: Cell<T[]>;
   readonly #syncs = new Map<string, RecordSync<T>>();
   /** Deleted here, maybe still on the server: id to the revision last seen. */
   readonly #deletes = new Map<string, number | null>();
@@ -59,10 +68,15 @@ export class CollectionStore<T extends { id: string }> {
     this.#mode = deps.cell<StoreMode>("draft");
     this.#status = deps.cell<SaveStatus>("saved");
     this.#error = deps.cell<string | null>(null);
+    this.#held = deps.cell<T[]>([]);
   }
 
   get #draftKey(): string {
     return draftKey(this.#a.name);
+  }
+
+  get #heldKey(): string {
+    return heldKey(this.#a.name);
   }
 
   get #pendingKey(): string {
@@ -88,6 +102,11 @@ export class CollectionStore<T extends { id: string }> {
 
   get error(): string | null {
     return this.#error.value;
+  }
+
+  /** Signed-out drafts held back from the account until adoptHeld() or dropHeld(). */
+  get held(): readonly T[] {
+    return this.#held.value;
   }
 
   /** Signed in and the server doesn't have everything yet. */
@@ -271,14 +290,62 @@ export class CollectionStore<T extends { id: string }> {
     this.#mode.value = mode;
   }
 
-  /** Signed out: shows this tab's draft. */
+  /** Signed out: shows this tab's draft, with any draft held back from an account it was never added to. */
   startDraft(): void {
     this.#reset("draft");
     this.#owner = null;
     const items: Record<string, T> = {};
+    for (const { value } of this.#readLocal(this.#heldKey, null).items) items[value.id] = value;
     for (const { value } of this.#readLocal(this.#draftKey, null).items) items[value.id] = value;
     this.#items.value = items;
+    this.#setHeld([]);
+    this.#persist();
     this.#refreshStatus();
+  }
+
+  #setHeld(values: T[]): void {
+    this.#held.value = values;
+    const items = values.map((value) => ({ value, basedOn: null }));
+    writeJson(this.#env, this.#heldKey, items.length > 0 ? { items } : null);
+  }
+
+  /**
+   * Before an account loads: sets aside this tab's signed-out draft records that `keep` accepts, so they join the
+   * account only when the student says so (adoptHeld). The rest of the draft is saved as usual. Returns how many
+   * records are held.
+   */
+  holdDraft(keep: (value: T) => boolean): number {
+    const held = new Map(
+      this.#readLocal(this.#heldKey, null).items.map(({ value }) => [value.id, value]),
+    );
+    const rest: T[] = [];
+    for (const { value } of this.#readLocal(this.#draftKey, null).items) {
+      if (keep(value)) held.set(value.id, value);
+      else rest.push(value);
+    }
+    const items = rest.map((value) => ({ value, basedOn: null }));
+    writeJson(this.#env, this.#draftKey, items.length > 0 ? { items } : null);
+    this.#setHeld([...held.values()]);
+    return held.size;
+  }
+
+  /** Signed in: adds the held drafts to the account, under names its records don't use, and saves them. */
+  adoptHeld(): void {
+    if (this.#mode.value !== "account") return;
+    for (const draft of this.#held.value) {
+      if (this.#items.value[draft.id] !== undefined) continue;
+      const adopted = this.#a.adoptDraft?.(draft, Object.values(this.#items.value)) ?? {
+        value: draft,
+        save: true,
+      };
+      if (adopted !== null) this.create(adopted.value, { save: adopted.save });
+    }
+    this.#setHeld([]);
+  }
+
+  /** Forgets the held drafts. */
+  dropHeld(): void {
+    this.#setHeld([]);
   }
 
   /**
@@ -309,8 +376,8 @@ export class CollectionStore<T extends { id: string }> {
       );
     }
     // Earlier unsaved changes first, then the signed-out draft on top.
-    for (const local of [...pending.items, ...draft.items])
-      this.#importLocal(items, revisions, local);
+    for (const local of pending.items) this.#importLocal(items, revisions, local);
+    for (const local of draft.items) this.#importLocal(items, revisions, local, true);
     for (const id of pending.deleted) {
       if (items[id] === undefined) continue;
       delete items[id];
@@ -324,15 +391,34 @@ export class CollectionStore<T extends { id: string }> {
     if (this.#deletes.size > 0) void this.#sendDeletes(epoch);
   }
 
-  /** Folds a record kept on this device into the account's: new ones are created, known ones merged and saved. */
+  /**
+   * Folds a record kept on this device into the account's: new ones are created, known ones merged and saved. A new
+   * signed-out draft goes through the adapter's `adoptDraft` first.
+   */
   #importLocal(
     items: Record<string, T>,
     revisions: Map<string, number>,
     local: LocalCopy<T>,
+    isDraft = false,
   ): void {
     const id = local.value.id;
     const stored = items[id];
     const revision = revisions.get(id) ?? null;
+    if (isDraft && stored === undefined && this.#a.adoptDraft !== undefined) {
+      const adopted = this.#a.adoptDraft(local.value, Object.values(items));
+      if (adopted === null) return;
+      items[id] = adopted.value;
+      this.#syncs.set(
+        id,
+        this.#sync({
+          value: adopted.value,
+          revision: null,
+          unsaved: adopted.save,
+          editsKnown: true,
+        }),
+      );
+      return;
+    }
     // Based on what the server still has: this device's copy is simply newer. Otherwise merge the two.
     const next =
       stored !== undefined && revision !== local.basedOn
@@ -354,13 +440,18 @@ export class CollectionStore<T extends { id: string }> {
     this.#refreshStatus();
   }
 
-  /** Signed out on purpose: forgets the account's records and anything unsaved, and starts an empty draft. */
+  /**
+   * Signed out on purpose: forgets the account's records and anything unsaved, and starts an empty draft, or the
+   * held draft the student never added to the account.
+   */
   clear(): void {
     this.#reset("draft");
     writeJson(this.#env, this.#pendingKey, null);
     writeJson(this.#env, this.#draftKey, null);
     this.#owner = null;
-    this.#items.value = {};
+    this.#items.value = Object.fromEntries(this.#held.value.map((value) => [value.id, value]));
+    this.#setHeld([]);
+    this.#persist();
     this.#refreshStatus();
   }
 

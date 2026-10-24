@@ -6,6 +6,7 @@
   import Button from "../ui/Button.svelte";
   import IconButton from "../ui/IconButton.svelte";
   import { readLocal, writeLocal } from "../ui/storage";
+  import { provideProfileBand } from "./profile-band.svelte";
   import { PROFILE_SECTIONS, profileHref, type ProfileSectionId } from "./profile-sections";
 
   let {
@@ -15,8 +16,8 @@
     avatar,
     title,
     band = true,
-    actions,
-    filters,
+    actions: actionsProp,
+    filters: filtersProp,
     children,
     class: className = "",
   }: {
@@ -31,9 +32,9 @@
     title?: string;
     /** Put the heading, actions and filters in a white band (Saved Courses); false keeps them on the page background (Friends). */
     band?: boolean;
-    /** Buttons right of the heading (Figma Friends: "Share Link", "Add Friends"). */
+    /** Buttons right of the heading (Figma Friends: "Share Link"); sections set theirs with profileBand(). */
     actions?: Snippet;
-    /** Selects under the heading (Figma "Department", "Course Level"). */
+    /** Selects under the heading (Figma "Department", "Course Level"); sections set theirs with profileBand(). */
     filters?: Snippet;
     /** Section content. */
     children: Snippet;
@@ -45,6 +46,10 @@
   let collapsed = $state(readLocal(KEY) === "hidden");
   const current = $derived(PROFILE_SECTIONS.find((section) => section.id === active) ?? PROFILE_SECTIONS[0]);
   const heading = $derived(title ?? current.label);
+  // The section inside can hand its own actions and filters to the band (profileBand()).
+  const slot = provideProfileBand();
+  const actions = $derived(actionsProp ?? slot.current.actions);
+  const filters = $derived(filtersProp ?? slot.current.filters);
 
   let aside = $state<HTMLElement>();
 

@@ -23,8 +23,7 @@
   import ToggleChips from "$lib/components/ui/ToggleChips.svelte";
   import { togglePill } from "$lib/components/ui/styles";
   import type { Option } from "$lib/components/ui/types";
-  import { fceOptions, type FceAggregateOptions } from "$lib/components/course";
-  import type { FceSeasonLetter } from "$lib/components/course/fce-aggregate";
+  import FceAggregateSettings from "$lib/components/course/FceAggregateSettings.svelte";
   import type { Department } from "$lib/core/data";
   import { FCE_HOURS_HELP } from "$lib/core/fce";
   import {
@@ -127,27 +126,6 @@
     ...minis.map((m) => ({ value: String(m.number), label: m.name })),
   ]);
 
-  const FCE_SEMESTERS: Option[] = [
-    { value: "1", label: "Most recent" },
-    { value: "2", label: "Last 2" },
-    { value: "3", label: "Last 3" },
-    { value: "4", label: "Last 4" },
-    { value: "6", label: "Last 6" },
-    { value: "all", label: "All semesters" },
-  ];
-  const FCE_SEASONS: { letter: FceSeasonLetter; label: string }[] = [
-    { letter: "S", label: "Spring" },
-    { letter: "M", label: "Summer" },
-    { letter: "F", label: "Fall" },
-  ];
-
-  function toggleFceSeason(letter: FceSeasonLetter, on: boolean): void {
-    const current = fceOptions.value.seasons;
-    const seasons: FceAggregateOptions["seasons"] = on
-      ? [...new Set([...current, letter])]
-      : current.filter((s) => s !== letter);
-    fceOptions.set({ seasons });
-  }
 </script>
 
 <RailGroup>
@@ -325,29 +303,7 @@
 
 {#if signedIn && fceAvailable && cards}
   <RailGroup title="Aggregate FCEs">
-    <div class="flex items-center gap-4">
-      <span aria-hidden="true" class="shrink-0 text-label-lg text-ink">Semesters to show</span>
-      <Select
-        label="Semesters to show on cards"
-        options={FCE_SEMESTERS}
-        class="min-w-0 flex-1"
-        bind:value={
-          () => (fceOptions.value.semesters === null ? "all" : String(fceOptions.value.semesters)),
-          (next) => fceOptions.set({ semesters: next === "all" ? null : Number(next) })
-        }
-      />
-    </div>
-    <div class="flex flex-wrap justify-between gap-2">
-      {#each FCE_SEASONS as season (season.letter)}
-        <Checkbox
-          label={season.label}
-          bind:checked={
-            () => fceOptions.value.seasons.includes(season.letter),
-            (on) => toggleFceSeason(season.letter, on)
-          }
-        />
-      {/each}
-    </div>
+    <FceAggregateSettings />
   </RailGroup>
 {/if}
 

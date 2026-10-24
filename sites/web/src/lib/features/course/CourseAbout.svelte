@@ -2,12 +2,12 @@
   import { ExternalLink, GitFork } from "@lucide/svelte";
   import CourseChipList from "$lib/components/course/CourseChipList.svelte";
   import { catalogIndex, courseDetails } from "$lib/components/course/data.svelte";
+  import { getCourseHref } from "$lib/components/course/links";
   import { termRequisites } from "$lib/components/course/requisite-context.svelte";
   import RequisiteExpression from "$lib/components/course/RequisiteExpression.svelte";
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import type { CatalogDetails } from "$lib/core/catalog-types";
   import { offeredText } from "$lib/core/catalog/format";
-  import { getCourseHref } from "./links";
   import { requisitesPath } from "./paths";
 
   let {

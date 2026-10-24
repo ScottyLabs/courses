@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChartScatter } from "@lucide/svelte";
+  import { ArrowDownUp, ChartScatter } from "@lucide/svelte";
   import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
   import Chip from "$lib/components/ui/Chip.svelte";
   import IconButton from "$lib/components/ui/IconButton.svelte";
@@ -48,9 +48,11 @@
     searchRef?: HTMLInputElement;
     allSemesters?: boolean;
   } = $props();
+
+  const sortLabel = $derived(sortOptions.find((o) => o.value === sortValue)?.label ?? "");
 </script>
 
-<PageToolbar title="Search" hideTitle="desktop" {count} {onreset}>
+<PageToolbar title="Search" hideTitle="desktop" {count} {onreset} actionsLayout="row">
   {#snippet search()}
     <SearchInput
       bind:value={url.searchText}
@@ -74,15 +76,31 @@
       label="Semester"
       options={termOptions}
       bind:value={() => termValue, onterm}
-      class="w-[8rem] sm:w-[9.75rem]"
+      class="min-w-0 flex-1 sm:w-[9.75rem] sm:flex-none"
     />
     <Select
       variant="compact"
       label="Sort by"
       options={sortOptions}
       bind:value={() => sortValue, onsort}
-      class="w-[7.5rem] sm:w-[11.5rem]"
+      class="w-[11.5rem] max-sm:hidden"
     />
+    <!-- Phones: an icon over the native list of sorts, so long names aren't cut off. -->
+    <label
+      title="Sort by: {sortLabel}"
+      class="relative grid size-10 shrink-0 place-items-center rounded-full border border-line-strong text-ink transition-colors hover:bg-hover has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-accent sm:hidden"
+    >
+      <ArrowDownUp aria-hidden="true" class="size-5" />
+      <select
+        aria-label="Sort by"
+        bind:value={() => sortValue, onsort}
+        class="absolute inset-0 cursor-pointer appearance-none rounded-full opacity-0"
+      >
+        {#each sortOptions as option (option.value)}
+          <option value={option.value} disabled={option.disabled}>{option.label}</option>
+        {/each}
+      </select>
+    </label>
     {#if fceAvailable}
       <IconButton
         label={chart ? "Show courses as cards or a list" : "Chart FCE hours against units"}
