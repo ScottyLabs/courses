@@ -3,6 +3,7 @@
 Course search and scheduling for Carnegie Mellon students.
 
 - [Architecture decisions](decisions/index.md)
+- [Courseweave features in CMU Courses](courseweave.md)
 - [Frontend implementation](frontend.md)
 - [Frontend API contract](api/frontend-contract.md)
 - [Database requirements](api/database-requirements.md)

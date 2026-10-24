@@ -4,7 +4,7 @@ Date: 2026-10-14
 
 ## Status
 
-Accepted
+Accepted; amended by [decision 15](0015-build-the-catalog-in-rust.md), which builds one `catalog.sqlite`
 
 ## Context
 

@@ -4,7 +4,7 @@ Date: 2026-10-16
 
 ## Status
 
-Accepted for the frontend at the project owner's request.
+Superseded by [decision 16](0016-serve-the-catalog-as-json-documents.md). Previously accepted for the frontend at the project owner's request.
 
 Supersedes decision 5's published catalog format, decision 6's browser query
 implementation, and decision 7's SQLite-specific loading mechanism. Amends
@@ -30,7 +30,7 @@ SQL projection, completeness metadata, versioning, and caching behavior.
 
 - The first search does not wait for the WASM engine or database download.
 - Each tab holds its own read-only catalog, cached by version/access scope in OPFS.
-- The selected WASM bundle adds roughly 8–9 MB compressed plus the database.
+- The selected WASM bundle adds roughly 8-9 MB compressed plus the database.
 - API and local query semantics must be kept aligned; this implementation does
   not share Diesel queries between Rust and the browser or implement SQLite FTS5.
 - Local reads require authenticated startup and periodic session verification;

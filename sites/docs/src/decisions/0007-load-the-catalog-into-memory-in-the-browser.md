@@ -4,9 +4,7 @@ Date: 2026-10-14
 
 ## Status
 
-The SQLite-specific mechanism is superseded by
-[decision 13](0013-use-api-first-duckdb-browser-reads.md); loading a catalog into
-each browser tab's memory is retained.
+Superseded by [decision 16](0016-serve-the-catalog-as-json-documents.md).
 
 ## Context
 

@@ -4,7 +4,7 @@ Date: 2026-10-14
 
 ## Status
 
-Accepted
+Amended by [decision 16](0016-serve-the-catalog-as-json-documents.md): the browser's HTTP cache, keyed by ETag, replaces the OPFS copy
 
 ## Context
 
