@@ -1,4 +1,7 @@
 <script lang="ts">
+  // The Figma's small course card, for saved courses and the record's courses taken and in progress: code and title
+  // (the whole card links to the course), department, friends taking it, then units and FCE hours. `children` adds
+  // lines above the units (meeting times), `footer` controls under them (a grade).
   import { Clock, Coins, SquareArrowOutUpRight } from "@lucide/svelte";
   import { departmentName } from "$lib/core/departments";
   import { codeOf } from "$lib/core/requisite-format";
@@ -13,7 +16,10 @@
     title: titleProp,
     units: unitsProp,
     dept: deptProp,
+    deptLabel,
     actions,
+    children,
+    footer,
     class: className = "",
   }: {
     courseId: string;
@@ -25,8 +31,14 @@
     units?: number | null;
     /** Department code; defaults to the one the offerings document lists. */
     dept?: string;
+    /** The department line as written, overriding `dept`. */
+    deptLabel?: string;
     /** Extra controls in the top-right corner, such as a remove button. */
     actions?: Snippet;
+    /** Lines between the department and the units. */
+    children?: Snippet;
+    /** Controls at the bottom, above the card's link. */
+    footer?: Snippet;
     class?: string;
   } = $props();
 
@@ -57,12 +69,16 @@
     </div>
   </div>
   <div class="flex items-center justify-between gap-3">
-    <p class="min-w-0 truncate text-label-lg font-medium text-muted">{dept ? departmentName(dept) : ""}</p>
+    <p class="min-w-0 truncate text-label-lg font-medium text-muted">
+      {deptLabel ?? (dept ? departmentName(dept) : "")}
+    </p>
     {#if termId}
       <FriendsTaking {courseId} {termId} size="xs" class="relative z-10 shrink-0" />
     {/if}
   </div>
-  <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-body-2 font-medium">
+  {@render children?.()}
+  <!-- The units line, or the footer when there is one, sits at the bottom of a card stretched to its row. -->
+  <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-body-2 font-medium {footer ? '' : 'mt-auto'}">
     {#if units}
       <span class="inline-flex items-center gap-1"><Coins aria-hidden="true" class="size-[18px]" />{units}</span>
     {/if}
@@ -73,4 +89,5 @@
       >
     {/if}
   </p>
+  {#if footer}<div class="relative z-10 mt-auto">{@render footer()}</div>{/if}
 </article>

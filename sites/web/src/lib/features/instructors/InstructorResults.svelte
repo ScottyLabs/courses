@@ -7,8 +7,8 @@
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import InstructorCard from "$lib/components/instructor/InstructorCard.svelte";
-  import { courseCode } from "$lib/components/instructor/format";
   import type { AllInstructor } from "$lib/core/instructors/allInstructors";
+  import { codeOf } from "$lib/core/requisite-format";
   import { coursePath } from "$lib/core/routes";
   import { teachingSummary } from "./data";
   import InstructorRows from "./InstructorRows.svelte";
@@ -73,7 +73,7 @@
               {:else}
                 <ul class="mt-3 flex flex-wrap gap-1.5" aria-label="Teaching in {scope.scopeName}">
                   {#each doc.inst.courseIds.toSorted().slice(0, 8) as id (id)}
-                    <li><Chip size="sm" href={coursePath(id, scope.termId)} label={courseCode(id)} /></li>
+                    <li><Chip size="sm" href={coursePath(id, scope.termId)} label={codeOf(id)} /></li>
                   {/each}
                   {#if doc.inst.courseIds.length > 8}
                     <li><Chip size="sm" tone="neutral" label="+{doc.inst.courseIds.length - 8}" /></li>

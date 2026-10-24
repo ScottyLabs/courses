@@ -3,7 +3,7 @@
   import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
   import type { TbaItem } from "$lib/components/calendar/types";
   import StatBox from "$lib/components/ui/StatBox.svelte";
-  import { NO_VALUE } from "$lib/components/instructor/format";
+  import { NO_VALUE } from "$lib/components/course/fce-format";
   import { isUnscheduled, sectionBlocks, sectionLabel } from "$lib/core/blocks";
   import { hashColor } from "$lib/core/colors";
   import { instructorSlug, type Instructor, type Term } from "$lib/core/data";

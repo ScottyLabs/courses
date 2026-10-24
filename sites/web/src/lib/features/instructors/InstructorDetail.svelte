@@ -8,8 +8,8 @@
   import Select from "$lib/components/ui/Select.svelte";
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import Switch from "$lib/components/ui/Switch.svelte";
-  import FceRowsTable from "$lib/components/instructor/FceRowsTable.svelte";
-  import FceStats from "$lib/components/instructor/FceStats.svelte";
+  import FceStats from "$lib/components/course/FceStats.svelte";
+  import FceTable from "$lib/components/course/FceTable.svelte";
   import { departmentName } from "$lib/core/departments";
   import type { AllInstructor } from "$lib/core/instructors/allInstructors";
   import { instructorPath } from "$lib/core/routes";
@@ -100,8 +100,8 @@
         <section aria-labelledby="aggregate-heading" class="mt-6 rounded-card bg-surface-2 p-4">
           <h2 id="aggregate-heading" class="mb-3 text-body-1 text-strong">
             Aggregate Data <span class="text-body-2 text-muted"
-              >(data from {scope.stats?.semesters ?? 0}
-              {scope.stats?.semesters === 1 ? "semester" : "semesters"}{scope.courses.length > 0
+              >(data from {scope.stats?.terms.length ?? 0}
+              {scope.stats?.terms.length === 1 ? "semester" : "semesters"}{scope.courses.length > 0
                 ? `, ${scope.courses.length} ${scope.courses.length === 1 ? "course" : "courses"}`
                 : ""})</span
             >
@@ -115,7 +115,9 @@
         {#if fce.value === undefined}
           <Skeleton class="h-40 w-full rounded-card" />
         {:else}
-          <FceRowsTable
+          <FceTable
+            showCourse
+            showInstructor={false}
             rows={tableRows}
             caption="Course evaluations for {inst.name}"
             empty={scope.everySemester

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { catalogIndex, offerings } from "$lib/components/course/data.svelte";
+  import { getCourseHref } from "$lib/components/course/links";
   import Chip from "$lib/components/ui/Chip.svelte";
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import { offeredText } from "$lib/core/catalog/format";
   import { termLabel } from "$lib/core/requisites";
   import type { TermIndexEntry } from "$lib/core/types";
-  import { getCourseHref } from "./links";
 
   let {
     courseId,

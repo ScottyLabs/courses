@@ -27,7 +27,7 @@
   import type { FriendSchedule } from "$lib/api/types";
   import FinalsDialog from "$lib/features/finals/FinalsDialog.svelte";
   import AddCourseSearch from "$lib/features/schedules/AddCourseSearch.svelte";
-  import CopyField from "$lib/features/schedules/CopyField.svelte";
+  import CopyField from "$lib/components/ui/CopyField.svelte";
   import CourseEntryRow from "$lib/features/schedules/CourseEntryRow.svelte";
   import DisplayMenu from "$lib/features/schedules/DisplayMenu.svelte";
   import ExportMenu from "$lib/features/schedules/ExportMenu.svelte";
@@ -40,12 +40,12 @@
     type CalendarSelection,
     type Preview,
   } from "$lib/features/schedules/planner";
-  import RequisiteSummary from "$lib/features/schedules/RequisiteSummary.svelte";
+  import ScheduleRequisiteSummary from "$lib/features/schedules/ScheduleRequisiteSummary.svelte";
   import SavedCourses from "$lib/features/schedules/SavedCourses.svelte";
   import ScheduleGenerator from "$lib/features/schedules/ScheduleGenerator.svelte";
   import ScheduleTabs from "$lib/features/schedules/ScheduleTabs.svelte";
   import ScheduleWorkload from "$lib/features/schedules/ScheduleWorkload.svelte";
-  import SendToStellicDialog from "$lib/features/schedules/SendToStellicDialog.svelte";
+  import SendToStellicDialog from "$lib/components/stellic/SendToStellicDialog.svelte";
   import ShareDialog from "$lib/features/schedules/ShareDialog.svelte";
   import { pageTerm } from "$lib/features/schedules/term-page.svelte";
   import WorkloadTotals from "$lib/features/schedules/WorkloadTotals.svelte";
@@ -263,7 +263,7 @@
       </RailGroup>
       {#if view.entries.length > 0}
         <RailGroup title="Requisites">
-          <RequisiteSummary entries={view.entries} {term} />
+          <ScheduleRequisiteSummary entries={view.entries} {term} />
         </RailGroup>
       {/if}
       <RailGroup title="Workload">

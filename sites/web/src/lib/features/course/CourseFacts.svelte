@@ -1,6 +1,7 @@
 <script lang="ts">
   import { KeyRound } from "@lucide/svelte";
   import type { Snippet } from "svelte";
+  import { getCourseHref } from "$lib/components/course/links";
   import Chip from "$lib/components/ui/Chip.svelte";
   import { instructorSlug, type Term } from "$lib/core/data";
   import { departmentName } from "$lib/core/departments";
@@ -10,7 +11,6 @@
   import { coursesPath, instructorPath } from "$lib/core/routes";
   import { sameCourseTitle } from "$lib/core/substitutes";
   import type { Course } from "$lib/core/types";
-  import { getCourseHref } from "./links";
 
   let {
     course,

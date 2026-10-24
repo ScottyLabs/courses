@@ -21,9 +21,9 @@
   import CourseSections from "./CourseSections.svelte";
   import CourseSyllabi from "./CourseSyllabi.svelte";
   import { CourseSchedule } from "./course-schedule.svelte";
-  import { defaultCourseHref, setCourseHref, type CourseHref } from "./links";
+  import { defaultCourseHref, setCourseHref, type CourseHref } from "$lib/components/course/links";
   import NotOfferedHere from "./NotOfferedHere.svelte";
-  import RequisiteStatus from "./RequisiteStatus.svelte";
+  import RequisiteStatus from "$lib/components/course/RequisiteStatus.svelte";
   import ScheduleActions from "./ScheduleActions.svelte";
   import ScheduleCalendar from "./ScheduleCalendar.svelte";
 

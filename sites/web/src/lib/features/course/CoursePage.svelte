@@ -32,7 +32,7 @@
   import NotOfferedHere from "./NotOfferedHere.svelte";
   import OfferingHistory from "./OfferingHistory.svelte";
   import { requisitesPath } from "./paths";
-  import RequisiteStatus from "./RequisiteStatus.svelte";
+  import RequisiteStatus from "$lib/components/course/RequisiteStatus.svelte";
   import ScheduleActions from "./ScheduleActions.svelte";
   import ScheduleCalendar from "./ScheduleCalendar.svelte";
 

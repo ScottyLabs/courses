@@ -4,7 +4,7 @@ import type { CatalogIndex } from "../../core/catalog-types.ts";
 import { buildSearchDocs } from "../../core/search.ts";
 import type { Course } from "../../core/types.ts";
 import { expect } from "../../testing.ts";
-import { catalogDocs, findCourses } from "./course-search.ts";
+import { catalogDocs, findCourses, findOfferedFirst } from "./course-search.ts";
 
 const entry = (id: string, title: string, units: number | null = 9) => ({
   id,
@@ -66,5 +66,32 @@ describe("findCourses", () => {
 
   it("builds the catalog's search docs once", () => {
     expect(catalogDocs(catalog)).toBe(catalogDocs(catalog));
+  });
+});
+
+describe("findOfferedFirst", () => {
+  const termDocs = buildSearchDocs([
+    special,
+    { ...special, id: "15150", code: "15-150", title: "Principles of Functional Programming" },
+  ]);
+
+  it("ranks the semester's courses before the rest of the catalog", () => {
+    expect(findOfferedFirst(termDocs, catalog, "principles").map((c) => c.id)).toEqual([
+      "15150",
+      "15122",
+    ]);
+  });
+
+  it("lists a course once and stops at the limit", () => {
+    expect(findOfferedFirst(termDocs, catalog, "15-150").map((c) => c.id)).toEqual(["15150"]);
+    expect(findOfferedFirst(termDocs, catalog, "principles", 1).map((c) => c.id)).toEqual([
+      "15150",
+    ]);
+  });
+
+  it("searches the catalog alone without a semester, and nothing for an empty query", () => {
+    expect(findOfferedFirst([], catalog, "21-127").map((c) => c.id)).toEqual(["21127"]);
+    expect(findOfferedFirst(termDocs, null, "hype").map((c) => c.id)).toEqual(["98317"]);
+    expect(findOfferedFirst(termDocs, catalog, " ")).toEqual([]);
   });
 });

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { catalogIndex, offerings } from "$lib/components/course/data.svelte";
+  import { getCourseHref } from "$lib/components/course/links";
   import { departmentName } from "$lib/core/departments";
   import { termLabel } from "$lib/core/requisites";
   import { coursesPath } from "$lib/core/routes";
   import type { TermIndexEntry } from "$lib/core/types";
-  import { getCourseHref } from "./links";
 
   let {
     courseId,

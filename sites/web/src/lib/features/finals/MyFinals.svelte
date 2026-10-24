@@ -6,13 +6,13 @@
 <script lang="ts">
   import { CalendarArrowDown, TriangleAlert } from "@lucide/svelte";
   import Button from "$lib/components/ui/Button.svelte";
+  import { download } from "$lib/components/ui/download";
   import type { FinalExam } from "$lib/api/types";
   import type { RegistrarFinal } from "$lib/data";
   import { courseColorStyle } from "$lib/core/colors";
   import { coursePath } from "$lib/core/routes";
   import type { ResolvedEntry } from "$lib/core/state/schedule-view";
   import { formatTimeRange } from "$lib/core/time";
-  import { download } from "$lib/features/schedules/download";
   import { fileName } from "$lib/features/schedules/planner";
   import { examDay, finalWarnings, finalsIcs, hasRoom, matchFinals, type Exam } from "./finals";
 

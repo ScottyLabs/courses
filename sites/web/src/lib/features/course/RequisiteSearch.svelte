@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { findOfferedFirst } from "$lib/components/course/course-search";
   import SearchInput from "$lib/components/ui/SearchInput.svelte";
   import { listRow, panelSurface } from "$lib/components/ui/styles";
   import type { CatalogIndex } from "$lib/core/catalog-types";
   import type { Term } from "$lib/core/data";
-  import { buildSearchDocs, searchCourses, type SearchDoc } from "$lib/core/search";
   import type { Course } from "$lib/core/types";
 
   let {
@@ -24,33 +24,8 @@
   let active = $state(0);
   let root = $state<HTMLElement>();
 
-  // Catalog courses the semester doesn't offer, so they can be explored too.
-  const extraDocs = $derived.by((): SearchDoc[] => {
-    if (!index) return [];
-    const extra: Course[] = [];
-    for (const e of Object.values(index.courses)) {
-      if (term?.courseById.has(e.id) === true) continue;
-      extra.push({
-        id: e.id,
-        code: e.code,
-        title: e.title,
-        units: e.units,
-        dept: "",
-        level: "U",
-        instructors: [],
-        sections: [],
-        crossListed: [],
-      });
-    }
-    return buildSearchDocs(extra);
-  });
-  const results = $derived.by(() => {
-    if (!query.trim()) return [];
-    // The semester's courses rank first among equal matches; the rest of the catalog follows.
-    const offered = term ? searchCourses(term.searchDocs, query, LIMIT) : [];
-    const more = offered.length < LIMIT ? searchCourses(extraDocs, query, LIMIT - offered.length) : [];
-    return [...offered, ...more];
-  });
+  // The semester's courses rank first among equal matches; the rest of the catalog follows.
+  const results = $derived(findOfferedFirst(term?.searchDocs ?? [], index, query, LIMIT));
   const showList = $derived(open && query.trim().length > 0);
 
   function pick(course: Course): void {

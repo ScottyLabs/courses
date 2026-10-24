@@ -1,8 +1,8 @@
 <script lang="ts">
   import { ArrowRight } from "@lucide/svelte";
   import StatBox from "$lib/components/ui/StatBox.svelte";
-  import { courseCode } from "$lib/components/instructor/format";
   import type { AllInstructor, CourseLookup } from "$lib/core/instructors/allInstructors";
+  import { codeOf } from "$lib/core/requisite-format";
   import { termLabel } from "$lib/core/requisites";
   import { coursePath, instructorPath } from "$lib/core/routes";
 
@@ -36,7 +36,7 @@
             {#each t.courses as id (id)}
               <li class="flex min-w-0 items-baseline gap-2 text-body-2">
                 <a href={coursePath(id, t.term)} class="shrink-0 font-medium text-ink hover:text-accent-ink hover:underline"
-                  >{courseCode(id)}</a
+                  >{codeOf(id)}</a
                 >
                 <span class="truncate text-muted">{lookup?.title(id) ?? ""}</span>
               </li>
