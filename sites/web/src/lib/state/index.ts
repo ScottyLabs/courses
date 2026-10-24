@@ -11,7 +11,7 @@ export {
   schedules,
 } from "./instances.svelte.ts";
 export { Personal } from "./personal.ts";
-export type { PersonalDeps, SignOutResult } from "./personal.ts";
+export type { HeldDrafts, PersonalDeps, SignOutResult } from "./personal.ts";
 export { ScheduleStore } from "./schedules.ts";
 export type { ScheduleItem } from "./schedules.ts";
 export { PlanStore } from "./plans.ts";

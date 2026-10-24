@@ -8,6 +8,7 @@ import type { Cell } from "../data/cell.ts";
 import {
   DEFAULT_DEBOUNCE_MS,
   draftKey,
+  heldKey,
   parseStored,
   pendingKey,
   readCollectionCopy,
@@ -47,6 +48,8 @@ export class CollectionStore<T extends { id: string }> {
   readonly #mode: Cell<StoreMode>;
   readonly #status: Cell<SaveStatus>;
   readonly #error: Cell<string | null>;
+  /** Signed-out drafts waiting for the student to add them to the account or discard them. */
+  readonly #held: Cell<T[]>;
   readonly #syncs = new Map<string, RecordSync<T>>();
   /** Deleted here, maybe still on the server: id to the revision last seen. */
   readonly #deletes = new Map<string, number | null>();
@@ -65,10 +68,15 @@ export class CollectionStore<T extends { id: string }> {
     this.#mode = deps.cell<StoreMode>("draft");
     this.#status = deps.cell<SaveStatus>("saved");
     this.#error = deps.cell<string | null>(null);
+    this.#held = deps.cell<T[]>([]);
   }
 
   get #draftKey(): string {
     return draftKey(this.#a.name);
+  }
+
+  get #heldKey(): string {
+    return heldKey(this.#a.name);
   }
 
   get #pendingKey(): string {
@@ -94,6 +102,11 @@ export class CollectionStore<T extends { id: string }> {
 
   get error(): string | null {
     return this.#error.value;
+  }
+
+  /** Signed-out drafts held back from the account until adoptHeld() or dropHeld(). */
+  get held(): readonly T[] {
+    return this.#held.value;
   }
 
   /** Signed in and the server doesn't have everything yet. */
@@ -277,14 +290,62 @@ export class CollectionStore<T extends { id: string }> {
     this.#mode.value = mode;
   }
 
-  /** Signed out: shows this tab's draft. */
+  /** Signed out: shows this tab's draft, with any draft held back from an account it was never added to. */
   startDraft(): void {
     this.#reset("draft");
     this.#owner = null;
     const items: Record<string, T> = {};
+    for (const { value } of this.#readLocal(this.#heldKey, null).items) items[value.id] = value;
     for (const { value } of this.#readLocal(this.#draftKey, null).items) items[value.id] = value;
     this.#items.value = items;
+    this.#setHeld([]);
+    this.#persist();
     this.#refreshStatus();
+  }
+
+  #setHeld(values: T[]): void {
+    this.#held.value = values;
+    const items = values.map((value) => ({ value, basedOn: null }));
+    writeJson(this.#env, this.#heldKey, items.length > 0 ? { items } : null);
+  }
+
+  /**
+   * Before an account loads: sets aside this tab's signed-out draft records that `keep` accepts, so they join the
+   * account only when the student says so (adoptHeld). The rest of the draft is saved as usual. Returns how many
+   * records are held.
+   */
+  holdDraft(keep: (value: T) => boolean): number {
+    const held = new Map(
+      this.#readLocal(this.#heldKey, null).items.map(({ value }) => [value.id, value]),
+    );
+    const rest: T[] = [];
+    for (const { value } of this.#readLocal(this.#draftKey, null).items) {
+      if (keep(value)) held.set(value.id, value);
+      else rest.push(value);
+    }
+    const items = rest.map((value) => ({ value, basedOn: null }));
+    writeJson(this.#env, this.#draftKey, items.length > 0 ? { items } : null);
+    this.#setHeld([...held.values()]);
+    return held.size;
+  }
+
+  /** Signed in: adds the held drafts to the account, under names its records don't use, and saves them. */
+  adoptHeld(): void {
+    if (this.#mode.value !== "account") return;
+    for (const draft of this.#held.value) {
+      if (this.#items.value[draft.id] !== undefined) continue;
+      const adopted = this.#a.adoptDraft?.(draft, Object.values(this.#items.value)) ?? {
+        value: draft,
+        save: true,
+      };
+      if (adopted !== null) this.create(adopted.value, { save: adopted.save });
+    }
+    this.#setHeld([]);
+  }
+
+  /** Forgets the held drafts. */
+  dropHeld(): void {
+    this.#setHeld([]);
   }
 
   /**
@@ -379,13 +440,18 @@ export class CollectionStore<T extends { id: string }> {
     this.#refreshStatus();
   }
 
-  /** Signed out on purpose: forgets the account's records and anything unsaved, and starts an empty draft. */
+  /**
+   * Signed out on purpose: forgets the account's records and anything unsaved, and starts an empty draft, or the
+   * held draft the student never added to the account.
+   */
   clear(): void {
     this.#reset("draft");
     writeJson(this.#env, this.#pendingKey, null);
     writeJson(this.#env, this.#draftKey, null);
     this.#owner = null;
-    this.#items.value = {};
+    this.#items.value = Object.fromEntries(this.#held.value.map((value) => [value.id, value]));
+    this.#setHeld([]);
+    this.#persist();
     this.#refreshStatus();
   }
 

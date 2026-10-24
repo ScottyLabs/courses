@@ -1,6 +1,7 @@
 // What the stores share: their modes, their dependencies, and the copies of records they keep in sessionStorage.
 // Signed out, a store's whole state is a draft under `cmucourses:draft:<name>`; signed in, whatever the server
-// doesn't have yet is kept under `cmucourses:pending:<name>` with the account it belongs to.
+// doesn't have yet is kept under `cmucourses:pending:<name>` with the account it belongs to. A draft waiting for the
+// student to add it to the account they signed in to, or discard it, is held under `cmucourses:held:<name>`.
 import type { CellFactory } from "../data/cell.ts";
 import { isObject, readJson, type StoreEnv } from "./env.ts";
 
@@ -47,6 +48,7 @@ export const SESSION_ENDED = "Your session ended. Sign in again to save your cha
 
 export const draftKey = (name: string): string => `cmucourses:draft:${name}`;
 export const pendingKey = (name: string): string => `cmucourses:pending:${name}`;
+export const heldKey = (name: string): string => `cmucourses:held:${name}`;
 
 /** A record kept on this device, and the stored revision it's based on (null: never saved). */
 export interface LocalCopy<T> {

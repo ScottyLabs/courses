@@ -67,6 +67,7 @@ describe("drafts saved on signing in", () => {
     h.server.signedIn = true;
     const back = await h.reload();
     expect(back.personal.mode).toBe("account");
+    back.personal.acceptDrafts();
     await back.env.advance(DEBOUNCE_MS);
 
     expect(back.personal.schedules.forTerm("S27").map((s) => s.name)).toEqual([

@@ -1,7 +1,9 @@
 // The student's own data, together: schedules, degree plans, the academic record, saved courses and preferences.
 // It follows the session (decision 17): signed out, every store is a draft in this tab; on signing in each loads the
-// account's copy and saves the draft into it; signing out forgets everything; a session that ends on its own keeps
-// what's on screen and in storage so signing in again saves it.
+// account's copy, and the schedules, plans, record and saved courses drafted signed out wait for the student to add
+// them to that account or discard them (heldDrafts), since the tab may be on a shared computer; signing out forgets
+// the account's data; a session that ends on its own keeps what's on screen and in storage so signing in again
+// saves it.
 import type { Api } from "../api/endpoints.ts";
 import type { Term } from "../core/data.ts";
 import { onboardingDue } from "../core/state/onboarding.ts";
@@ -32,6 +34,17 @@ export interface PersonalDeps {
 
 /** What signing out did: done; unsaved (changes couldn't be saved first; ask, then pass force); failed. */
 export type SignOutResult = "done" | "unsaved" | "failed";
+
+/** What this tab drafted signed out and holds back from the account the student signed in to. */
+export interface HeldDrafts {
+  /** Schedules with courses in them (empty defaults aren't asked about). */
+  schedules: number;
+  plans: number;
+  /** Whether there's anything for the academic record. */
+  record: boolean;
+  /** Saved courses. */
+  saved: number;
+}
 
 interface Lifecycle {
   readonly mode: StoreMode;
@@ -129,6 +142,12 @@ export class Personal {
 
   async #load(owner: string): Promise<void> {
     this.#loadError.value = null;
+    // What was drafted signed out waits for the student's say before it joins this account.
+    if (this.schedules.store.mode !== "account")
+      this.schedules.store.holdDraft((s) => s.entries.length > 0);
+    if (this.plans.store.mode !== "account") this.plans.store.holdDraft(() => true);
+    if (this.record.store.mode !== "account") this.record.store.holdDraft();
+    if (this.saved.mode !== "account") this.saved.holdDraft();
     const results = await Promise.allSettled(
       this.#stores.map((store) =>
         store.mode === "account" ? Promise.resolve() : store.startAccount(owner),
@@ -162,13 +181,45 @@ export class Personal {
     return this.#stores.some((s) => s.unsaved);
   }
 
+  /**
+   * Signed in, with what this tab drafted signed out still held back from the account: what there is, or null when
+   * there's nothing to ask about.
+   */
+  get heldDrafts(): HeldDrafts | null {
+    if (this.mode !== "account") return null;
+    const held: HeldDrafts = {
+      schedules: this.schedules.store.held.length,
+      plans: this.plans.store.held.length,
+      record: this.record.store.held !== null,
+      saved: this.saved.held.length,
+    };
+    return held.schedules + held.plans + held.saved > 0 || held.record ? held : null;
+  }
+
+  /** Adds the held drafts to the account: schedules and plans under names it doesn't use, the record merged in. */
+  acceptDrafts(): void {
+    this.schedules.store.adoptHeld();
+    this.plans.store.adoptHeld();
+    this.record.store.adoptHeld();
+    this.saved.adoptHeld();
+  }
+
+  /** Forgets the held drafts. */
+  discardDrafts(): void {
+    this.schedules.store.dropHeld();
+    this.plans.store.dropHeld();
+    this.record.store.dropHeld();
+    this.saved.dropHeld();
+  }
+
   /** Whether to ask for the academic record now (core/state/onboarding.ts). */
   get onboardingDue(): boolean {
     const { session, device } = this.#deps;
     const signedIn = session.status === "signed-in";
     return onboardingDue({
       session: session.status,
-      loaded: this.mode === "account",
+      // A record drafted signed out may be on its way in.
+      loaded: this.mode === "account" && this.heldDrafts === null,
       recordEmpty: this.record.isEmpty,
       asked: signedIn ? this.preferences.onboarding.asked : device.onboardingAsked,
     });

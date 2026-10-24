@@ -51,8 +51,9 @@ keyboard or a touch screen. On phones, past semesters start collapsed.
 Course links go to `/course/<code>?term=<semester>` (`courseHref()`), so the course page offers "Back to plan"
 (`planOrigin()`).
 
-Signed out, plans are drafts in the tab, saved to the account on signing in, and the program picker and requirements
-say degree programs need a CMU sign-in
+Signed out, plans are drafts in the tab, which the student can add to the account on signing in
+([decision 42](../decisions/0042-ask-before-adding-signed-out-drafts-to-an-account.md)), and the program picker and
+requirements say degree programs need a CMU sign-in
 ([decision 37](../decisions/0037-let-signed-out-visitors-draft-a-degree-plan.md)).
 
 Pure helpers with tests: `grid.ts` (year rows), `rows.ts` (a course row's facts, where a drop lands, nudging),
