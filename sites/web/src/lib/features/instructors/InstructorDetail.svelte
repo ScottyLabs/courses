@@ -14,7 +14,7 @@
   import type { AllInstructor } from "$lib/core/instructors/allInstructors";
   import { instructorPath } from "$lib/core/routes";
   import { ALL_SEMESTERS } from "$lib/state/term-scope";
-  import { semesterOptions } from "./data";
+  import { semesterOptions } from "$lib/state";
   import EvaluationHistory from "./EvaluationHistory.svelte";
   import { useInstructorsScope } from "./scope.svelte";
   import TeachingHistory from "./TeachingHistory.svelte";

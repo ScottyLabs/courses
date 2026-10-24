@@ -5,6 +5,7 @@
   import { ChevronDown, Download, Ellipsis, Trash2, Upload } from "@lucide/svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
+  import { download } from "$lib/components/ui/download";
   import Menu, { type MenuEntry } from "$lib/components/ui/Menu.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
   import { exportRecord, parseRecordExport, type RecordData } from "$lib/core/state/record";
@@ -19,15 +20,10 @@
 
   const empty = $derived(record.isEmpty && Object.keys(record.profile).length === 0);
 
-  function download(): void {
+  function exportBackup(): void {
     const data = exportRecord(record.data);
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `cmucourses-record-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    download(blob, `cmucourses-record-${new Date().toISOString().slice(0, 10)}.json`);
   }
 
   async function onFile(file: File): Promise<void> {
@@ -62,7 +58,7 @@
   }
 
   const moreItems = $derived<MenuEntry[]>([
-    { label: "Export backup", icon: Download, disabled: empty, onselect: download },
+    { label: "Export backup", icon: Download, disabled: empty, onselect: exportBackup },
     { label: "Import backup", icon: Upload, onselect: () => fileInput?.click() },
     ...(empty
       ? []

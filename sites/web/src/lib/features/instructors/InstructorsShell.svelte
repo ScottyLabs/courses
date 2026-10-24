@@ -23,7 +23,7 @@
   import { departmentName } from "$lib/core/departments";
   import { saved } from "$lib/state";
   import { ALL_SEMESTERS } from "$lib/state/term-scope";
-  import { semesterOptions } from "./data";
+  import { semesterOptions } from "$lib/state";
   import InstructorRows from "./InstructorRows.svelte";
   import { provideInstructorsScope } from "./scope.svelte";
 

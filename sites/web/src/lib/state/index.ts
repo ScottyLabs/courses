@@ -34,7 +34,13 @@ export { worstStatus } from "./sync.ts";
 export type { SaveStatus } from "./sync.ts";
 export { browserEnv } from "./env.ts";
 export type { StoreEnv } from "./env.ts";
-export { ALL_SEMESTERS, ALL_SEMESTER_PAGES, isAllSemesters, resolveTerm } from "./term-scope.ts";
+export {
+  ALL_SEMESTERS,
+  ALL_SEMESTER_PAGES,
+  isAllSemesters,
+  resolveTerm,
+  semesterOptions,
+} from "./term-scope.ts";
 export { lastOrigin, originBack, planOrigin, trackOrigin } from "./nav-origin.ts";
 export {
   buildScheduleView,

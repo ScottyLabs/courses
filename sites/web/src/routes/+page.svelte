@@ -17,7 +17,7 @@
   import { codeOf } from "$lib/core/requisite-format";
   import { coursePath } from "$lib/core/routes";
   import type { Course } from "$lib/core/types";
-  import { ALL_SEMESTERS } from "$lib/state";
+  import { ALL_SEMESTERS, semesterOptions } from "$lib/state";
   import CourseDetailPanel from "$lib/features/course/CourseDetailPanel.svelte";
   import { filterChips } from "$lib/features/explorer/chips";
   import CourseResults from "$lib/features/explorer/CourseResults.svelte";
@@ -106,10 +106,7 @@
 
   // ---- Toolbar ----
 
-  const termOptions = $derived([
-    ...(x.terms.value ?? []).map((t) => ({ value: t.id, label: t.name })),
-    { value: ALL_SEMESTERS, label: "All semesters" },
-  ]);
+  const termOptions = $derived(semesterOptions(x.terms.value ?? []));
   const sortOptions = $derived(
     (Object.keys(SORT_LABELS) as SortKey[])
       .filter((key) => !FCE_SORTS.includes(key) || x.fceMap !== null)
