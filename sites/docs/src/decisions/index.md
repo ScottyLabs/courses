@@ -21,3 +21,5 @@
 | 17 | [Store personal data on the server](0017-store-personal-data-on-the-server.md) | accepted |
 | 21 | [Sort catalog strings with Unicode collation](0021-sort-catalog-strings-with-unicode-collation.md) | accepted |
 | 22 | [Leave build times out of FCE and program documents](0022-leave-build-times-out-of-fce-and-program-documents.md) | accepted |
+| 30 | [Build UI primitives on native elements and the top layer](0030-build-ui-primitives-on-native-elements.md) | accepted |
+| 31 | [Scroll the page, with a sticky header and rail](0031-scroll-the-page-with-a-sticky-rail.md) | accepted |
