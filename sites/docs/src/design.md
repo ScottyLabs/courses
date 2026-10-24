@@ -176,6 +176,6 @@ interface ShellSession {
 }
 ```
 
-The root layout calls `setSession(...)`, currently with `createStubSession()` (always signed out); the data layer
-replaces that with the real session, backed by runes state. Pages read it with `getSession()`, and `SignInPrompt`
+The root layout calls `setSession(...)` with the data layer's session (`shellSession()` in `$lib/state`), backed by
+runes state. Pages read it with `getSession()`, and `SignInPrompt`
 shows the sign-in state for pages that need an account. Set each page's title with `<Title value="Instructors" />`.

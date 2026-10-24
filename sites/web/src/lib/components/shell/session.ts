@@ -22,16 +22,3 @@ export interface ShellSession {
 }
 
 export const [getSession, setSession] = createContext<ShellSession>();
-
-/** Placeholder until the data layer supplies a session: always signed out. */
-export function createStubSession(): ShellSession {
-  return {
-    status: "signed-out",
-    signIn: () => {
-      location.assign("/auth/login");
-    },
-    signOut: () => {
-      location.assign("/auth/logout");
-    },
-  };
-}
