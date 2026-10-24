@@ -11,6 +11,9 @@
 </script>
 
 <script lang="ts">
+  // Courseweave's single-series trend chart (features/fce/LineChart.tsx), for course and instructor FCEs: a snapping
+  // crosshair on hover and the arrow keys, nulls breaking the line, the latest value labelled, and an optional
+  // reference line.
   let {
     points,
     domain,
@@ -214,6 +217,7 @@
   {#if activePoint && active !== null}
     <div
       role="tooltip"
+      aria-live="polite"
       class="pointer-events-none absolute top-0 z-10 rounded-tag border border-line bg-surface px-2 py-1.5 text-label-md shadow-popover"
       style={sx(active) > width / 2 ? `right: ${width - sx(active) + 8}px` : `left: ${sx(active) + 8}px`}
     >

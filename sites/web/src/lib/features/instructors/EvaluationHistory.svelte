@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LineChart from "$lib/components/instructor/LineChart.svelte";
+  import LineChart from "$lib/components/course/LineChart.svelte";
   import { courseCode, semesterName } from "$lib/components/instructor/format";
   import StatBox from "$lib/components/ui/StatBox.svelte";
   import { FCE_HOURS_HELP, formatHours, formatRating, type InstructorFce } from "$lib/core/fce";
@@ -51,6 +51,7 @@
         <LineChart
           label="{fce.name}'s overall teaching rating by semester"
           domain={[1, 5]}
+          height={150}
           format={(value) => value.toFixed(Number.isInteger(value) ? 0 : 2)}
           points={fce.terms.map((t) => ({
             label: t.term,
