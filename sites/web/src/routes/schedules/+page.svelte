@@ -281,7 +281,7 @@
     {#if term && view}
       <h1 class="sr-only">Schedules: {active?.name ?? "Schedule 1"}, {term.meta.name}</h1>
       <ScheduleTabs {term} {activeId} onshare={() => (shareOpen = true)} ontarget={target} />
-      <PageToolbar class="mt-4">
+      <PageToolbar class="mt-4" actionsLayout="inline">
         {#snippet search()}
           <AddCourseSearch
             {term}
@@ -305,13 +305,20 @@
           {/each}
         {/snippet}
         {#snippet actions()}
+          <!-- Phones show these as icon buttons; the names stay for screen readers. -->
           <Button
             icon={WandSparkles}
-            class="h-10 lg:h-9"
+            class="h-10 max-sm:w-10 max-sm:px-0 lg:h-9"
+            title="Generate schedules"
             disabled={view.entries.length === 0}
-            onclick={() => (generatorOpen = true)}>Generate</Button
+            onclick={() => (generatorOpen = true)}><span class="max-sm:sr-only">Generate</span></Button
           >
-          <Button icon={CalendarClock} class="h-10 lg:h-9" onclick={() => setFinals(true)}>Finals</Button>
+          <Button
+            icon={CalendarClock}
+            class="h-10 max-sm:w-10 max-sm:px-0 lg:h-9"
+            title="Final exams"
+            onclick={() => setFinals(true)}><span class="max-sm:sr-only">Finals</span></Button
+          >
           {#if active}
             <ExportMenu
               schedule={active}
