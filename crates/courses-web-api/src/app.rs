@@ -118,6 +118,29 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     api().split_for_parts().1
 }
 
+/// Whether a write may come from `origin`: only `APP_URL`, except that local development sign-in (ADR 26) also
+/// accepts other `http://localhost` ports, so several development servers can share one API.
+fn origin_allowed(state: &AppState, origin: Option<&str>) -> bool {
+    let Some(origin) = origin else { return false };
+    #[cfg(feature = "dev-auth")]
+    let local_dev = matches!(&state.auth, crate::auth::AuthMode::Dev(_)) && local_origin(origin);
+    #[cfg(not(feature = "dev-auth"))]
+    let local_dev = false;
+    origin == state.origin || local_dev
+}
+
+/// `http://localhost:<port>` or `http://127.0.0.1:<port>`.
+#[cfg_attr(not(feature = "dev-auth"), allow(dead_code))]
+fn local_origin(origin: &str) -> bool {
+    ["http://localhost:", "http://127.0.0.1:"]
+        .iter()
+        .any(|prefix| {
+            origin
+                .strip_prefix(prefix)
+                .is_some_and(|port| !port.is_empty() && port.bytes().all(|b| b.is_ascii_digit()))
+        })
+}
+
 /// Refuses writes from other origins and adds security and cache headers to dynamic responses.
 async fn guard(Extension(state): Extension<AppState>, request: Request, next: Next) -> Response {
     let write = !matches!(
@@ -125,11 +148,13 @@ async fn guard(Extension(state): Extension<AppState>, request: Request, next: Ne
         Method::GET | Method::HEAD | Method::OPTIONS
     );
     if write
-        && request
-            .headers()
-            .get(header::ORIGIN)
-            .and_then(|v| v.to_str().ok())
-            != Some(state.origin.as_str())
+        && !origin_allowed(
+            &state,
+            request
+                .headers()
+                .get(header::ORIGIN)
+                .and_then(|v| v.to_str().ok()),
+        )
     {
         return error::ApiError::forbidden("Cross-site request refused.").into_response();
     }
@@ -319,4 +344,19 @@ impl<AC: axum_oidc::AdditionalClaims> axum_oidc::Session<AC> for OidcSession {
 /// Deletes expired sessions hourly.
 pub fn spawn_background(state: &AppState) {
     SqliteStore::new(state.db.clone()).spawn_cleanup();
+}
+
+#[cfg(test)]
+mod origin_tests {
+    use super::local_origin;
+
+    #[test]
+    fn local_origins_are_only_localhost_ports() {
+        assert!(local_origin("http://localhost:5181"));
+        assert!(local_origin("http://127.0.0.1:5173"));
+        assert!(!local_origin("http://localhost"));
+        assert!(!local_origin("http://localhost:5181.evil.test"));
+        assert!(!local_origin("https://localhost:5181"));
+        assert!(!local_origin("http://localhost.evil.test:80"));
+    }
 }
