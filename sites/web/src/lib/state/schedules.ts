@@ -20,6 +20,7 @@ import {
 import { CollectionStore } from "./collection.ts";
 import type { StoreDeps } from "./drafts.ts";
 import { isObject } from "./env.ts";
+import { distinctName } from "./names.ts";
 import type { PreferencesStore } from "./preferences.ts";
 import type { Stored } from "./sync.ts";
 
@@ -40,6 +41,25 @@ function fromApi(r: ScheduleRecord): Stored<ScheduleItem> {
   if (value === null)
     throw new ApiError(200, "unavailable", "The server sent a schedule this website can't read.");
   return { value: { ...value, shareId: r.shareId }, revision: r.revision };
+}
+
+/**
+ * A schedule drafted signed out, joining the account's on sign-in. An empty one (the "Schedule 1" a semester shows
+ * on a visit) is dropped when the account already has a schedule for that semester, and otherwise stays unsaved
+ * until something is added; any other takes a name no schedule of that semester has.
+ */
+function adoptDraft(
+  draft: ScheduleItem,
+  existing: readonly ScheduleItem[],
+): { value: ScheduleItem; save: boolean } | null {
+  const sameTerm = existing.filter((s) => s.termId === draft.termId);
+  if (draft.entries.length === 0) return sameTerm.length > 0 ? null : { value: draft, save: false };
+  const name = distinctName(
+    draft.name,
+    sameTerm.map((s) => s.name),
+    "Schedule",
+  );
+  return { value: name === draft.name ? draft : { ...draft, name }, save: true };
 }
 
 export class ScheduleStore {
@@ -79,6 +99,7 @@ export class ScheduleStore {
         remove: (id) => api.schedules.remove(id),
         normalize,
         merge: (local, remote) => mergeNewer(local, remote),
+        adoptDraft,
       },
       deps,
     );
