@@ -33,6 +33,14 @@
   const offered = $derived(offerings());
   const loading = $derived(index.status === "loading" || offered.status === "loading");
 
+  /** The department of a course no built semester offers: the one other courses with its number prefix have. */
+  const deptByPrefix = $derived.by(() => {
+    const out = new Map<string, string>();
+    for (const o of offered.value?.byId.values() ?? [])
+      if (!out.has(o.id.slice(0, 2))) out.set(o.id.slice(0, 2), o.dept);
+    return out;
+  });
+
   /** Saved courses aren't tied to a semester: what the catalog and the offerings document say about each. */
   const courses = $derived.by(() =>
     saved.ids.toReversed().map((id): { course: Course; terms: readonly string[] } => {
@@ -45,7 +53,7 @@
           code: codeOf(id),
           title: offering?.title ?? entry?.title ?? "",
           units: entry?.unitsMax === undefined ? (entry?.units ?? null) : null,
-          dept: offering?.dept ?? "",
+          dept: offering?.dept ?? deptByPrefix.get(id.slice(0, 2)) ?? "",
           level: courseLevel,
           instructors: [],
           sections: [],
