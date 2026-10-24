@@ -1,152 +1,34 @@
-//! JavaScript semantics that Courseweave's scripts rely on, reproduced so the documents match the files they write:
-//! whitespace as `\s` and `trim()` see it, `Number()`, `JSON.stringify` of numbers and of objects with integer-like
-//! keys, and `localeCompare`.
+//! JavaScript semantics that Courseweave's scripts rely on, reproduced so the documents match the files they write.
+//! Whitespace, `Number()`, number formatting and `localeCompare` are shared with the FCE and program builders
+//! ([`crate::fce::js`]); this module adds object key order, numeric collation and dates.
 
 use std::cmp::Ordering;
+use std::sync::LazyLock;
 
+use icu_collator::options::CollatorOptions;
+use icu_collator::preferences::CollationNumericOrdering;
+use icu_collator::{Collator, CollatorBorrowed, CollatorPreferences};
 use serde::Serialize;
 use serde::ser::{SerializeMap, Serializer};
 
-/// The characters JavaScript's `\s` and `String.prototype.trim` treat as whitespace. Unlike Rust's, it has U+FEFF and
-/// lacks U+0085.
-pub fn is_space(c: char) -> bool {
-    matches!(
-        c,
-        '\t' | '\n' | '\u{0B}' | '\u{0C}' | '\r' | ' ' | '\u{A0}' | '\u{1680}' | '\u{2000}'
-            ..='\u{200A}'
-                | '\u{2028}'
-                | '\u{2029}'
-                | '\u{202F}'
-                | '\u{205F}'
-                | '\u{3000}'
-                | '\u{FEFF}'
-    )
-}
-
-/// JavaScript's `\s` as a regex character class.
-pub const WS: &str = r"[\t\n\x0B\x0C\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]";
-
-pub fn trim(s: &str) -> &str {
-    s.trim_matches(is_space)
-}
-
-/// `s.replace(/\s+/g, ' ')`.
-pub fn collapse_space(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    let mut in_space = false;
-    for c in s.chars() {
-        if is_space(c) {
-            if !in_space {
-                out.push(' ');
-            }
-            in_space = true;
-        } else {
-            out.push(c);
-            in_space = false;
-        }
-    }
-    out
-}
+use crate::fce::js::Num;
+pub use crate::fce::js::{
+    SPACE_CLASS as WS, collapse_spaces as collapse_space, is_space, locale_compare as locale_cmp,
+    string_to_number as number, trim,
+};
 
 /// `s.replace(/\s+/g, ' ').trim()`.
 pub fn squish(s: &str) -> String {
     trim(&collapse_space(s)).to_owned()
 }
 
-/// `Number(s)`: the empty string is 0, anything that isn't a whole numeric literal is NaN.
-pub fn number(s: &str) -> f64 {
-    let t = trim(s);
-    if t.is_empty() {
-        return 0.0;
-    }
-    let radix = match t.get(..2) {
-        Some("0x" | "0X") => 16,
-        Some("0o" | "0O") => 8,
-        Some("0b" | "0B") => 2,
-        _ => 10,
-    };
-    if radix != 10 {
-        let digits = &t[2..];
-        if digits.is_empty() {
-            return f64::NAN;
-        }
-        let mut value = 0.0;
-        for c in digits.chars() {
-            match c.to_digit(radix) {
-                Some(d) => value = value * radix as f64 + d as f64,
-                None => return f64::NAN,
-            }
-        }
-        return value;
-    }
-    match t {
-        "Infinity" | "+Infinity" => return f64::INFINITY,
-        "-Infinity" => return f64::NEG_INFINITY,
-        _ => {}
-    }
-    if is_decimal_literal(t) {
-        t.parse().unwrap_or(f64::NAN)
-    } else {
-        f64::NAN
-    }
-}
-
-/// `[+-]? (digits [. digits?] | . digits) ([eE] [+-]? digits)?`
-fn is_decimal_literal(t: &str) -> bool {
-    let b = t.as_bytes();
-    let mut i = 0;
-    if matches!(b.first(), Some(b'+' | b'-')) {
-        i += 1;
-    }
-    let int_start = i;
-    while i < b.len() && b[i].is_ascii_digit() {
-        i += 1;
-    }
-    let mut digits = i - int_start;
-    if i < b.len() && b[i] == b'.' {
-        i += 1;
-        let frac_start = i;
-        while i < b.len() && b[i].is_ascii_digit() {
-            i += 1;
-        }
-        digits += i - frac_start;
-    }
-    if digits == 0 {
-        return false;
-    }
-    if i < b.len() && matches!(b[i], b'e' | b'E') {
-        i += 1;
-        if matches!(b.get(i), Some(b'+' | b'-')) {
-            i += 1;
-        }
-        let exp_start = i;
-        while i < b.len() && b[i].is_ascii_digit() {
-            i += 1;
-        }
-        if i == exp_start {
-            return false;
-        }
-    }
-    i == b.len()
-}
-
 /// Serializes a number as `JSON.stringify` does: integers without a fraction, non-finite numbers as `null`.
 pub fn ser_num<S: Serializer>(value: &f64, s: S) -> Result<S::Ok, S::Error> {
-    let v = *value;
-    if !v.is_finite() {
-        s.serialize_none()
-    } else if v.fract() == 0.0 && v.abs() < 9.007_199_254_740_992e15 {
-        s.serialize_i64(v as i64)
-    } else {
-        s.serialize_f64(v)
-    }
+    Num(*value).serialize(s)
 }
 
 pub fn ser_opt_num<S: Serializer>(value: &Option<f64>, s: S) -> Result<S::Ok, S::Error> {
-    match value {
-        Some(v) => ser_num(v, s),
-        None => s.serialize_none(),
-    }
+    value.map(Num).serialize(s)
 }
 
 /// Whether JavaScript orders this property key as an array index: before every other key, in numeric order.
@@ -213,96 +95,19 @@ impl<V: Serialize> Serialize for Object<V> {
     }
 }
 
-/// Primary collation weight of a character, approximating ICU's root collation (Node's `localeCompare`): spaces,
-/// then punctuation and symbols in CLDR order, then digits, then letters ignoring case.
-fn primary(c: char) -> (u8, u32) {
-    const PUNCTUATION: &str = "_-,;:!?.'\"()[]{}@*/\\&#%`^+<=>|~$";
-    if is_space(c) {
-        (0, 0)
-    } else if let Some(i) = PUNCTUATION.find(c) {
-        (1, i as u32)
-    } else if c.is_ascii_digit() {
-        (3, c as u32)
-    } else if c.is_alphabetic() {
-        (4, c.to_lowercase().next().unwrap_or(c) as u32)
-    } else if c.is_ascii() {
-        (2, c as u32)
-    } else {
-        (5, c as u32)
-    }
-}
+static NUMERIC: LazyLock<CollatorBorrowed<'static>> = LazyLock::new(|| {
+    let mut prefs = CollatorPreferences::default();
+    prefs.numeric_ordering = Some(CollationNumericOrdering::True);
+    Collator::try_new(prefs, CollatorOptions::default()).expect("the root collation is compiled in")
+});
 
-/// Lowercase before uppercase, as ICU's tertiary level orders them.
-fn tertiary(a: &str, b: &str) -> Ordering {
-    for (x, y) in a.chars().zip(b.chars()) {
-        if x != y {
-            match (x.is_lowercase(), y.is_lowercase()) {
-                (true, false) => return Ordering::Less,
-                (false, true) => return Ordering::Greater,
-                _ => {}
-            }
-        }
-    }
-    a.cmp(b)
-}
-
-/// `a.localeCompare(b)`.
-pub fn locale_cmp(a: &str, b: &str) -> Ordering {
-    a.chars()
-        .map(primary)
-        .cmp(b.chars().map(primary))
-        .then_with(|| tertiary(a, b))
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-enum Part<'a> {
-    // Leading zeros stripped: shorter runs are smaller numbers.
-    Number(usize, &'a str),
-    Char((u8, u32)),
-}
-
-fn parts(s: &str) -> Vec<Part<'_>> {
-    let mut out = Vec::new();
-    let mut rest = s;
-    while let Some(c) = rest.chars().next() {
-        if c.is_ascii_digit() {
-            let end = rest
-                .find(|c: char| !c.is_ascii_digit())
-                .unwrap_or(rest.len());
-            let digits = rest[..end].trim_start_matches('0');
-            out.push(Part::Number(digits.len(), digits));
-            rest = &rest[end..];
-        } else {
-            out.push(Part::Char(primary(c)));
-            rest = &rest[c.len_utf8()..];
-        }
-    }
-    out
-}
-
-/// `a.localeCompare(b, undefined, { numeric: true })`: digit runs compare by value, before letters.
+/// `a.localeCompare(b, undefined, { numeric: true })`: digit runs compare by value.
 pub fn numeric_cmp(a: &str, b: &str) -> Ordering {
-    // Digits sort before letters, so a number against a letter compares by class.
-    let key = |p: &Part| match p {
-        Part::Number(..) => 3,
-        Part::Char((class, _)) => *class,
-    };
-    let (pa, pb) = (parts(a), parts(b));
-    for (x, y) in pa.iter().zip(&pb) {
-        let ord = key(x).cmp(&key(y)).then_with(|| x.cmp(y));
-        if ord != Ordering::Equal {
-            return ord;
-        }
+    if a == b {
+        Ordering::Equal
+    } else {
+        NUMERIC.compare(a, b)
     }
-    pa.len().cmp(&pb.len()).then_with(|| {
-        // Equal apart from case (lowercase first) or leading zeros (equal).
-        match a.chars().zip(b.chars()).find(|(x, y)| x != y) {
-            Some((x, y)) if x.to_lowercase().eq(y.to_lowercase()) => {
-                y.is_lowercase().cmp(&x.is_lowercase())
-            }
-            _ => Ordering::Equal,
-        }
-    })
 }
 
 /// Days since 1970-01-01 of a proleptic Gregorian date.
@@ -362,29 +167,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn whitespace_matches_javascript() {
-        assert_eq!(trim("\u{FEFF} a b \u{A0}"), "a b");
-        assert_eq!(trim("\u{85}x"), "\u{85}x");
-        assert_eq!(squish("  a \n\t b  "), "a b");
-    }
-
-    #[test]
-    fn number_matches_javascript() {
-        assert_eq!(number(""), 0.0);
-        assert_eq!(number(" 12 "), 12.0);
-        assert_eq!(number("12.0"), 12.0);
-        assert_eq!(number("-1"), -1.0);
-        assert_eq!(number("4.5"), 4.5);
-        assert_eq!(number(".5"), 0.5);
-        assert_eq!(number("0x10"), 16.0);
-        assert_eq!(number("1e3"), 1000.0);
-        assert!(number("VAR").is_nan());
-        assert!(number("inf").is_nan());
-        assert!(number("1-3").is_nan());
-        assert!(number("Infinity").is_infinite());
-    }
-
-    #[test]
     fn numbers_serialize_like_json_stringify() {
         #[derive(Serialize)]
         struct N {
@@ -428,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn collation_approximates_icu() {
+    fn collation_matches_icu() {
         let mut names = vec![
             "Garnhart-Bushakra",
             "Garnhart-bushakra",

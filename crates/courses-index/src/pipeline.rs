@@ -13,7 +13,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::catalog::{self, Catalog};
 use crate::config::{self, TermConfig};
@@ -117,6 +117,8 @@ pub struct Summary {
     pub catalog_courses: usize,
     pub syllabi: usize,
     pub finals: Vec<(String, usize)>,
+    pub fce_documents: usize,
+    pub program_documents: usize,
 }
 
 fn select(configs: Vec<TermConfig>, only: &[String]) -> Result<Vec<TermConfig>> {
@@ -149,29 +151,47 @@ pub fn build(opts: &Options) -> Result<Summary> {
         bail!("no exported root at {}", inputs.exported.display());
     }
 
-    let ((catalog, built), (scan, exams)) = rayon::join(
+    let (((catalog, built), (scan, exams)), (fce, programs)) = rayon::join(
         || {
             rayon::join(
-                || catalog::build(&inputs.exported),
                 || {
-                    configs
-                        .par_iter()
-                        .map(|c| {
-                            terms::build_term(c, &inputs)
-                                .with_context(|| format!("building {}", c.id))
-                        })
-                        .collect::<Result<Vec<_>>>()
+                    rayon::join(
+                        || catalog::build(&inputs.exported),
+                        || {
+                            configs
+                                .par_iter()
+                                .map(|c| {
+                                    terms::build_term(c, &inputs)
+                                        .with_context(|| format!("building {}", c.id))
+                                })
+                                .collect::<Result<Vec<_>>>()
+                        },
+                    )
+                },
+                || {
+                    rayon::join(
+                        || syllabi::scan(&inputs.exported.join("syllabi")),
+                        || finals::read_dir(&inputs.data.join("finals")),
+                    )
                 },
             )
         },
         || {
             rayon::join(
-                || syllabi::scan(&inputs.exported.join("syllabi")),
-                || finals::read_dir(&inputs.data.join("finals")),
+                || fce_documents(&inputs.data),
+                || {
+                    crate::programs::documents(&inputs.exported).with_context(|| {
+                        format!(
+                            "building program documents from {}",
+                            inputs.exported.display()
+                        )
+                    })
+                },
             )
         },
     );
     let (catalog, built, scan, exams) = (catalog?, built?, scan?, exams?);
+    let (fce, programs) = (fce?, programs?);
     info!(elapsed = ?started.elapsed(), "inputs read");
 
     // Timestamps come from the inputs, never the clock, so a rebuild gives the same bytes.
@@ -236,8 +256,25 @@ pub fn build(opts: &Options) -> Result<Summary> {
         docs.split(format!("finals/{term}"), &finals::redacted(list), list)?;
     }
 
-    // FCE (`fce/*`) and degree program (`programs/*`) documents are built here by their own modules, another
-    // workstream: `crate::fce::documents(&inputs)` and `crate::programs::documents(&inputs)` each add to `docs`.
+    // FCEs and degree programs: member-only, built by their own modules (decisions 21 and 22).
+    let fce_summary = fce.map(|(list, summary)| {
+        for (name, json) in list {
+            docs.raw(name, None, Some(json));
+        }
+        summary
+    });
+    if fce_summary.is_none() {
+        warn!("no data/fces.csv; skipping FCE documents");
+    }
+    let programs_summary = programs.map(|(list, summary)| {
+        for (name, json) in list {
+            docs.raw(name, None, Some(json));
+        }
+        summary
+    });
+    if programs_summary.is_none() {
+        warn!("no Stellic program exports; skipping program documents");
+    }
 
     docs.sort()?;
     let version = {
@@ -286,6 +323,8 @@ pub fn build(opts: &Options) -> Result<Summary> {
         "catalog": { "courses": catalog.entries.len(), "socDetailsFetchedAt": catalog.fetched_at },
         "syllabi": { "entries": scan.files.len(), "skipped": scan.skipped.len() },
         "finals": exams.iter().map(|(t, l)| (t.clone(), l.len())).collect::<BTreeMap<_, _>>(),
+        "fce": fce_summary,
+        "programs": programs_summary,
     });
     writer.set_meta("generated_at", &generated_at)?;
     writer.set_meta("version", &version)?;
@@ -307,7 +346,21 @@ pub fn build(opts: &Options) -> Result<Summary> {
         catalog_courses: catalog.entries.len(),
         syllabi: scan.files.len(),
         finals: exams.iter().map(|(t, l)| (t.clone(), l.len())).collect(),
+        fce_documents: fce_summary.as_ref().map_or(0, |s| s.documents),
+        program_documents: programs_summary.as_ref().map_or(0, |s| s.documents),
     })
+}
+
+/// The FCE documents from `<data>/fces.csv`, or `None` without the export.
+fn fce_documents(data: &Path) -> Result<Option<(Vec<crate::fce::Document>, crate::fce::Summary)>> {
+    let path = data.join("fces.csv");
+    if !path.exists() {
+        return Ok(None);
+    }
+    let bytes = std::fs::read(&path).with_context(|| format!("reading {}", path.display()))?;
+    crate::fce::documents(&String::from_utf8_lossy(&bytes))
+        .with_context(|| format!("building FCE documents from {}", path.display()))
+        .map(Some)
 }
 
 fn dump(dir: &Path, docs: &Docs) -> Result<()> {

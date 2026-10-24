@@ -7,11 +7,13 @@
 
 pub mod catalog;
 pub mod config;
+pub mod fce;
 pub mod finals;
 pub mod js;
 pub mod merge;
 pub mod model;
 pub mod pipeline;
+pub mod programs;
 pub mod requisite;
 pub mod soc;
 pub mod sources;

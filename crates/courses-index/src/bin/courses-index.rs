@@ -86,8 +86,11 @@ fn main() -> Result<()> {
                 println!("finals/{id}: {exams} exams");
             }
             println!(
-                "catalog: {} courses; syllabi: {} entries",
-                summary.catalog_courses, summary.syllabi
+                "catalog: {} courses; syllabi: {} entries; {} FCE and {} program documents",
+                summary.catalog_courses,
+                summary.syllabi,
+                summary.fce_documents,
+                summary.program_documents
             );
             println!(
                 "{}: {} documents, {:.1} MB of JSON, {:.1} MB file, version {}, in {:.1?}",
