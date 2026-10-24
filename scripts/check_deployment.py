@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Read-only anonymous checks against a deployed browser-facing service."""
+"""Read-only anonymous checks against a deployed CMU Courses: health, public catalog documents and their redaction,
+member-only documents, personal routes and search-engine files. Usage: check_deployment.py https://cmu.courses"""
 
 import argparse
-import hashlib
 import json
 import urllib.error
 import urllib.request
@@ -14,41 +14,56 @@ origin = args.origin.rstrip("/")
 
 
 def get(path):
-    with urllib.request.urlopen(origin + path, timeout=45) as response:
+    request = urllib.request.Request(origin + path, headers={"Accept-Encoding": "identity"})
+    with urllib.request.urlopen(request, timeout=45) as response:
         return response.read()
 
 
-assert get("/api/health") == b"ok"
-terms = json.loads(get("/api/terms"))
-assert any(t["id"] == "S27" for t in terms)
-page = json.loads(get("/api/courses?term=S27&page_size=3"))
-assert page["total"] == 3085
-for course in page["items"]:
-    assert "fce" not in course and "instructors" not in course
-    for section in course["sections"]:
-        assert not section["instructors"]
-        assert all("location" not in meeting for meeting in section["meetings"])
-for route in [
-    "/api/instructors",
-    "/api/schedules",
-    "/api/profile/friends",
-    "/api/finals?term=S27",
-]:
+def status(path):
     try:
-        get(route)
+        get(path)
     except urllib.error.HTTPError as error:
-        assert error.code == 401, (route, error.code)
-    else:
-        raise AssertionError("Protected route accessible: " + route)
-version = json.loads(get("/api/catalog/version"))
-assert version["audience"] == "public" and version["format"] == "sqlite"
-import gzip
+        return error.code
+    return 200
 
-binary = get("/api/catalog/binary")
-if binary[:2] == b"\x1f\x8b":
-    binary = gzip.decompress(binary)
-assert hashlib.sha256(binary).hexdigest() == version["hash"]
-assert binary.startswith(b"SQLite format 3\0")
-print(
-    "PASS: live anonymous API, S27 coverage, access restrictions and public SQLite hash"
-)
+
+health = json.loads(get("/api/health"))
+assert health["status"] == "ok", health
+
+terms = json.loads(get("/api/catalog/terms"))
+assert terms, "no semesters in the catalog"
+newest = terms[0]["id"]
+
+# Public term documents leave out instructors and rooms (decision 20).
+term = json.loads(get(f"/api/catalog/term/{newest}"))
+assert term["courses"], f"{newest} has no courses"
+for course in term["courses"]:
+    assert not course["instructors"], course["id"]
+    for section in course["sections"]:
+        assert not section["instructors"], (course["id"], section["name"])
+        for meeting in section["meetings"]:
+            assert meeting["building"] is None and meeting["room"] is None, (course["id"], section["name"])
+
+# Member-only documents and personal routes reject anonymous callers.
+for path in ["/api/catalog/fce/summary", "/api/catalog/programs/index", "/api/catalog/teaching"]:
+    assert status(path) == 401, path
+for path in [
+    "/api/me",
+    "/api/schedules",
+    "/api/plans",
+    "/api/record",
+    "/api/preferences",
+    "/api/saved",
+    "/api/friends",
+    f"/api/finals?term={newest}",
+]:
+    assert status(path) == 401, path
+
+# The public course API and search-engine files.
+page = json.loads(get(f"/api/courses?term={newest}&pageSize=3"))
+assert page["total"] > 0 and len(page["items"]) <= 3
+assert b"<urlset" in get("/sitemap.xml")
+assert b"Disallow: /api/" in get("/robots.txt")
+assert b'<link rel="canonical"' in get("/course/15-122")
+
+print(f"PASS: health, {len(terms)} semesters ({newest} newest), redaction, access checks, course API and SEO files")

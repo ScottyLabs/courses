@@ -1,15 +1,17 @@
-# Courses API
+# Course data for developers
 
-The intended public data API is `https://api.cmu.courses/v2`. Course codes,
-names, descriptions, units, prerequisites, and similar catalog fields are public.
-Section times and locations, instructors, and FCE data require CMU authentication
-or a separately issued API key. The browser uses same-origin `/api/*` routes and
-the existing OIDC session cookie. See [frontend API contract](./frontend-contract.md)
-for the JSON endpoints the redesign expects.
+Student developers can use CMU Courses' public course data in their own projects in two ways.
 
-The current `courses-web-api` implementation exposes `/api/me`,
-`/api/catalog/version`, and `/api/catalog/binary`. Both catalog routes currently
-require an OIDC session, even though the intended public API policy above allows
-anonymous access to non-sensitive course fields. Backend work should either add
-public JSON catalog routes with field-level redaction or split the binary by
-access level. The frontend must never infer authorization from cached data.
+- **The public course API** in `courses-web-api`: `GET /api/terms`, `GET /api/courses` (search with filters, paginated)
+  and `GET /api/courses/{code}`. It answers from the catalog's relational tables, which hold public fields only. See
+  [the web API](web-api.md#public-course-api) for parameters and responses, and `/api/scalar` on a running server for
+  the OpenAPI reference.
+- **Catalog documents**: `GET /api/catalog/<name>` serves the same JSON the website loads, such as `terms` or
+  `term/S27`. Signed-out callers get the public versions, which leave out instructors, meeting rooms, FCEs, syllabi
+  and degree programs ([decision 16](../decisions/0016-serve-the-catalog-as-json-documents.md)). The document list is
+  in [Courseweave features in CMU Courses](../courseweave.md#catalog-documents).
+
+FCEs, instructors, syllabi and Stellic degree programs are for signed-in CMU students only, as on the website, and
+aren't available to other applications.
+
+The older standalone `courses-api` service (`api.cmu.courses`) predates this catalog and serves its own format.

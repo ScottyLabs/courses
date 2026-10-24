@@ -23,7 +23,7 @@ Components use one data repository. Initial reads use the JSON API; after
 authentication, the repository loads a compatible DuckDB file in a worker and
 uses SQL for covered catalog queries once ready. Unsupported queries and local
 failures fall back to the API. Personal data and all mutations remain on the
-API. The [browser catalog contract](../api/duckdb-catalog.md) defines the file's
+API. The browser catalog contract (since removed, with decision 16) defined the file's
 SQL projection, completeness metadata, versioning, and caching behavior.
 
 ## Consequences
