@@ -35,4 +35,6 @@
 | 31 | [Scroll the page, with a sticky header and rail](0031-scroll-the-page-with-a-sticky-rail.md) | accepted |
 | 32 | [Share course data between components through a module cache](0032-share-course-data-between-components.md) | accepted |
 | 33 | [Open courses in a panel beside the course list](0033-open-courses-beside-the-course-list.md) | accepted |
+| 34 | [Show final exams in a dialog on each schedule](0034-show-final-exams-in-a-dialog-on-each-schedule.md) | accepted |
+| 35 | [Share schedules by token when signed in, by a link that carries the schedule when signed out](0035-share-schedules-by-token-or-by-a-link-that-carries-it.md) | accepted |
 | 40 | [Adapt the Figma design to the features, borrowing from Courseweave](0040-follow-courseweaves-interaction-design.md) | accepted |

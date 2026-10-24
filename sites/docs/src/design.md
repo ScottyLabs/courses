@@ -106,7 +106,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 
 The root layout renders the header, `<main>` and the footer around every page. Pages pick one of three patterns.
 
-**Rail layout** (courses, instructors, schedules, finals, plan). A white rail on the left with a title and a Hide
+**Rail layout** (courses, instructors, schedules, plan). A white rail on the left with a title and a Hide
 button, and the page on the right: a white toolbar band, then content on the page background. Below 1024px the rail is
 a sheet opened from the toolbar's Filter button, which shows the active filter count.
 
@@ -149,7 +149,7 @@ device's choice.
 
 ## App shell
 
-The header shows the logo, the navigation (Courses, Instructors, Schedules, Plan, Finals, Profile), the theme switch
+The header shows the logo, the navigation (Courses, Instructors, Schedules, Plan, Profile), the theme switch
 and a Sign in or Sign out pill; below 1024px it becomes a menu button, the logo and the account control. The shell
 reads the session from context:
 
