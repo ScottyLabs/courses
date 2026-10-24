@@ -21,7 +21,7 @@
   import { checkCourse, termLabel } from "$lib/core/requisites";
   import { topSections } from "$lib/core/sections";
   import { catalog, resource } from "$lib/data";
-  import { device, resolveTerm } from "$lib/state";
+  import { device, record, resolveTerm } from "$lib/state";
   import { catalogIndex, courseDetails, fceSummary, termData } from "./data.svelte";
   import { termRequisites } from "./requisite-context.svelte";
 
@@ -71,8 +71,8 @@
 
   const requisites = $derived(semester === null ? null : termRequisites(semester));
   const ctx = $derived(requisites?.ctx ?? null);
-  // Nothing taken, planned or scheduled: every check would read "missing", which says nothing.
-  const check = $derived(ctx !== null && ctx.credits.size > 0 && entry ? checkCourse(courseId, entry, ctx) : null);
+  // With nothing on the record, every check would read "missing", which says nothing about the student.
+  const check = $derived(ctx !== null && !record.isEmpty && entry ? checkCourse(courseId, entry, ctx) : null);
   const status = $derived(check && entry ? summarizeCheck(check, entry) : null);
   const icons = { check: Check, clock: Clock, info: Info, "triangle-alert": TriangleAlert };
   const StatusIcon = $derived(status ? icons[LEVEL_STYLE[status.level].icon] : null);
