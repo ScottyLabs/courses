@@ -10,6 +10,7 @@
   import { coursePath } from "$lib/core/routes";
   import { entryUnits, type RecordEntry } from "$lib/core/state/record";
   import type { ResolvedEntry } from "$lib/core/state/schedule-view";
+  import { session } from "$lib/data";
   import type { RecordData } from "./record-data.svelte";
 
   let {
@@ -35,7 +36,7 @@
   const hours = $derived(data.hours(id));
   const href = $derived(coursePath(id, entry.term));
   const parts = $derived(
-    (scheduled?.parts ?? []).map((section) => ({ label: partLabel(section), ...timesAndRoom(section) })),
+    (scheduled?.parts ?? []).map((section) => Object.assign({ label: partLabel(section) }, timesAndRoom(section, !session.signedIn))),
   );
   const sectionNote = $derived.by(() => {
     if (!hasSchedule) return null;

@@ -34,7 +34,7 @@
   $effect(() => {
     if (scrolled || friends.status !== "ready" || location.hash !== "#sharing") return;
     scrolled = true;
-    requestAnimationFrame(() => document.getElementById("sharing")?.scrollIntoView({ block: "start" }));
+    requestAnimationFrame(() => document.querySelector("#sharing")?.scrollIntoView({ block: "start" }));
   });
 
   const terms = resource(() => catalog.terms());

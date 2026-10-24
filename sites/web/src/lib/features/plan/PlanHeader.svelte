@@ -60,7 +60,7 @@
   }
 
   function newPlan(): void {
-    go(plans.createPlan({ startTerm: plan.startTerm, programs: plan.programs.map((p) => ({ ...p })) }));
+    go(plans.createPlan({ startTerm: plan.startTerm, programs: plan.programs.map((p) => Object.assign({}, p)) }));
   }
 
 </script>
