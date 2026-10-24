@@ -33,3 +33,4 @@
 | 29 | [Develop and test the website against an in-memory mock of the web API](0029-develop-against-an-in-memory-mock-api.md) | accepted |
 | 30 | [Build UI primitives on native elements and the top layer](0030-build-ui-primitives-on-native-elements.md) | accepted |
 | 31 | [Scroll the page, with a sticky header and rail](0031-scroll-the-page-with-a-sticky-rail.md) | accepted |
+| 40 | [Follow Courseweave's interaction design where it differs from the Figma](0040-follow-courseweaves-interaction-design.md) | accepted |

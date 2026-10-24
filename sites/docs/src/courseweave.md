@@ -26,8 +26,10 @@ Courseweave's source is the reference implementation: when this page says "as Co
 
 ## Design
 
-The [Figma redesign](https://www.figma.com/design/vsvdhGC2QP5fsvG0Pl7W6v/CMUCourses-Redesign--summer-25---Copy-?node-id=502-10393)
-sets the look: Inter, a pale blue-gray page, white cards with thin borders, pill buttons, a header with centered
+Courseweave's screens are the reference for layout and interaction
+([decision 40](decisions/0040-follow-courseweaves-interaction-design.md)). The
+[Figma redesign](https://www.figma.com/design/vsvdhGC2QP5fsvG0Pl7W6v/CMUCourses-Redesign--summer-25---Copy-?node-id=502-10393)
+sets the visual identity: Inter, a pale blue-gray page, white cards with thin borders, pill buttons, a header with centered
 icon-and-label navigation, a collapsible filter rail on the left and the ScottyLabs footer.
 
 Tokens, from the file's variables:
@@ -51,7 +53,7 @@ Tokens, from the file's variables:
 Type: Inter; heading 18/26 and 16/24 medium, body 16/24 and 14/20 regular, label 12/16 medium. The website defines
 dark values for every token.
 
-Rules where the design and Courseweave meet:
+Rules where the Figma and Courseweave meet:
 
 - No gen eds page: the requirement filter covers gen eds.
 - No Saved tab: saved courses are a filter on the course and instructor lists.

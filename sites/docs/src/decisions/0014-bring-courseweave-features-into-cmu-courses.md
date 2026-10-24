@@ -4,7 +4,8 @@ Date: 2026-10-24
 
 ## Status
 
-Accepted
+Accepted; amended by [decision 40](0040-follow-courseweaves-interaction-design.md), which makes Courseweave's screens the
+reference for layout and interaction.
 
 ## Context
 
