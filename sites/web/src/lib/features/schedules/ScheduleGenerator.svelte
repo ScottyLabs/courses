@@ -14,7 +14,6 @@
   import IconButton from "$lib/components/ui/IconButton.svelte";
   import Select from "$lib/components/ui/Select.svelte";
   import ToggleChips from "$lib/components/ui/ToggleChips.svelte";
-  import { togglePill } from "$lib/components/ui/styles";
   import { courseColorStyle } from "$lib/core/colors";
   import type { Term } from "$lib/core/data";
   import {
@@ -195,9 +194,9 @@
                 />
                 <span aria-hidden="true" class="course-swatch h-4 w-1 shrink-0 rounded-full"></span>
                 <span class="min-w-0 flex-1 pl-1">
-                  <span class="tabular text-label-lg text-strong">{e.course.code}</span>
-                  <span class="text-label-md font-normal text-muted">
-                    {isLocked && e.section ? `keeping ${choiceLabel(e)}` : sectionCounts(e.course)}
+                  <span class="tabular block text-label-lg text-strong">{e.course.code}</span>
+                  <span class="block truncate text-label-md font-normal text-muted">
+                    {isLocked && e.section ? `Keeping ${choiceLabel(e)}` : sectionCounts(e.course)}
                   </span>
                 </span>
                 <IconButton
@@ -214,7 +213,7 @@
 
         <section aria-labelledby="gen-prefs" class="flex flex-col gap-4">
           <h3 id="gen-prefs" class="text-heading-6 text-strong">Preferences</h3>
-          <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-3">
             <Select
               label="Start no earlier than"
               hideLabel={false}
@@ -239,6 +238,7 @@
           <div class="flex flex-col gap-1.5">
             <p class="text-label-lg text-ink">Days I'd rather keep free</p>
             <ToggleChips
+              stretch
               label="Days I'd rather keep free"
               options={WEEKDAYS.map((d) => ({ value: String(d), label: DAY_SHORT[d] }))}
               bind:value={
@@ -247,34 +247,36 @@
               }
             />
           </div>
-          <div class="flex flex-col gap-1.5">
-            <p class="text-label-lg text-ink">Prefer</p>
-            <div class="flex flex-wrap gap-2" role="group" aria-label="Prefer">
-              <button
-                type="button"
-                class="{togglePill} px-4"
-                aria-pressed={prefs.minimizeGaps}
-                title="Rank back-to-back classes higher"
-                onclick={() => (prefs = { ...prefs, minimizeGaps: !prefs.minimizeGaps })}>Fewer gaps</button
-              >
-              <button
-                type="button"
-                class="{togglePill} px-4"
-                aria-pressed={prefs.lunch !== null}
-                title="{DEFAULT_LUNCH.minutes} free minutes between {formatTime(DEFAULT_LUNCH.start)} and {formatTime(
-                  DEFAULT_LUNCH.end,
-                )}"
-                onclick={() => (prefs = { ...prefs, lunch: prefs.lunch === null ? DEFAULT_LUNCH : null })}
-                >Time for lunch</button
-              >
-              <button
-                type="button"
-                class="{togglePill} px-4"
-                aria-pressed={prefs.fewerDays}
-                onclick={() => (prefs = { ...prefs, fewerDays: !prefs.fewerDays })}>Fewer days on campus</button
-              >
-            </div>
-          </div>
+          <fieldset class="flex flex-col">
+            <legend class="mb-1 text-label-lg text-ink">Prefer</legend>
+            <Checkbox
+              checked={prefs.minimizeGaps}
+              label="Fewer gaps"
+              description="Rank back-to-back classes higher"
+              onchange={(event) =>
+                (prefs = { ...prefs, minimizeGaps: (event.currentTarget as HTMLInputElement).checked })}
+              class="-ml-2"
+            />
+            <Checkbox
+              checked={prefs.lunch !== null}
+              label="Time for lunch"
+              description="{DEFAULT_LUNCH.minutes} free minutes, {formatTime(DEFAULT_LUNCH.start)} to {formatTime(
+                DEFAULT_LUNCH.end,
+              )}"
+              onchange={(event) =>
+                (prefs = {
+                  ...prefs,
+                  lunch: (event.currentTarget as HTMLInputElement).checked ? DEFAULT_LUNCH : null,
+                })}
+              class="-ml-2"
+            />
+            <Checkbox
+              checked={prefs.fewerDays}
+              label="Fewer days on campus"
+              onchange={(event) => (prefs = { ...prefs, fewerDays: (event.currentTarget as HTMLInputElement).checked })}
+              class="-ml-2"
+            />
+          </fieldset>
         </section>
       </aside>
 
