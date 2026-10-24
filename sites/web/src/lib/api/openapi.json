@@ -1,0 +1,2883 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CMU Courses web API",
+    "description": "Same-origin API for cmu.courses. JSON field names are camelCase. Writes need an `Origin` header equal to the site's origin. Errors are `{ code, message }`.",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/account": {
+      "delete": {
+        "tags": ["auth"],
+        "summary": "Deletes all of the caller's data and signs out all of their sessions.",
+        "operationId": "delete",
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/{name}": {
+      "get": {
+        "tags": ["catalog"],
+        "summary": "A catalog document, as described in decision 16. Signed-in CMU users get the member version when there is one;\neveryone else gets the public version. The body is the stored gzip, decompressed only for clients that don't\naccept gzip.",
+        "operationId": "document",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Document name, such as `terms`, `term/S27` or `fce/courses/15`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The JSON document",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "304": {
+            "description": "The document matches `If-None-Match`"
+          },
+          "401": {
+            "description": "The document is for signed-in CMU users only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/courses": {
+      "get": {
+        "tags": ["courses"],
+        "summary": "Search courses, optionally limited to a term, department, level or unit count.",
+        "operationId": "courses",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Words to search for in codes, titles and descriptions, or a course number such as `15-122`, `15122` or `15-1`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "term",
+            "in": "query",
+            "description": "Only courses offered in this term.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "description": "A department name, such as `Computer Science`, or a two-digit prefix, such as `15`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "description": "Course level in hundreds, such as `100` for 15-122 or `400` for 15-445.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "description": "Courses that can be taken for this many units.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "From 1. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "1 to 100. Defaults to 20.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoursePage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/courses/{code}": {
+      "get": {
+        "tags": ["courses"],
+        "summary": "One course, by code (`15-122`) or id (`15122`), with its offerings, and its sections when `term` is given.",
+        "operationId": "course",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "`15-122` or `15122`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "term",
+            "in": "query",
+            "description": "Include this term's sections and meetings.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finals": {
+      "get": {
+        "tags": ["finals"],
+        "summary": "The caller's imported final exams for a term, earliest first.",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "description": "A term, such as `S27`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "courses",
+            "in": "query",
+            "description": "Only these courses: comma-separated ids or codes.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinalExam"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finals/import": {
+      "post": {
+        "tags": ["finals"],
+        "summary": "Replaces the term's import with the final exams in an SIO calendar: one multipart field `calendar`, a UTF-8\n`.ics` file of at most 120 KiB. Events that aren't finals for this term's courses are dropped, and a calendar with\nnone keeps the previous import.",
+        "operationId": "import",
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "description": "A term, such as `S27`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A field `calendar` holding the .ics file",
+          "content": {
+            "multipart/form-data": {}
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinalExam"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["finals"],
+        "summary": "Removes the caller's import for a term.",
+        "operationId": "clear",
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "description": "A term, such as `S27`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/friends": {
+      "get": {
+        "tags": ["friends"],
+        "summary": "Accepted friends and pending requests either way.",
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Friend"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["friends"],
+        "summary": "Asks someone, by Andrew ID, to be friends. They must have signed in once.",
+        "operationId": "send_request",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FriendRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Friend"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/courses": {
+      "get": {
+        "tags": ["friends"],
+        "summary": "Accepted friends taking each course in `term`: course id to friends' names.",
+        "operationId": "friends_courses",
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "description": "A term, such as `S27`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "propertyNames": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/invites": {
+      "post": {
+        "tags": ["friends"],
+        "summary": "Creates a single-use invite link valid for seven days, replacing the caller's previous one.",
+        "operationId": "invite",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invite"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/invites/{token}": {
+      "delete": {
+        "tags": ["friends"],
+        "summary": "Revokes one of the caller's invites.",
+        "operationId": "revoke_invite",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/friends/invites/{token}/redeem": {
+      "post": {
+        "tags": ["friends"],
+        "summary": "Accepts an invite: the two become friends at once and the link is used up.",
+        "operationId": "redeem",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Friend"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/sharing": {
+      "get": {
+        "tags": ["friends"],
+        "summary": "What the caller shows accepted friends.",
+        "operationId": "get_sharing",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sharing"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["friends"],
+        "summary": "Changes what the caller shows accepted friends. Accepting a friendship never changes this.",
+        "operationId": "set_sharing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sharing"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sharing"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/{id}": {
+      "delete": {
+        "tags": ["friends"],
+        "summary": "Declines, cancels or ends a friendship. Either person can, and access ends at once.",
+        "operationId": "remove",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Friendship id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/{id}/accept": {
+      "post": {
+        "tags": ["friends"],
+        "summary": "Accepts an incoming request. Only its recipient can.",
+        "operationId": "accept",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Friendship id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/{id}/schedules": {
+      "get": {
+        "tags": ["friends"],
+        "summary": "An accepted friend's schedules marked visible to friends; empty unless they share schedules.",
+        "operationId": "friend_schedules",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Friendship id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "term",
+            "in": "query",
+            "description": "A term, such as `S27`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FriendSchedule"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "200 when the catalog opens with this build's schema and the user database takes writes.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": ["auth"],
+        "summary": "The signed-in CMU user.",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in without a verified CMU email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plans": {
+      "get": {
+        "tags": ["plans"],
+        "summary": "The caller's plans, oldest first.",
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Plan"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["plans"],
+        "summary": "Creates a plan at revision 1.",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A plan with this id exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanConflict"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plans/{id}": {
+      "put": {
+        "tags": ["plans"],
+        "summary": "Replaces a plan. A stale `revision` gets 409 with the current plan.",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanConflict"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["plans"],
+        "summary": "Deletes a plan.",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/preferences": {
+      "get": {
+        "tags": ["preferences"],
+        "summary": "The caller's preferences.",
+        "operationId": "get_preferences",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preferences"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["preferences"],
+        "summary": "Replaces the preferences. A stale `revision` gets 409 with the current preferences.",
+        "operationId": "put_preferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preferences"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesConflict"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/record": {
+      "get": {
+        "tags": ["record"],
+        "summary": "The caller's academic record.",
+        "operationId": "get_record",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["record"],
+        "summary": "Replaces the academic record. A stale `revision` gets 409 with the current record.",
+        "operationId": "put_record",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordConflict"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/saved": {
+      "get": {
+        "tags": ["saved"],
+        "summary": "The caller's saved courses, oldest first.",
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavedCourse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/saved/{courseId}": {
+      "put": {
+        "tags": ["saved"],
+        "summary": "Saves a course. Saving it again changes nothing.",
+        "operationId": "save",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "description": "Five-digit course id, such as `15122`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["saved"],
+        "summary": "Un-saves a course. Removing one that isn't saved changes nothing.",
+        "operationId": "remove",
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/schedules": {
+      "get": {
+        "tags": ["schedules"],
+        "summary": "The caller's schedules, oldest first.",
+        "operationId": "list_mine",
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "description": "Only this term, such as `S27`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Schedule"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["schedules"],
+        "summary": "Creates a schedule at revision 1.",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewSchedule"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid, or not in the catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A schedule with this id exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleConflict"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/{id}": {
+      "put": {
+        "tags": ["schedules"],
+        "summary": "Replaces a schedule. A stale `revision` gets 409 with the current schedule.",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schedule"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleConflict"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Over the daily write cap or the per-minute limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["schedules"],
+        "summary": "Deletes a schedule and its share link.",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/{id}/share": {
+      "post": {
+        "tags": ["schedules"],
+        "summary": "Creates a read-only share link, or returns the existing one.",
+        "operationId": "share",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLink"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["schedules"],
+        "summary": "Revokes the share link.",
+        "operationId": "unshare",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shared-schedules/{token}": {
+      "get": {
+        "tags": ["schedules"],
+        "summary": "A schedule shared by link. Anyone with the link may read it; it never names its owner.",
+        "operationId": "shared",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedSchedule"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/syllabi/{key}": {
+      "get": {
+        "tags": ["syllabi"],
+        "summary": "A past syllabus file, for signed-in CMU users. PDFs are shown inline (`?download=1` downloads them); other types\nare attachments. Saved as `<term>-<file>`.",
+        "operationId": "serve",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "`<term>/<dept>/<file>`, such as `F25/MSC/21241-1.pdf`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "download",
+            "in": "query",
+            "description": "`1` downloads a PDF instead of showing it.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file"
+          },
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Syllabus storage isn't configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/terms": {
+      "get": {
+        "tags": ["courses"],
+        "summary": "Every term, newest first.",
+        "operationId": "terms",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Term"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "get": {
+        "tags": ["auth"],
+        "summary": "Starts sign-in. With Keycloak, the login layer has already completed the OIDC flow by the time this runs, so it\nonly redirects to `returnTo`.",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "returnTo",
+            "in": "query",
+            "description": "A path on this site to return to afterwards. Defaults to `/`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "as",
+            "in": "query",
+            "description": "Development sign-in only: the Andrew ID to act as.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Signs out: `POST` answers 204, `GET` redirects home.",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "403": {
+            "description": "Origin isn't APP_URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CalendarDisplay": {
+        "type": "object",
+        "description": "What calendar blocks show besides the course code.",
+        "required": ["section", "time", "location"],
+        "properties": {
+          "location": {
+            "type": "boolean"
+          },
+          "section": {
+            "type": "boolean"
+          },
+          "time": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CourseDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "department",
+          "units",
+          "unitsMax",
+          "description",
+          "prerequisites",
+          "corequisites",
+          "offerings"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "corequisites": {
+            "type": ["string", "null"]
+          },
+          "department": {
+            "type": ["string", "null"]
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "offerings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Offering"
+            },
+            "description": "Newest first."
+          },
+          "prerequisites": {
+            "type": ["string", "null"]
+          },
+          "sections": {
+            "type": ["array", "null"],
+            "items": {
+              "$ref": "#/components/schemas/Section"
+            },
+            "description": "The sections in `term`, when `term` was given."
+          },
+          "title": {
+            "type": "string"
+          },
+          "units": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "unitsMax": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        }
+      },
+      "CoursePage": {
+        "type": "object",
+        "required": ["items", "total", "page", "pageSize"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CourseSummary"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CourseSummary": {
+        "type": "object",
+        "required": ["id", "code", "title", "department", "units", "unitsMax"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Such as `15-122`."
+          },
+          "department": {
+            "type": ["string", "null"]
+          },
+          "id": {
+            "type": "string",
+            "description": "Five digits, such as `15122`."
+          },
+          "title": {
+            "type": "string"
+          },
+          "units": {
+            "type": ["number", "null"],
+            "format": "double"
+          },
+          "unitsMax": {
+            "type": ["number", "null"],
+            "format": "double",
+            "description": "Upper bound for variable-unit courses."
+          }
+        }
+      },
+      "ErrorBody": {
+        "type": "object",
+        "description": "Every error response.",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "auth",
+          "forbidden",
+          "not_found",
+          "conflict",
+          "too_large",
+          "too_many",
+          "bad_request",
+          "unavailable"
+        ]
+      },
+      "ExamCredit": {
+        "type": "object",
+        "required": ["id", "score"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "score": {
+            "type": "string"
+          }
+        }
+      },
+      "FinalExam": {
+        "type": "object",
+        "required": ["courseId", "courseCode", "title", "startsAt", "endsAt", "location"],
+        "properties": {
+          "courseCode": {
+            "type": "string",
+            "description": "Such as `15-122`."
+          },
+          "courseId": {
+            "type": "string",
+            "description": "Five-digit course id, such as `15122`."
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "description": "RFC 3339, UTC."
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "Friend": {
+        "type": "object",
+        "required": ["id", "name", "andrewId", "status", "sharesCourses", "sharesSchedules"],
+        "properties": {
+          "andrewId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "description": "The friendship's id, used by the other friend routes."
+          },
+          "name": {
+            "type": "string"
+          },
+          "sharesCourses": {
+            "type": "boolean",
+            "description": "An accepted friend shows you the courses they're taking."
+          },
+          "sharesSchedules": {
+            "type": "boolean",
+            "description": "An accepted friend shows you their schedules marked visible to friends."
+          },
+          "status": {
+            "$ref": "#/components/schemas/FriendStatus"
+          }
+        }
+      },
+      "FriendRequest": {
+        "type": "object",
+        "required": ["andrewId"],
+        "properties": {
+          "andrewId": {
+            "type": "string"
+          }
+        }
+      },
+      "FriendSchedule": {
+        "type": "object",
+        "required": ["id", "termId", "name", "entries", "updatedAt"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntry"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "FriendStatus": {
+        "type": "string",
+        "enum": ["accepted", "incoming", "outgoing"]
+      },
+      "Health": {
+        "type": "object",
+        "required": ["status", "catalogSchema"],
+        "properties": {
+          "catalogSchema": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "Invite": {
+        "type": "object",
+        "required": ["token", "url", "expiresAt"],
+        "properties": {
+          "expiresAt": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Milliseconds since the epoch."
+          },
+          "token": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "The website's page that redeems it."
+          }
+        }
+      },
+      "Level": {
+        "type": "string",
+        "enum": ["undergraduate", "graduate"]
+      },
+      "Me": {
+        "type": "object",
+        "required": ["subject", "name", "andrewId", "email", "isAdmin"],
+        "properties": {
+          "andrewId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string",
+            "description": "The OIDC subject."
+          }
+        }
+      },
+      "Meeting": {
+        "type": "object",
+        "required": ["days", "start", "end"],
+        "properties": {
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "Weekdays, 0 for Monday through 6 for Sunday; empty when TBA."
+          },
+          "end": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "start": {
+            "type": ["integer", "null"],
+            "format": "int64",
+            "description": "Minutes after midnight, Pittsburgh time; null when TBA."
+          }
+        }
+      },
+      "NewPlan": {
+        "type": "object",
+        "required": ["name", "startTerm"],
+        "properties": {
+          "id": {
+            "type": ["string", "null"],
+            "description": "An id of your own, as for schedules. Defaults to a new UUID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "programs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSelection"
+            }
+          },
+          "startTerm": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanTerm"
+            }
+          }
+        }
+      },
+      "NewSchedule": {
+        "type": "object",
+        "required": ["termId", "name"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntry"
+            }
+          },
+          "id": {
+            "type": ["string", "null"],
+            "description": "An id of your own (1 to 64 letters, digits, `-` or `_`), so a retried create can't make two. Defaults to a\nnew UUID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        }
+      },
+      "Offering": {
+        "type": "object",
+        "required": ["termId", "title", "department", "units"],
+        "properties": {
+          "department": {
+            "type": ["string", "null"]
+          },
+          "termId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "units": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        }
+      },
+      "Onboarding": {
+        "type": "object",
+        "description": "The first-run prompt to add the academic record.",
+        "required": ["asked", "promptHidden"],
+        "properties": {
+          "asked": {
+            "type": "boolean",
+            "description": "The student added their record or skipped the prompt."
+          },
+          "promptHidden": {
+            "type": "boolean",
+            "description": "The \"add your record\" nudges were closed."
+          }
+        }
+      },
+      "Plan": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "programs",
+          "startTerm",
+          "terms",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "createdAt": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "programs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSelection"
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startTerm": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanTerm"
+            },
+            "description": "Oldest first."
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PlanConflict": {
+        "type": "object",
+        "description": "409 body for plans.",
+        "required": ["code", "message", "current"],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "current": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PlanCourse": {
+        "type": "object",
+        "required": ["id", "courseId"],
+        "properties": {
+          "courseId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique within the plan, so a repeatable course can appear twice."
+          },
+          "passFail": {
+            "type": "boolean"
+          },
+          "units": {
+            "type": ["number", "null"],
+            "format": "double",
+            "description": "Units to count for a variable-unit course."
+          }
+        }
+      },
+      "PlanLayout": {
+        "type": "string",
+        "enum": ["cards", "table"]
+      },
+      "PlanLink": {
+        "type": "object",
+        "required": ["scheduleId"],
+        "properties": {
+          "scheduleId": {
+            "type": "string"
+          }
+        }
+      },
+      "PlanTerm": {
+        "type": "object",
+        "required": ["term", "courses"],
+        "properties": {
+          "courses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanCourse"
+            }
+          },
+          "link": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlanLink",
+                "description": "While set, the term's courses come from this schedule."
+              }
+            ]
+          },
+          "term": {
+            "type": "string",
+            "description": "Such as `F25`."
+          }
+        }
+      },
+      "PlanUpdate": {
+        "type": "object",
+        "required": ["name", "programs", "startTerm", "terms", "revision"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "programs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSelection"
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startTerm": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanTerm"
+            }
+          }
+        }
+      },
+      "Preferences": {
+        "type": "object",
+        "description": "Preferences that follow the student between devices.",
+        "required": [
+          "calendarDisplay",
+          "activeSchedule",
+          "activePlanId",
+          "planLayout",
+          "onboarding",
+          "revision",
+          "updatedAt"
+        ],
+        "properties": {
+          "activePlanId": {
+            "type": ["string", "null"]
+          },
+          "activeSchedule": {
+            "type": "object",
+            "description": "Term id to the schedule shown for it.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "calendarDisplay": {
+            "$ref": "#/components/schemas/CalendarDisplay"
+          },
+          "onboarding": {
+            "$ref": "#/components/schemas/Onboarding"
+          },
+          "planLayout": {
+            "$ref": "#/components/schemas/PlanLayout"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "0 when nothing has been saved yet."
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PreferencesConflict": {
+        "type": "object",
+        "description": "409 body for preferences.",
+        "required": ["code", "message", "current"],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "current": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PreferencesUpdate": {
+        "type": "object",
+        "required": ["revision"],
+        "properties": {
+          "activePlanId": {
+            "type": ["string", "null"]
+          },
+          "activeSchedule": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "calendarDisplay": {
+            "$ref": "#/components/schemas/CalendarDisplay"
+          },
+          "onboarding": {
+            "$ref": "#/components/schemas/Onboarding"
+          },
+          "planLayout": {
+            "$ref": "#/components/schemas/PlanLayout"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The revision this change is based on; 0 to create."
+          }
+        }
+      },
+      "ProgramSelection": {
+        "type": "object",
+        "description": "Which program version a plan audits against (`lib/plan-types.ts`).",
+        "required": ["catalogId", "auditId"],
+        "properties": {
+          "auditId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The audit version (entry year and campus)."
+          },
+          "catalogId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Stellic catalog program id."
+          },
+          "concentrations": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "Record": {
+        "type": "object",
+        "description": "The academic record.",
+        "required": ["entries", "overrides", "profile", "revision", "updatedAt"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordEntry"
+            }
+          },
+          "overrides": {
+            "type": "object",
+            "description": "Course id to its requisite waivers.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StoredOverride"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "profile": {
+            "$ref": "#/components/schemas/StudentProfile"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "0 when nothing has been saved yet."
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RecordConflict": {
+        "type": "object",
+        "description": "409 body for the record.",
+        "required": ["code", "message", "current"],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "current": {
+            "$ref": "#/components/schemas/Record"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "RecordEntry": {
+        "type": "object",
+        "required": ["id", "courseId", "source", "addedAt"],
+        "properties": {
+          "addedAt": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Milliseconds since the epoch."
+          },
+          "courseId": {
+            "type": ["string", "null"],
+            "description": "Five-digit course id; null for transfer credit with no CMU equivalent."
+          },
+          "exam": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ExamCredit"
+              }
+            ]
+          },
+          "grade": {
+            "type": ["string", "null"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": ["string", "null"]
+          },
+          "label": {
+            "type": ["string", "null"]
+          },
+          "note": {
+            "type": ["string", "null"]
+          },
+          "source": {
+            "$ref": "#/components/schemas/RecordSource"
+          },
+          "term": {
+            "type": ["string", "null"],
+            "description": "Term taken, such as `F25`."
+          },
+          "units": {
+            "type": ["number", "null"],
+            "format": "double"
+          }
+        }
+      },
+      "RecordSource": {
+        "type": "string",
+        "enum": ["taken", "transfer", "exam", "waiver"]
+      },
+      "RecordUpdate": {
+        "type": "object",
+        "required": ["revision"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordEntry"
+            }
+          },
+          "overrides": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StoredOverride"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "profile": {
+            "$ref": "#/components/schemas/StudentProfile"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The revision this change is based on; 0 to create."
+          }
+        }
+      },
+      "SavedCourse": {
+        "type": "object",
+        "required": ["courseId", "savedAt"],
+        "properties": {
+          "courseId": {
+            "type": "string"
+          },
+          "savedAt": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Milliseconds since the epoch."
+          }
+        }
+      },
+      "Schedule": {
+        "type": "object",
+        "required": [
+          "id",
+          "termId",
+          "name",
+          "entries",
+          "visibility",
+          "revision",
+          "shareId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "createdAt": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Milliseconds since the epoch, set by the server."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntry"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Increments on every write. Send it back with the next write."
+          },
+          "shareId": {
+            "type": ["string", "null"],
+            "description": "The read-only share token, when a share link exists."
+          },
+          "termId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        }
+      },
+      "ScheduleConflict": {
+        "type": "object",
+        "description": "409 body for schedules.",
+        "required": ["code", "message", "current"],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "current": {
+            "$ref": "#/components/schemas/Schedule"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ScheduleEntry": {
+        "type": "object",
+        "required": ["courseId", "section", "child", "passFail", "color", "hidden"],
+        "properties": {
+          "child": {
+            "type": ["string", "null"],
+            "description": "The chosen child section (recitation or lab) of `section`, or null."
+          },
+          "color": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Index into the course color palette.",
+            "minimum": 0
+          },
+          "courseId": {
+            "type": "string",
+            "description": "Five-digit course id, such as `15122`."
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Left off the calendar and the unit total."
+          },
+          "passFail": {
+            "type": "boolean",
+            "description": "Pass/fail elected."
+          },
+          "section": {
+            "type": ["string", "null"],
+            "description": "The chosen top-level section (a lecture or a standalone section), or null before one is picked."
+          }
+        }
+      },
+      "ScheduleUpdate": {
+        "type": "object",
+        "required": ["termId", "name", "entries", "visibility", "revision"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntry"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The revision this change is based on."
+          },
+          "termId": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        }
+      },
+      "Section": {
+        "type": "object",
+        "required": ["name", "kind", "parent", "mini", "meetings"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`lecture` or `section`."
+          },
+          "meetings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Meeting"
+            }
+          },
+          "mini": {
+            "type": ["integer", "null"],
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Such as `A`, `1` or `A3`."
+          },
+          "parent": {
+            "type": ["string", "null"],
+            "description": "The lecture this section belongs to, if any."
+          }
+        }
+      },
+      "ShareLink": {
+        "type": "object",
+        "required": ["shareId", "url"],
+        "properties": {
+          "shareId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "The website's page for the link."
+          }
+        }
+      },
+      "SharedSchedule": {
+        "type": "object",
+        "description": "What a share link shows: no owner, id or visibility.",
+        "required": ["termId", "name", "entries", "updatedAt"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntry"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "Sharing": {
+        "type": "object",
+        "required": ["shareCourses", "shareSchedules"],
+        "properties": {
+          "shareCourses": {
+            "type": "boolean",
+            "description": "Accepted friends see the courses you're taking, from your record and friends-visible schedules."
+          },
+          "shareSchedules": {
+            "type": "boolean",
+            "description": "Accepted friends see your schedules marked visible to friends."
+          }
+        }
+      },
+      "StoredOverride": {
+        "type": "object",
+        "description": "A requisite waiver for one course.",
+        "required": ["updatedAt"],
+        "properties": {
+          "antireqs": {
+            "type": "boolean"
+          },
+          "coreqs": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": ["string", "null"]
+          },
+          "prereqs": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "StudentProfile": {
+        "type": "object",
+        "properties": {
+          "college": {
+            "type": ["string", "null"],
+            "description": "A college code, such as `SCS`."
+          },
+          "entryTerm": {
+            "type": ["string", "null"]
+          },
+          "expectedGraduation": {
+            "type": ["string", "null"]
+          },
+          "level": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Level"
+              }
+            ]
+          },
+          "majors": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            }
+          },
+          "minors": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Term": {
+        "type": "object",
+        "required": ["id", "name", "season", "year"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Such as `S27`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Such as `Spring 2027`."
+          },
+          "season": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "Visibility": {
+        "type": "string",
+        "enum": ["private", "friends"]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "health"
+    },
+    {
+      "name": "auth",
+      "description": "Sign-in and the account"
+    },
+    {
+      "name": "catalog",
+      "description": "Catalog documents (decision 16)"
+    },
+    {
+      "name": "courses",
+      "description": "The public course API"
+    },
+    {
+      "name": "schedules"
+    },
+    {
+      "name": "plans"
+    },
+    {
+      "name": "record",
+      "description": "The academic record"
+    },
+    {
+      "name": "preferences"
+    },
+    {
+      "name": "saved",
+      "description": "Saved courses"
+    },
+    {
+      "name": "friends"
+    },
+    {
+      "name": "finals",
+      "description": "Final exams imported from SIO"
+    },
+    {
+      "name": "syllabi"
+    }
+  ]
+}
