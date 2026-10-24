@@ -4,12 +4,11 @@
   import { getSession } from "$lib/components/shell/session";
   import SignInPrompt from "$lib/components/shell/SignInPrompt.svelte";
   import Title from "$lib/components/shell/Title.svelte";
-  import FriendsSection, { friendsActions } from "$lib/features/profile/FriendsSection.svelte";
+  import FriendsSection from "$lib/features/profile/FriendsSection.svelte";
   import SavedSection from "$lib/features/profile/SavedSection.svelte";
   import SchedulesSection from "$lib/features/profile/SchedulesSection.svelte";
   import SettingsSection from "$lib/features/profile/SettingsSection.svelte";
-  import TakenSection, { takenActions, takenFilters } from "$lib/features/profile/TakenSection.svelte";
-  import { hasTakenCourses } from "$lib/features/record/taken-list.svelte";
+  import TakenSection from "$lib/features/profile/TakenSection.svelte";
   import TakingSection from "$lib/features/profile/TakingSection.svelte";
   import type { PageProps } from "./$types";
 
@@ -17,7 +16,8 @@
   const session = getSession();
   const section = $derived(PROFILE_SECTIONS.find((item) => item.id === data.section) ?? PROFILE_SECTIONS[0]);
 
-  // Each section is its own component, owned by the feature it belongs to.
+  // Each section is its own component, owned by the feature it belongs to; it puts its own actions and filters in
+  // the title band (profileBand()).
   const SECTIONS = {
     saved: SavedSection,
     taking: TakingSection,
@@ -34,14 +34,6 @@
   name={session.status === "signed-in" ? session.name : undefined}
   detail={session.status === "signed-in" ? session.detail : undefined}
   band={data.section !== "friends"}
-  actions={session.status !== "signed-in"
-    ? undefined
-    : data.section === "friends"
-      ? friendsActions
-      : data.section === "taken"
-        ? takenActions
-        : undefined}
-  filters={data.section === "taken" && session.status === "signed-in" && hasTakenCourses() ? takenFilters : undefined}
 >
   {#if data.section === "settings"}
     <SettingsSection />

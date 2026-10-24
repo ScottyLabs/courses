@@ -1,18 +1,13 @@
-<script lang="ts" module>
-  import RecordActions from "$lib/features/record/RecordActions.svelte";
-  import TakenFilters from "$lib/features/record/TakenFilters.svelte";
-  import { personal } from "$lib/state";
-
-  // The record's actions and the course filters; the profile page puts them in the section's title band.
-  export { takenActions, takenFilters };
-</script>
-
 <script lang="ts">
   // Profile "Courses Taken": the academic record. Courses taken, exam and transfer credit, placements and overrides,
   // imported from SIO or Stellic or added by hand; prerequisite checks and the degree plan read it. Courseweave's
   // record page (features/record/RecordPage.tsx), with courses shown as the Figma's Courses Taken page shows them.
+  import { profileBand } from "$lib/components/layout/profile-band.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
-  import { record } from "$lib/state";
+  import { personal, record } from "$lib/state";
+  import RecordActions from "$lib/features/record/RecordActions.svelte";
+  import TakenFilters from "$lib/features/record/TakenFilters.svelte";
+  import { hasTakenCourses } from "$lib/features/record/taken-list.svelte";
   import ExamCredit from "$lib/features/record/ExamCredit.svelte";
   import ProfileTotals from "$lib/features/record/ProfileTotals.svelte";
   import { recordData } from "$lib/features/record/record-data.svelte";
@@ -26,10 +21,16 @@
 
   const data = recordData();
   const semester = $derived(data.term?.meta.name);
+
+  // The record's actions beside the section title, and the course filters under it.
+  profileBand(() => ({
+    actions: personal.mode === "loading" ? undefined : takenActions,
+    filters: personal.mode !== "loading" && hasTakenCourses() ? takenFilters : undefined,
+  }));
 </script>
 
 {#snippet takenActions()}
-  {#if personal.mode !== "loading"}<RecordActions />{/if}
+  <RecordActions />
 {/snippet}
 
 {#snippet takenFilters()}
