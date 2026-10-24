@@ -141,6 +141,23 @@ pub fn etag(json: &[u8]) -> String {
     format!("{:x}", Sha256::digest(json))
 }
 
+/// A document version ready to store: its ETag, size and gzip bytes.
+pub struct Prepared {
+    etag: String,
+    bytes: i64,
+    gzip: Vec<u8>,
+}
+
+impl Prepared {
+    pub fn new(json: &[u8]) -> Result<Self> {
+        Ok(Self {
+            etag: etag(json),
+            bytes: json.len() as i64,
+            gzip: gzip(json)?,
+        })
+    }
+}
+
 pub struct TermRow<'a> {
     pub id: &'a str,
     pub name: &'a str,
@@ -227,18 +244,17 @@ impl Writer {
 
     /// Stores one version of a document from its JSON bytes.
     pub fn put_raw(&self, name: &str, audience: Audience, json: &[u8]) -> Result<()> {
+        self.put_prepared(name, audience, &Prepared::new(json)?)
+    }
+
+    /// Stores one version of a document compressed with [`Prepared::new`], which callers can run in parallel.
+    pub fn put_prepared(&self, name: &str, audience: Audience, doc: &Prepared) -> Result<()> {
         if !valid_document_name(name) {
             bail!("invalid document name {name:?}");
         }
         let changed = self.conn.execute(
             "INSERT INTO documents(name, audience, etag, bytes, gzip) VALUES (?, ?, ?, ?, ?)",
-            params![
-                name,
-                audience.as_str(),
-                etag(json),
-                json.len() as i64,
-                gzip(json)?
-            ],
+            params![name, audience.as_str(), doc.etag, doc.bytes, doc.gzip],
         );
         match changed {
             Ok(_) => Ok(()),

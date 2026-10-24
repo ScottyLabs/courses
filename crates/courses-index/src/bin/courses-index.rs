@@ -1,40 +1,50 @@
-//! Native CLI for the catalog pipeline. Walks `exported/` and `data/fces.csv`
-//! into a `Corpus` and writes the catalog artifact.
+//! `courses-index build`: builds `catalog.sqlite` from the raw inputs.
 
 use std::path::PathBuf;
+use std::time::Instant;
 
-use anyhow::Result;
-use clap::Parser;
-use tracing::info;
+use anyhow::{Context, Result};
+use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
-use courses_index::load;
+use courses_index::pipeline::{self, Options};
 
 #[derive(Parser, Debug)]
-#[command(about = "Build the course catalog artifact")]
-struct Args {
-    /// Path to the scrape output root. The directory should contain one
-    /// subdirectory per student (named by AndrewID), each with
-    /// `courses_history/`, `programs/`, and `syllabi/` underneath. The
-    /// loader walks every immediate subdirectory and consolidates.
-    #[arg(long, env = "EXPORTED_ROOT", default_value = "exported")]
-    exported_root: PathBuf,
+#[command(about = "Build the course catalog")]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
 
-    /// Path to the FCE CSV.
-    #[arg(long, env = "FCE_CSV", default_value = "data/fces.csv")]
-    fce_csv: PathBuf,
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Build catalog.sqlite from the scraper's output and data/.
+    Build {
+        /// The scraper's output root: Stellic exports, syllabi, SOC captures and schedule CSVs.
+        #[arg(long, env = "EXPORTED_ROOT", default_value = "exported")]
+        exported: PathBuf,
 
-    /// Print a single course by code after loading (e.g. `--pick 15-122`).
-    #[arg(long)]
-    pick: Option<String>,
+        /// The repository's data directory: terms.json, fces.csv and finals/.
+        #[arg(long, default_value = "data")]
+        data: PathBuf,
 
-    /// Print one professor whose name contains this substring (case-insensitive).
-    #[arg(long)]
-    prof: Option<String>,
+        /// Where to write the catalog.
+        #[arg(long, short, default_value = "data/catalog/catalog.sqlite")]
+        output: PathBuf,
 
-    /// Write the catalog to this path.
-    #[arg(long)]
-    write_catalog: Option<PathBuf>,
+        /// Build only these terms (repeat or separate with commas), for faster local builds. The term index,
+        /// offerings and teaching documents then cover only these terms.
+        #[arg(long = "term", value_delimiter = ',')]
+        terms: Vec<String>,
+
+        /// Whose Stellic export the lyear values in data/terms.json are for, when exported/ has several.
+        #[arg(long, env = "STELLIC_EXPORT_USER")]
+        stellic_user: Option<String>,
+
+        /// Also write every document as JSON under this directory (public/ and member/), for inspection and diffs.
+        #[arg(long)]
+        dump: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -42,68 +52,53 @@ fn main() -> Result<()> {
         .with_env_filter(
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
+        .with_writer(std::io::stderr)
         .init();
 
-    let args = Args::parse();
-
-    let corpus = load::run(&args.exported_root, &args.fce_csv)?;
-    info!(
-        courses = corpus.courses.len(),
-        professors = corpus.professors.len(),
-        sections = corpus.sections.len(),
-        fce_rows = corpus.fce_rows.len(),
-        "load complete"
-    );
-
-    if args.write_catalog.is_some() {
-        unimplemented!();
-    }
-
-    if let Some(code) = args.pick {
-        match corpus.courses.iter().find(|c| c.code == code) {
-            Some(c) => {
-                let n_sections = corpus
-                    .sections
-                    .iter()
-                    .filter(|s| s.course_id == c.id)
-                    .count();
-                println!("{:#?}", c);
-                println!("section_rows_for_course = {n_sections}");
+    match Cli::parse().command {
+        Command::Build {
+            exported,
+            data,
+            output,
+            terms,
+            stellic_user,
+            dump,
+        } => {
+            let source_date_epoch = std::env::var("SOURCE_DATE_EPOCH")
+                .ok()
+                .map(|s| s.trim().parse::<i64>())
+                .transpose()
+                .context("SOURCE_DATE_EPOCH must be whole seconds")?;
+            let started = Instant::now();
+            let summary = pipeline::build(&Options {
+                exported,
+                data,
+                output,
+                terms,
+                stellic_user,
+                dump,
+                source_date_epoch,
+            })?;
+            for (id, courses, sections) in &summary.terms {
+                println!("{id}: {courses} courses, {sections} sections");
             }
-            None => eprintln!("no course with code {code}"),
+            for (id, exams) in &summary.finals {
+                println!("finals/{id}: {exams} exams");
+            }
+            println!(
+                "catalog: {} courses; syllabi: {} entries",
+                summary.catalog_courses, summary.syllabi
+            );
+            println!(
+                "{}: {} documents, {:.1} MB of JSON, {:.1} MB file, version {}, in {:.1?}",
+                summary.output.display(),
+                summary.documents,
+                summary.json_bytes as f64 / 1e6,
+                summary.file_bytes as f64 / 1e6,
+                summary.version,
+                started.elapsed()
+            );
+            Ok(())
         }
     }
-
-    if let Some(needle) = args.prof {
-        let lower = needle.to_lowercase();
-        match corpus
-            .professors
-            .iter()
-            .find(|p| p.name.to_lowercase().contains(&lower))
-        {
-            Some(p) => {
-                let n_fce = corpus
-                    .fce_rows
-                    .iter()
-                    .filter(|r| r.instructor_id == Some(p.id))
-                    .count();
-                println!("{:#?}", p);
-                println!("fce_rows_for_prof = {n_fce}");
-            }
-            None => eprintln!("no professor matching {needle}"),
-        }
-    }
-
-    let mut top: Vec<(&str, &str, f32)> = corpus
-        .courses
-        .iter()
-        .map(|c| (c.code.as_str(), c.name.as_str(), c.pagerank))
-        .collect();
-    top.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
-    println!("\nTop 15 courses by PageRank:");
-    for (code, name, score) in top.iter().take(15) {
-        println!("  {score:.6}  {code:8}  {name}");
-    }
-
-    Ok(())
 }
