@@ -129,19 +129,23 @@
     onblockhover?.(block, hovering);
   }
 
-  /** "15-122 Lec 1, Monday 9:30-10:50 AM, GHC 4401, conflicts with another class". */
-  function spoken(block: CalendarBlock): string {
-    const where = block.location ?? undefined;
-    const parts = [
-      block.tooltip ?? [block.label, block.section].filter(Boolean).join(" "),
-      `${DAY_LONG[block.day]} ${formatTimeRange(block.start, block.end)}`,
-    ];
+  /**
+   * "15-122 Principles of Imperative Computation, Lec 1, Monday 9:30-10:50 AM, GHC 4401, conflicts with another class",
+   * then the tooltip's hint ("Select to see other lectures.") when `hint` is set.
+   */
+  function spoken(block: CalendarBlock, hint = true): string {
+    const [main = "", ...rest] = (block.tooltip ?? [block.label, block.section].filter(Boolean).join(" "))
+      .replace(/\.$/u, "")
+      .split(". ");
+    const parts = [main, `${DAY_LONG[block.day]} ${formatTimeRange(block.start, block.end)}`];
+    const where = block.location;
     if (where !== undefined && where !== "TBA") parts.push(where);
     if (block.mini !== null && block.mini !== undefined) parts.push(`mini ${block.mini}`);
     if (block.variant === "preview") parts.unshift("Preview");
     if (block.variant === "ghost") parts.unshift("Option");
     if (block.conflict === true) parts.push("conflicts with another class");
-    return parts.join(", ");
+    const text = parts.join(", ");
+    return hint && rest.length > 0 ? `${text}. ${rest.join(". ")}.` : text;
   }
 
   function blockStyle(block: CalendarBlock, lane: number, lanes: number): string {
@@ -375,7 +379,7 @@
         {#if list.length > 0}
           <ul>
             {#each list as block (block.key)}
-              <li>{spoken(block)}</li>
+              <li>{spoken(block, false)}</li>
             {/each}
           </ul>
         {/if}
