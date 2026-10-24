@@ -1,6 +1,6 @@
 # Maintainer guide
 
-CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/Axum service that serves the built Svelte application, JSON endpoints, authenticated sessions and SQLite downloads on **one origin**. `courses-api` is the older standalone public catalog service; its custom binary format and publishing workflow are separate. Do not point the new web app at that service.
+CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/Axum service that serves the built Svelte application, catalog documents, JSON endpoints and authenticated sessions on **one origin**. `courses-api` is the older standalone public catalog service; its custom binary format and publishing workflow are separate. Do not point the new web app at that service.
 
 ## Read this first
 
@@ -34,6 +34,10 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 | `account.rs` | Account deletion |
 | `tests.rs` | Router-level tests: ownership, revisions, validation, audiences, syllabi, SEO, friends, deletion, limits |
 | `crates/courses-index` | Catalog builder: raw inputs to `catalog.sqlite` ([catalog data](api/data.md)) |
+| `crates/courses-catalog` | The `catalog.sqlite` format: documents by audience, relational tables, full-text search |
+| `sites/web/src/routes/` | Pages: courses, course, requisites, instructors, schedules (with the finals dialog), plan, profile, invite |
+| `sites/web/src/lib/features/` | One folder per area; see the [feature pages](features.md) |
+| `sites/web/src/lib/components/` | The design system (`ui`, `layout`, `shell`) and shared course, instructor and calendar components ([design system](design.md)) |
 | `sites/web/src/lib/core/` | Courseweave's UI-free modules (audits, requisites, plans, search, schedules, imports) and their tests |
 | `sites/web/src/lib/api/` | Same-origin API client, errors and the types generated from `openapi.json` |
 | `sites/web/src/lib/data/` | Catalog document loading and caching, the session, stale-deploy reloads |

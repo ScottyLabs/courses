@@ -1,29 +1,37 @@
 # Feature status
 
-This matrix describes the browser-facing app. “Implemented” means code and a local verification path exist, not that production login and rollout have already been verified. See the [deployment runbook](deployment.md) for the current rollout status.
+What the website does today, where it lives and what it needs. "Member" means a signed-in CMU account; signed-out
+visitors see public data and get a sign-in prompt where member data would be. Each area has its own page with the
+details.
 
-| Feature | Behavior / implementation | Verification |
-| --- | --- | --- |
-| Public course search and filters | JSON first, SQLite WASM after warmup; older terms fall back to JSON | SQL adapter tests and real browser smoke test |
-| Anonymous privacy | No instructor/FCE/location bytes in public exports; protected routes reject anonymous callers | Full database scan plus API tests |
-| CMU authentication | Verified CMU-domain email from configured OIDC issuer | Claim-policy tests; real IdP sign-in remains an operator check |
-| Persistent schedules | Owner-scoped create/edit/delete, revision conflicts and term/section checks | Restart, cross-owner, stale revision and invalid-section tests |
-| Sharing | Explicit unguessable read-only links, revocation | Share/revoke tests |
-| Saved courses | Authenticated persistent stars; anonymous local drafts | Save/reopen/remove tests |
-| Taking/taken history | Per-term personal records, profile add/remove UI | Separate history persistence test |
-| Friends | Pending requests, recipient acceptance, removal | Consent and unauthorized acceptance tests |
-| Invite links | Seven-day, single-use, explicit acceptance, owner revocation | Transactional redemption and repeat-redemption rejection tests |
-| Shared courses | Intersection of same-term history, both participants opt in | Authorization enforced in query; no implicit schedule sharing |
-| Finals | Private per-term SIO .ics import, reload, removal and export | Timezone/term/duration/parser and owner-isolation tests |
-| Major requirements | 204 current public catalog pages plus 2,848 older Stellic audit trees; selection stored with schedule | Imported counts and source provenance |
-| Spring 2027 | 3,085 courses / 6,760 sections from CourseWeave | Source converter tests and full/browser database counts |
-| Deployment | Persistent SQLite wiring and pinned encrypted catalog bootstrap | Encryption tamper tests; remote rollout must pass Kennel health and live smoke checks |
+| Feature | Where | Needs | Details |
+| --- | --- | --- | --- |
+| Course search with ranked results, cards or compact rows, and an FCE hours chart | `/` | Public | [Explorer](features/explorer.md) |
+| Filters: saved only, fits my schedule, department, units, offered in, level, days and times, mini, delivery, FCE hours and rating | `/` | Public; FCE filters are member | [Explorer](features/explorer.md) |
+| Requirement filter, gen eds included | `/` | Member (degree programs) | [Explorer](features/explorer.md) |
+| All semesters view of courses and instructors | `/?term=all`, `/instructors?term=all` | Public; instructors are member | [Explorer](features/explorer.md), [People](features/people.md) |
+| Course detail panel and full course page: sections, requisites checked against the record, what a course unlocks, cross-listings, counts toward, offering history | `/?course=`, `/course/[code]` | Public; instructors, rooms and counts toward are member | [Explorer](features/explorer.md) |
+| FCE charts and history; past syllabi with preview and download | Course and instructor pages | Member | [Explorer](features/explorer.md) |
+| Requisite explorer | `/requisites` | Public | [Explorer](features/explorer.md) |
+| Schedules: several per semester, section pickers, week calendar, conflicts, colors, pass/fail, workload, display options | `/schedules` | Public as a draft; saved when signed in | [Schedules](features/schedules.md) |
+| Schedule generator, .ics and image export, send to Stellic or SIO | `/schedules` | Public | [Schedules](features/schedules.md) |
+| Share links and the read-only shared view | `/schedules/shared/[token]` | Member to share; anyone to view | [Schedules](features/schedules.md) |
+| Final exams: the registrar's schedule matched to a schedule, conflict warnings, search, .ics, SIO import | Finals dialog on `/schedules` | Public; SIO import is member | [Schedules](features/schedules.md) |
+| Degree plan: programs, requirement audit, progress bar, semester grid with drag and drop, requisite problems, schedule links | `/plan` | Member for degree programs; drafts without | [Plan and record](features/plan-and-record.md) |
+| Academic record: SIO and Stellic PDF import in the browser, grades, exam and transfer credit, waivers, QPA | `/profile/taken`, `/profile/taking` | Member | [Plan and record](features/plan-and-record.md) |
+| Instructors: search, cards or rows, aggregate FCEs, teaching history and timetable | `/instructors`, `/instructors/[id]` | Member | [People](features/people.md) |
+| Friends: requests, invite links, sharing settings, friends taking a course, a friend's schedule | `/profile/friends`, `/invite/[token]`, course cards, schedules | Member | [People](features/people.md) |
+| Settings: theme, calendar display, account, delete my data | `/profile/settings` | Theme for everyone; the rest member | [People](features/people.md) |
+| Course pages for search engines and a sitemap | `/course/[code]`, `/sitemap.xml` | Public | [Web API](api/web-api.md) |
 
-## Boundaries that should remain visible
+## Boundaries
 
-- Requirements are readable references, **not an automatic degree-completion evaluator**. Course alternatives, substitutions and double-counting are not certified.
-- FCEs are historical course aggregates. Per-semester instructor ratings and respondent drilldowns are not supplied by the current normalized catalog.
-- Missing source times, rooms, instructors and descriptions remain missing. Refreshing S27 schedules does not refresh historical FCEs or every description.
-- Finals come from the user's own calendar export. There is no university-wide official finals feed in this app.
-- The current deployment is one personal SQLite writer with in-memory sessions. Multi-replica deployment and restart-persistent sessions require additional infrastructure.
-- “All features implemented” must not be used to imply all historical frontend wishlist items, unprovided datasets, or a validated degree audit. The endpoint contract and this matrix define the delivered behavior.
+- The degree audit is a planning aid. It follows the rules in Stellic's degree programs, but substitutions, advisor
+  exceptions and college policies aren't all modeled; the plan page says so.
+- FCEs are historical. A course's next instructor may differ from those evaluated.
+- Final exams come from the registrar's published PDFs, which change; the dialog asks students to confirm with SIO.
+- Instructors, rooms, FCEs, syllabi and Stellic degree programs are member data
+  ([decision 20](decisions/0020-redact-public-term-documents.md)). Syllabi stay private only once they're in a private
+  bucket ([decision 24](decisions/0024-serve-syllabi-from-private-object-storage.md)).
+- Personal data lives in the web API's SQLite database on one service instance
+  ([decision 17](decisions/0017-store-personal-data-on-the-server.md)); replicas would need shared storage.

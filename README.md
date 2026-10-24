@@ -1,6 +1,6 @@
 # CMU Courses
 
-Course browsing app with a Svelte frontend and Rust API.
+Course search, schedules and degree planning for Carnegie Mellon students: a Svelte website and a Rust API.
 
 ## Maintainers
 
@@ -35,7 +35,7 @@ The environment provides Rust and Deno. First startup downloads dependencies.
 ## Run locally
 
 Use three terminals, each with the development environment loaded. Start from
-the repository root in each terminal.
+the repository root in each terminal, after building the catalog (above).
 
 ```sh
 # Terminal 1: PostgreSQL and the Ricochet login relay
@@ -55,6 +55,21 @@ deno task dev
 
 Open <http://localhost:5173>. The frontend proxies `/api` and `/auth` to the web
 API on port 3002. Stop the foreground processes with Ctrl+C.
+
+### Without Keycloak
+
+To work on the website without OpenBao or Keycloak, run the API with development
+sign-in ([decision 26](sites/docs/src/decisions/0026-sign-in-locally-without-keycloak.md)),
+which treats every request as a CMU test user:
+
+```sh
+APP_URL=http://localhost:5173 DEV_USER=jdoe CATALOG_DIR=data/catalog \
+  SYLLABI_DIR=exported/syllabi cargo run -p courses-web-api --features dev-auth
+```
+
+`/auth/login?as=<name>` switches to another test user and `/auth/logout` signs
+out. Without a catalog or API at all, `deno task dev:mock` in `sites/web` serves
+an in-memory mock of the API ([website data and state](sites/docs/src/frontend.md)).
 
 ## Preview a production build
 
@@ -76,7 +91,11 @@ the generated `sites/web/build` directory through `courses-web-api` using `STATI
 | Command | Run from | Purpose |
 | --- | --- | --- |
 | `deno task check` | `sites/web` | Check Svelte and TypeScript |
+| `deno task test` | `sites/web` | Run the website's tests |
+| `cargo test --workspace` | Repository root | Run the Rust tests |
+| `cargo run --release -p courses-index -- build` | Repository root | Build `data/catalog/catalog.sqlite` |
+| `cargo run -p courses-web-api -- openapi` | Repository root | Print the API's OpenAPI document |
 | `devenv --no-tui shell` | Repository root | Show plain startup logs when troubleshooting |
 
-More details: [architecture](sites/docs-migrating-wip/src/overview.md) and
-[scraper usage](sites/docs-migrating-wip/src/scraper/running.md).
+More details: [documentation](sites/docs/src/index.md), [architecture decisions](sites/docs/src/decisions/index.md)
+and [scraper usage](sites/docs-migrating-wip/src/scraper/running.md).
