@@ -198,13 +198,13 @@
           {#if s !== null && synced.has(s.id)}
             <span title="Synced with {activePlan?.name}" class="inline-flex text-ok">
               <RefreshCw aria-hidden="true" class="size-4" />
-              <span class="sr-only">, synced with {activePlan?.name}</span>
+              <span class="sr-only">(synced with {activePlan?.name})</span>
             </span>
           {/if}
           {#if s?.visibility === "friends"}
             <span title="Friends can see it" class="inline-flex text-muted">
               <Users aria-hidden="true" class="size-4" />
-              <span class="sr-only">, friends can see it</span>
+              <span class="sr-only">(friends can see it)</span>
             </span>
           {/if}
           <span class="tabular text-label-md font-normal text-muted"

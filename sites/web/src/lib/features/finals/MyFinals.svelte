@@ -1,15 +1,15 @@
 <!--
   The final exams of a schedule's courses: the registrar's exam for each course and section (or the student's SIO
   import for courses the registrar's file lacks), warnings for overlaps, back-to-back exams and three or more in 24
-  hours, and a calendar file. Used on the finals page and, compact, on the schedules page.
+  hours, and a calendar file. Shown in the schedules page's final exams dialog.
 -->
 <script lang="ts">
-  import { CalendarArrowDown, CalendarClock, TriangleAlert } from "@lucide/svelte";
+  import { CalendarArrowDown, TriangleAlert } from "@lucide/svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import type { FinalExam } from "$lib/api/types";
   import type { RegistrarFinal } from "$lib/data";
   import { courseColorStyle } from "$lib/core/colors";
-  import { coursePath, finalsPath } from "$lib/core/routes";
+  import { coursePath } from "$lib/core/routes";
   import type { ResolvedEntry } from "$lib/core/state/schedule-view";
   import { formatTimeRange } from "$lib/core/time";
   import { download } from "$lib/features/schedules/download";
@@ -23,7 +23,6 @@
     termId,
     termName,
     scheduleName,
-    compact = false,
   }: {
     entries: readonly ResolvedEntry[];
     /** The registrar's schedule; null when it isn't published. */
@@ -32,8 +31,6 @@
     termId: string;
     termName: string;
     scheduleName: string;
-    /** For the schedules page: fewer words, and a link to the finals page. */
-    compact?: boolean;
   } = $props();
 
   const mine = $derived(matchFinals(entries, registrar, sio));
@@ -66,11 +63,6 @@
   {#if mine.length === 0}
     <p class="text-body-2 text-muted">Add courses to see their final exams.</p>
   {:else}
-    {#if registrar === null && sio.length === 0}
-      <p class="text-body-2 text-muted">
-        The registrar hasn't published the {termName} final exam schedule yet.
-      </p>
-    {/if}
     {#if warnings.length > 0}
       <ul class="flex flex-col gap-1.5" aria-label="Exam warnings">
         {#each warnings as w (`${w.kind}-${w.codes.join()}`)}
@@ -100,11 +92,9 @@
             <span class="shrink-0 text-label-md font-normal {hasRoom(f.exam) ? 'text-ink' : 'text-muted'}">
               {f.exam.mode === "Remote" ? "Remote" : (f.exam.location ?? "Room to be announced")}
             </span>
-            {#if NOTE[f.match] && !compact}
-              <span class="w-full pl-[5.75rem] text-label-md font-normal text-muted">{NOTE[f.match]}</span>
-            {:else if f.match === "sio"}
-              <span class="sr-only">{NOTE.sio}</span>
-            {/if}
+            <span class="w-full pl-[5.75rem] text-label-md font-normal text-muted">
+              {f.match === "section" ? `Section ${f.exam.section ?? ""}` : NOTE[f.match]}
+            </span>
           {:else}
             <span class="min-w-0 flex-1 basis-48 text-body-2 text-muted">{NOTE[f.match]}</span>
           {/if}
@@ -113,9 +103,6 @@
     </ul>
     <div class="flex flex-wrap items-center gap-3">
       <Button size="sm" icon={CalendarArrowDown} disabled={exams.length === 0} onclick={ics}>Download exams (.ics)</Button>
-      {#if compact}
-        <Button size="sm" variant="ghost" icon={CalendarClock} href={finalsPath(termId)}>All final exams</Button>
-      {/if}
     </div>
     <p class="text-label-md font-normal text-muted">
       Check exam times with your instructors and SIO: the registrar's schedule can change, and some courses hold their

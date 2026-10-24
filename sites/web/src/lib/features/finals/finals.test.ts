@@ -7,6 +7,7 @@ import { resolveEntries } from "../../core/state/schedule-view.ts";
 import type { ScheduleEntry } from "../../core/state/store.ts";
 import type { Course, Day, Section, TermData } from "../../core/types.ts";
 import { examDay, finalWarnings, finalsIcs, fromSio, matchFinals, type MyFinal } from "./finals.ts";
+import { filterFinals, finalRows, sortFinals } from "./finals-table.ts";
 
 const sec = (name: string, parent: string | null = null, days: Day[] = [1, 3]): Section => ({
   name,
@@ -186,5 +187,40 @@ describe("finalsIcs", () => {
       location: "",
     });
     expect([e.date, e.start, e.end, e.location]).toEqual(["2026-05-04", 510, 690, null]);
+  });
+});
+
+describe("the registrar's table", () => {
+  const rows = finalRows(
+    [
+      { ...exam("21127", "1", "2026-12-09", 780), instructors: ["JOHNSON GREGORY"] },
+      exam("15122", "1", "2026-12-07", 510),
+      exam("76101", "A", "2026-12-07", 1050),
+    ],
+    (id) => term.courseById.get(id),
+  );
+
+  it("finds courses by number, title and instructor, within departments", () => {
+    const codes = (q: string, depts: string[] = []) =>
+      filterFinals(rows, q, depts).map((r) => r.exam.code);
+    expect(codes("15-122")).toEqual(["15-122"]);
+    expect(codes("15122")).toEqual(["15-122"]);
+    expect(codes("course 21127")).toEqual(["21-127"]);
+    expect(codes("johnson")).toEqual(["21-127"]);
+    expect(codes("", ["CS"])).toEqual(["21-127", "15-122", "76-101"]);
+    expect(codes("", ["MATH"])).toEqual([]);
+  });
+
+  it("sorts by course or by date", () => {
+    expect(sortFinals(rows, "course").map((r) => r.exam.code)).toEqual([
+      "15-122",
+      "21-127",
+      "76-101",
+    ]);
+    expect(sortFinals(rows, "date").map((r) => r.exam.code)).toEqual([
+      "15-122",
+      "76-101",
+      "21-127",
+    ]);
   });
 });

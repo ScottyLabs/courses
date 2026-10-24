@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { CalendarDays, Info, LogIn, RotateCw, WandSparkles } from "@lucide/svelte";
+  import { CalendarClock, CalendarDays, Info, LogIn, RotateCw, WandSparkles } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { api } from "$lib/api";
   import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
   import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
   import RailGroup from "$lib/components/layout/RailGroup.svelte";
@@ -16,7 +15,7 @@
   import Select from "$lib/components/ui/Select.svelte";
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
-  import { catalog, resource, session } from "$lib/data";
+  import { session } from "$lib/data";
   import { courseColorStyle } from "$lib/core/colors";
   import { childForSection, initialChoice, partLabel } from "$lib/core/planner/format";
   import { coursesPath } from "$lib/core/routes";
@@ -26,7 +25,7 @@
   import type { Course } from "$lib/core/types";
   import { personal, schedules } from "$lib/state";
   import type { FriendSchedule } from "$lib/api/types";
-  import MyFinals from "$lib/features/finals/MyFinals.svelte";
+  import FinalsDialog from "$lib/features/finals/FinalsDialog.svelte";
   import AddCourseSearch from "$lib/features/schedules/AddCourseSearch.svelte";
   import CopyField from "$lib/features/schedules/CopyField.svelte";
   import CourseEntryRow from "$lib/features/schedules/CourseEntryRow.svelte";
@@ -143,8 +142,16 @@
   );
   const unplaced = $derived(view?.entries.filter((e) => !e.entry.hidden && e.section === null).length ?? 0);
 
-  const registrar = resource(() => (termId === null ? null : catalog.finals(termId)));
-  const sio = resource(() => (termId !== null && signedIn ? api.finals.list(termId) : null));
+  // `?finals=1` opens the final exams dialog for the shown schedule, so it can be linked to.
+  const finalsOpen = $derived(page.url.searchParams.get("finals") === "1");
+
+  function setFinals(open: boolean): void {
+    if (open === finalsOpen) return;
+    const url = new URL(page.url);
+    if (open) url.searchParams.set("finals", "1");
+    else url.searchParams.delete("finals");
+    void goto(url, { replaceState: true, keepFocus: true, noScroll: true });
+  }
 
   function applySections(sections: Record<string, SectionChoice>): void {
     schedules.setSections(target(), sections);
@@ -297,6 +304,7 @@
             disabled={view.entries.length === 0}
             onclick={() => (generatorOpen = true)}>Generate</Button
           >
+          <Button icon={CalendarClock} class="h-10 lg:h-9" onclick={() => setFinals(true)}>Finals</Button>
           {#if active}
             <ExportMenu
               schedule={active}
@@ -415,22 +423,6 @@
         </p>
       {/if}
 
-      <section aria-labelledby="schedule-finals" class="mt-4 flex flex-col gap-3">
-        <h2 id="schedule-finals" class="text-heading-5 text-strong">Final exams</h2>
-        {#if registrar.status === "loading" && registrar.value === undefined}
-          <Skeleton variant="text" lines={2} />
-        {:else}
-          <MyFinals
-            entries={view.entries}
-            registrar={registrar.value ?? null}
-            sio={sio.value ?? []}
-            termId={term.meta.id}
-            termName={term.meta.name}
-            scheduleName={active?.name ?? "Schedule"}
-            compact
-          />
-        {/if}
-      </section>
     {/if}
   </div>
 </RailLayout>
@@ -443,6 +435,12 @@
       <p class="text-body-2 text-ink">Add a course first, then share the schedule.</p>
     </Dialog>
   {/if}
+  <FinalsDialog
+    bind:open={() => finalsOpen, (value) => setFinals(value)}
+    {term}
+    entries={view.entries}
+    scheduleName={active?.name ?? "Schedule 1"}
+  />
   <ScheduleGenerator
     bind:open={generatorOpen}
     {view}

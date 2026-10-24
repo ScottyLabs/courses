@@ -1,4 +1,4 @@
-import { CalendarDays, CircleUser, Clock, GraduationCap, Search, User } from "@lucide/svelte";
+import { CircleUser, Clock, GraduationCap, Search, User } from "@lucide/svelte";
 import type { IconComponent } from "../ui/types";
 
 export interface NavItem {
@@ -13,7 +13,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/instructors", label: "Instructors", icon: CircleUser },
   { href: "/schedules", label: "Schedules", icon: Clock },
   { href: "/plan", label: "Plan", icon: GraduationCap },
-  { href: "/finals", label: "Finals", icon: CalendarDays },
   { href: "/profile", label: "Profile", icon: User },
 ];
 
