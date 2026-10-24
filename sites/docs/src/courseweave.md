@@ -22,7 +22,7 @@ Courseweave's source is the reference implementation: when this page says "as Co
 | Accounts, sync, sign out and clear this device | Keycloak sign-in; data on the server ([decision 17](decisions/0017-store-personal-data-on-the-server.md)) |
 | Search-engine course pages and sitemap | The web API adds course head tags to `/course/[code]` and serves `/sitemap.xml` |
 | - | Friends: requests, invite links, friends taking a course, friends' schedules (new) |
-| - | Final exam schedule from the registrar, checked against your schedule (new); SIO calendar import stays |
+| - | Final exam schedule from the registrar, in a dialog on each schedule: that schedule's exams with conflict warnings, search across the semester's exams, .ics export; SIO calendar import stays (new) |
 
 ## Design
 
@@ -156,14 +156,13 @@ sites/web/src/
     data/          catalog document loading and caching; signed-in session
     state/         runes stores for schedules, plans, record, saved courses, preferences and drafts
     components/    shared components; components/ui/ for buttons, selects, chips, menus, dialogs
-    features/      one folder per area: explorer, course, instructors, schedules, finals, plan, profile, friends
+    features/      one folder per area: explorer, course, instructors, schedules (with finals), plan, profile, friends
   routes/
     +layout.svelte              header, navigation, footer
     +page.svelte                courses
     course/[code]/              full course page
     instructors/, instructors/[id]/
     schedules/, schedules/shared/[token]/
-    finals/
     plan/
     profile/[[section]]/        saved, taking, taken, schedules, friends, settings
     invite/[token]/
