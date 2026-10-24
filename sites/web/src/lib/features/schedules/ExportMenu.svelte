@@ -6,6 +6,7 @@
   import { CalendarArrowDown, ChevronDown, ClipboardList, Image, Link2, Send, Share } from "@lucide/svelte";
   import { calendarPng } from "$lib/components/calendar/calendar-image";
   import Button from "$lib/components/ui/Button.svelte";
+  import { download } from "$lib/components/ui/download";
   import Menu, { type MenuEntry } from "$lib/components/ui/Menu.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
   import type { Term } from "$lib/core/data";
@@ -14,7 +15,6 @@
   import type { ScheduleView } from "$lib/core/state/schedule-view";
   import type { Schedule } from "$lib/core/state/store";
   import { preferences } from "$lib/state";
-  import { download } from "./download";
   import { courseListText, fileName } from "./planner";
 
   let {

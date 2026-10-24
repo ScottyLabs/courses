@@ -3,10 +3,11 @@
   script the student runs in their own signed-in Stellic (or SIO) tab. The script shows what it will add and changes
   nothing until the student confirms there; it only adds courses with their sections, never registers, drops or
   removes anything. For SIO there is also the plain list of course numbers and sections. Nothing here talks to
-  Stellic or SIO itself. The plan page can open it with mode "plan".
+  Stellic or SIO itself. The schedules page opens it with mode "schedules", the degree plan with mode "plan".
 -->
 <script lang="ts">
   import { ExternalLink } from "@lucide/svelte";
+  import CopyField from "$lib/components/ui/CopyField.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
   import Select from "$lib/components/ui/Select.svelte";
   import Checkbox from "$lib/components/ui/Checkbox.svelte";
@@ -26,23 +27,25 @@
     type ExportTerm,
   } from "$lib/core/stellic-export";
   import { plans, schedules, type ScheduleItem } from "$lib/state";
-  import CopyField from "./CopyField.svelte";
 
   let {
     open = $bindable(false),
     mode = "schedules",
     initialId,
+    courseTitle,
   }: {
     open?: boolean;
     /** schedules: one schedule a semester; plan: a degree plan's current and future semesters. */
     mode?: "schedules" | "plan";
     /** The schedule (or plan) to start with. */
     initialId?: string;
+    /** Course titles for the script; defaults to the catalog's. The plan passes its own, which know special listings. */
+    courseTitle?: (courseId: string) => string;
   } = $props();
 
   const index = resource(() => catalog.catalogIndex());
   const titleOf = $derived(
-    (id: string): string => index.value?.courses[id]?.title ?? codeOf(id),
+    courseTitle ?? ((id: string): string => index.value?.courses[id]?.title ?? codeOf(id)),
   );
 
   // Schedules with courses, newest semester first; at most one a semester (two would ask for conflicting sections).
@@ -143,6 +146,8 @@
                 <li><span class="font-semibold text-strong">{t.name}</span>: {t.courses.map((c) => c.code).join(", ")}</li>
               {/each}
             </ul>
+          {:else if planId !== ""}
+            <p class="text-body-2 text-ink">This plan has no courses in this or later semesters yet.</p>
           {/if}
         </section>
       {/if}
