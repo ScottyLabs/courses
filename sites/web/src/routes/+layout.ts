@@ -1,5 +1,4 @@
-// Pure SPA build. Catalog and wasm load entirely on the client, so SSR
-// has nothing to do. The static adapter writes one `index.html` fallback
-// that bootstraps the SvelteKit runtime; routing happens client-side.
+// Client-rendered SPA: the static adapter writes one index.html fallback and
+// routing, data loading and rendering all happen in the browser.
 export const ssr = false;
 export const prerender = false;

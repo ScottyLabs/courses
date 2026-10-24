@@ -1,7 +1,7 @@
 # Frontend API contract
 
 > Implementation update (2026-10-23): core catalog, auth, schedule, saved-course,
-> and requirements routes now exist. See [SQLite backend](./sqlite-backend.md)
+> and requirements routes now exist. See [web API](./web-api.md)
 > for the current behavior and deferred routes. Older DuckDB notes below are historical.
 
 The Svelte frontend calls same-origin JSON routes defined in
@@ -22,7 +22,7 @@ The implementation has superseded this original endpoint wishlist. Use:
 
 - [Catalog data and releases](data.md)
 - [Personal API and consent](user.md)
-- [Backend and browser handoff](sqlite-backend.md)
+- [Web API](web-api.md)
 - [Feature status](../features.md)
 - `sites/web/src/lib/contracts.ts` for wire types
 

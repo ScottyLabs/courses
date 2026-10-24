@@ -5,7 +5,7 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 ## Read this first
 
 - [Catalog data and refreshes](api/data.md): source precedence, schemas, privacy and release artifacts.
-- [Personal data and API behavior](api/user.md): ownership, revisions, consent and imports.
+- [Web API](api/web-api.md) and [personal data and consent](api/user.md): routes, sign-in, records, ownership, revisions, consent and imports.
 - [Deployment runbook](deployment.md): storage, configuration, release and rollback.
 - [Feature status](features.md): implemented behavior and explicit limitations.
 - [Data audit](api/data-audit.md): dates, record counts and source completeness.
@@ -14,15 +14,25 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 
 | Location | Responsibility |
 | --- | --- |
-| `crates/courses-web-api/src/main.rs` | Configuration, OIDC/session middleware, routes and static assets |
-| `auth.rs` | Verified CMU email policy and authenticated principal extraction |
-| `backend/mod.rs` | Database initialization, shared errors, SQL JSON decoding and Origin guard |
-| `backend/catalog.rs` | Public/member read APIs and browser database transport |
-| `backend/personal.rs` | Schedule validation, revisions, shares, saved courses and history |
-| `backend/finals.rs` | SIO calendar parsing, term validation and personal import storage |
-| `backend/friends.rs` | Profiles, pending requests, acceptance, invites and sharing consent |
-| `backend/tests.rs` | Ownership, restart durability, consent and revocation tests |
-| `catalog_release.rs` | Download, authenticate and atomically install a pinned catalog generation |
+| `crates/courses-web-api/src/main.rs` | Configuration, sign-in mode, startup and the `openapi` command |
+| `app.rs` | Router, OpenAPI document, Origin guard, security headers, session and OIDC layers, static site |
+| `auth.rs`, `auth/dev.rs` | Verified CMU email policy, `CurrentUser`/`Viewer`/`Writer` extractors, `/api/me`, login and logout; development sign-in (`dev-auth`) |
+| `sessions.rs` | `tower-sessions` store over the personal database, with hashed ids and owner tags |
+| `db.rs` | Personal database connection, migrations to `user_version` 4 and the v3 conversion |
+| `error.rs` | `{ code, message }` errors and conversion of axum's plain-text errors |
+| `ratelimit.rs`, `state.rs` | Per-user write limit; shared application state |
+| `catalog/mod.rs` | `catalog.sqlite` reader pool and catalog documents by audience, with ETags |
+| `catalog/courses.rs` | Public course API over the relational tables |
+| `catalog_release.rs` | Download, authenticate and atomically install the pinned `catalog.sqlite` release |
+| `records/mod.rs` | Shared validation, revisions and daily write caps |
+| `records/schedules.rs`, `records/plans.rs` | Schedules (checked against the catalog) and share links; degree plans |
+| `records/documents.rs`, `records/saved.rs` | The academic record and preferences; saved courses |
+| `friends.rs` | Profiles, requests, invites, sharing consent, friends' schedules and courses |
+| `finals.rs` | SIO calendar parsing and personal final exam imports |
+| `syllabi.rs` | Member-only syllabus files from object storage or a directory |
+| `seo.rs` | Course page head tags, sitemap and robots.txt |
+| `account.rs` | Account deletion |
+| `tests.rs` | Router-level tests: ownership, revisions, validation, audiences, syllabi, SEO, friends, deletion, limits |
 | `sites/web/src/lib/contracts.ts` | Browser wire types and same-origin HTTP client |
 | `data-client.ts` | API-first reads, worker handoff, session rechecks and fallback |
 | `catalog.ts` | Download validation and identity-scoped OPFS cache |
@@ -52,7 +62,7 @@ When changing catalog queries, update both `backend/catalog.rs` and `sqlite-cata
 
 Personal schema changes must preserve existing records. Current additions are `CREATE TABLE IF NOT EXISTS`; `PRAGMA user_version` identifies the schema. Future column changes need a version-gated migration, a test opening a previous schema, and a backup/rollback plan. Never run a catalog importer against the personal database.
 
-Requirement text is a reference, not a degree-audit algorithm. Preserve source URLs and catalog/entry years. Do not translate a list of referenced courses into “all required” without interpreting alternatives, minimum grades, double-counting and substitutions.
+Requirement text is a reference, not a degree-audit algorithm. Preserve source URLs and catalog/entry years. Do not translate a list of referenced courses into "all required" without interpreting alternatives, minimum grades, double-counting and substitutions.
 
 ## Verification
 

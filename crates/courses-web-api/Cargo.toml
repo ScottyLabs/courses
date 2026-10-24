@@ -3,21 +3,33 @@ name = "courses-web-api"
 version.workspace = true
 edition.workspace = true
 
+[features]
+# Local development without Keycloak: treat requests as the CMU user in DEV_USER. Never enabled in the Nix build.
+dev-auth = []
+
 [dependencies]
-rusqlite = { version = "0.38", features = ["bundled"] }
-sha2 = "0.10"
-anyhow = "1.0.102"
-axum = { version = "0.8.9", features = ["multipart"] }
 aes-gcm = "0.10"
-flate2 = "1"
-reqwest = { version = "0.13", features = ["json"] }
-chrono = { version = "0.4", features = ["serde"] }
-chrono-tz = "0.10"
-ical = "0.11"
+anyhow = "1.0.102"
+async-trait = "0.1"
+aws-sdk-s3 = { version = "1.152.0", default-features = false, features = [
+  "default-https-client",
+  "http-1x",
+  "rt-tokio",
+  "sigv4a",
+] }
+axum = { version = "0.8.9", features = ["multipart"] }
 axum-oidc = { git = "https://codeberg.org/pfzetto/axum-oidc", rev = "007135e2c26830f6c89d1659302c228076c7afa7" }
 base64 = "0.22.1"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
+courses-catalog = { path = "../courses-catalog" }
+flate2 = "1"
+ical = "0.11"
+reqwest = { version = "0.13", features = ["json"] }
+rusqlite = { version = "0.38", features = ["bundled"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
+sha2 = "0.10"
 tokio = { version = "1.52.1", features = ["full"] }
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["fs", "trace"] }
@@ -27,4 +39,7 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 utoipa = { version = "5.4.0", features = ["axum_extras"] }
 utoipa-axum = "0.2.0"
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
-uuid = { version = "1.23.0", features = ["v4", "v7", "serde"] }
+uuid = { version = "1.23.0", features = ["v4", "serde"] }
+
+[dev-dependencies]
+tempfile = "3"

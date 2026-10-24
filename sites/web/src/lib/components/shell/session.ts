@@ -1,0 +1,37 @@
+// What the app shell needs to know about the signed-in student. The data
+// layer provides the real implementation; the root layout calls `setSession`
+// once and the header, menus and sign-in prompts read it with `getSession`.
+import { createContext } from "svelte";
+
+export type SessionStatus = "loading" | "signed-out" | "signed-in";
+
+export interface ShellSession {
+  /**
+   * "loading" until the first session check finishes. Implementations should
+   * back these fields with runes state (or getters over it) so the shell updates.
+   */
+  readonly status: SessionStatus;
+  /** Display name while signed in, such as "Andrew Carnegie". */
+  readonly name?: string;
+  /** Second line under the name on the profile, such as a department. */
+  readonly detail?: string;
+  /** Starts sign-in (navigates to the identity provider). */
+  signIn: () => void;
+  /** Signs out and returns to the site signed out. */
+  signOut: () => void;
+}
+
+export const [getSession, setSession] = createContext<ShellSession>();
+
+/** Placeholder until the data layer supplies a session: always signed out. */
+export function createStubSession(): ShellSession {
+  return {
+    status: "signed-out",
+    signIn: () => {
+      location.assign("/auth/login");
+    },
+    signOut: () => {
+      location.assign("/auth/logout");
+    },
+  };
+}

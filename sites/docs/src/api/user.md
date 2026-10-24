@@ -1,54 +1,55 @@
 # Personal data and consent
 
-All endpoints below require a verified CMU identity. Every mutation requires an exact `Origin` matching `APP_URL`. JSON errors use `{ "message": "..." }`; 401 means no session, 403 means disallowed identity/origin, 404 means no accessible record, and 409 means a stale schedule revision. The request body limit is 128 KiB.
+For a signed-in CMU student, the web API's database is the only durable copy of their schedules, degree plans, academic
+record, preferences and saved courses ([decision 17](../decisions/0017-store-personal-data-on-the-server.md)). This page
+covers who can see and change that data. Routes, shapes and limits are in the [web API reference](web-api.md).
 
-## Storage and authentication
+## Who owns what
 
-`USER_DB_PATH` overrides `DATABASE_PATH`; otherwise local development uses `data/private/users.sqlite`. Kennel provisions `DATABASE_PATH` when `scottylabs.sqlite.enable` is set. SQLite uses WAL, a five-second busy timeout and a process mutex for personal writes. The current server is intended for one service instance per personal database.
+- Only a signed-in user with a verified `cmu.edu` email (or a subdomain) can read or write personal data. Signed out is
+  401; signed in with another account is 403.
+- Every record is keyed by the OIDC subject from the session, never by an id the browser sends. Every query that reads,
+  changes or deletes a record names its owner in SQL, so another student's id behaves like one that doesn't exist (404).
+- Every write needs an `Origin` header equal to the site's origin, so other sites can't make changes with a student's
+  cookie.
 
-Ownership keys are the OIDC subject, never a browser-supplied user ID. Identity is established by the configured issuer, token validation and `email_verified=true` with domain `cmu.edu` or a CMU subdomain. Project groups do not grant membership. The profile directory records the verified email local part as the Andrew ID on sign-in; aliases therefore follow the issuer's mapping. Users must sign in once before Andrew-ID requests can find them.
+## Revisions
 
-Sessions are currently in memory and expire after one hour of inactivity. Restart requires signing in again but does not remove saved data. OIDC callback state is handled by the existing relay flow. Production cookies are Secure and SameSite=Lax.
+Each schedule, plan, record and preferences document carries a revision. A write states the revision it was based on;
+a stale write is refused with 409 and the current version, which the website merges its change into before writing
+again. Nothing is overwritten silently. Writes are limited to 128 KiB a record, 500 writes a record each UTC day and 60
+writes a student each minute.
 
-## Schedules
+## Imports
 
-| Endpoint | Behavior |
-| --- | --- |
-| `GET /api/schedules` | List the caller's schedules |
-| `POST /api/schedules` | Create `{name, term_id}` with empty items and revision 1 |
-| `PUT /api/schedules/{id}` | Replace name, term, items and optional program_id with matching revision |
-| `DELETE /api/schedules/{id}` | Delete an owned schedule |
-| `POST /api/schedules/{id}/share` | Create/reuse an unguessable read-only share token |
-| `DELETE /api/schedules/{id}/share` | Revoke the token |
-| `GET /api/shared-schedules/{token}` | Public read-only name, term and course/section IDs; no owner or restricted course fields |
+- SIO and Stellic PDFs are parsed in the browser; only the parsed courses are sent, as the academic record.
+- An SIO calendar (`.ics`) uploaded for final exams is parsed on the server. Only final exams for the term's courses are
+  kept; the file and its other events aren't stored. A calendar with no matching finals keeps the previous import.
+- Neither is an official transcript or a university-wide exam schedule. The registrar's final exam schedule is a public
+  catalog document.
 
-Items are `{course_code, section_ids}`. Each course and section must belong to the term. Names are 1–120 characters; schedules allow at most 50 courses and 20 section IDs per course. Stale saves return 409; reload the saved version before editing again. Anonymous drafts remain local until explicit save after login.
+## Sharing
 
-## Saved courses and history
+- A share link makes one schedule readable by anyone who has the link. It shows the schedule's term, name and courses,
+  never who owns it. Revoking the link or deleting the schedule ends access.
+- Friends are mutual: a request (by Andrew ID, for someone who has signed in once) or an invite link must be accepted by
+  the other person. Invite links are single use and expire after seven days.
+- Friendship shares nothing by itself. Each student separately turns on "share my courses" and "share my schedules";
+  both start off, and each applies only to that student's own data. Accepted friends then see:
+  - with schedules shared: the student's schedules marked visible to friends, and the courses in them that aren't
+    hidden; private schedules are never shown.
+  - with courses shared: the courses on the student's record for a term that have no grade yet (in progress). Grades,
+    past courses, transfer and exam credit, overrides and the profile are never shown.
+- Turning sharing off or removing a friend ends access immediately. Friends see each other's name and Andrew ID.
 
-`GET /api/profile/courses?status=saved|taking|taken` lists one category. History rows include `term_id`. `PUT /api/profile/courses/{code}` takes `{status, term_id?}`; `DELETE` takes those fields as query parameters. History requires a term in which the course exists. Saved stars are independent of history, so removing a star never deletes a taken-course record.
+## Deleting an account
 
-The profile UI allows adding and removing course history. These records are not imported grades or an official transcript.
+`DELETE /api/account` removes everything the student owns: schedules (and their share links), plans, the record,
+preferences, saved courses, final exam imports, invites, friendships, the profile and every session on every device.
+It can't be undone.
 
-## Friends
+## Retention and backups
 
-| Endpoint | Behavior |
-| --- | --- |
-| `GET /api/profile/friends` | Accepted friends plus incoming/outgoing requests |
-| `POST /api/profile/friends` | `{andrew_id}` creates a pending request |
-| `POST /api/profile/friends/{id}/accept` | Only the recipient can accept |
-| `DELETE /api/profile/friends/{id}` | Either participant can decline/cancel/remove |
-| `POST /api/profile/friend-invites` | Create a seven-day, single-use link; replaces the owner's previous link |
-| `POST /api/profile/friend-invites/{token}/redeem` | Explicit signed-in acceptance, consumed transactionally |
-| `DELETE /api/profile/friend-invites/{token}` | Owner revokes an invite |
-| `PUT /api/profile/friend-visibility` | `{share_courses: boolean}` changes explicit history-sharing consent |
-
-Friend acceptance alone discloses no history. Shared courses are the intersection of both users' taking/taken records in the same term and are returned only when **both** users opted in. Removing a friendship immediately removes that access. Schedules require separately created share links; friendship does not grant schedule access.
-
-## Finals import
-
-`POST /api/finals/import?term=S27` accepts one multipart field named `calendar`, a UTF-8 `.ics` file up to 120 KiB. Imports are private and keyed by owner and term. `GET /api/finals?term=S27&courses=15-122,21-127` supports an optional course filter. `DELETE /api/finals/import?term=S27` removes only the caller's import for that term.
-
-The parser keeps final-exam events with recognizable course codes in the selected term's catalog. Unrelated events are discarded. UTC and IANA `TZID` timestamps are supported; floating times default to America/New_York. Ambiguous local times, invalid durations, recurring final events and dates in a different term are rejected. A failed or empty import preserves the previous import. Original calendars and unrelated events are not retained.
-
-The UI exports stored finals as an iCalendar file. The app does not claim an authoritative university-wide finals feed or infer finals from weekly class times.
+Personal data stays until the student deletes it or their account. Sessions expire after 14 days without use and are
+deleted hourly afterwards. The database is backed up by operators as the [deployment runbook](../deployment.md)
+describes; backups hold the same personal data and session tokens, so access is restricted to authorized operators.

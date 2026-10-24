@@ -1,0 +1,133 @@
+<script lang="ts">
+  import { afterNavigate } from "$app/navigation";
+  import { page } from "$app/state";
+  import logo from "$lib/assets/logo.png";
+  import { LogIn, LogOut, Menu } from "@lucide/svelte";
+  import Avatar from "../ui/Avatar.svelte";
+  import Button from "../ui/Button.svelte";
+  import IconButton from "../ui/IconButton.svelte";
+  import Sheet from "../ui/Sheet.svelte";
+  import Skeleton from "../ui/Skeleton.svelte";
+  import { NAV_ITEMS, isActive } from "./nav";
+  import { getSession } from "./session";
+  import ThemeSwitch from "./ThemeSwitch.svelte";
+
+  const session = getSession();
+  let menuOpen = $state(false);
+
+  afterNavigate(() => {
+    menuOpen = false;
+  });
+</script>
+
+<header
+  class="sticky top-0 z-30 bg-surface shadow-header-mobile lg:bg-paper lg:shadow-header"
+>
+  <!-- Desktop: logo, centered icon-and-label navigation, theme switch and session pill. -->
+  <div class="hidden h-[85px] grid-cols-[1fr_auto_1fr] items-center gap-6 px-8 lg:grid">
+    <a href="/" class="flex items-center gap-4 justify-self-start rounded-[6px]">
+      <img src={logo} alt="" width="36" height="35" class="h-[35px] w-9 rounded-tag" />
+      <span class="text-heading-6 text-ink max-xl:sr-only">CMU Courses</span>
+    </a>
+    <nav aria-label="Main">
+      <ul class="flex items-center gap-5 xl:gap-8">
+        {#each NAV_ITEMS as item (item.href)}
+          {@const active = isActive(item, page.url.pathname)}
+          <li>
+            <a
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              class="flex h-10 items-center gap-2 rounded-[6px] text-[15px] leading-6 font-medium transition-colors xl:gap-2.5 xl:text-heading-6 {active
+                ? 'text-accent-ink'
+                : 'text-muted hover:text-ink'}"
+            >
+              <item.icon aria-hidden="true" class="size-6" />
+              {item.label}
+            </a>
+          </li>
+        {/each}
+      </ul>
+    </nav>
+    <div class="flex items-center gap-4 justify-self-end xl:gap-8">
+      <span class="p-1.5"><ThemeSwitch /></span>
+      {#if session.status === "loading"}
+        <Skeleton class="h-10 w-[110px] rounded-full" />
+      {:else if session.status === "signed-in"}
+        <Button
+          icon={LogOut}
+          title={session.name ? `Signed in as ${session.name}` : undefined}
+          onclick={() => session.signOut()}
+        >
+          Sign out
+        </Button>
+      {:else}
+        <Button icon={LogIn} onclick={() => session.signIn()}>Sign in</Button>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Phones and tablets: menu button, logo, account. -->
+  <div class="grid h-16 grid-cols-[1fr_auto_1fr] items-center px-3 lg:hidden">
+    <IconButton
+      label="Menu"
+      icon={Menu}
+      aria-haspopup="dialog"
+      aria-expanded={menuOpen}
+      class="justify-self-start"
+      onclick={() => (menuOpen = true)}
+    />
+    <a href="/" aria-label="CMU Courses" class="rounded-[10px]">
+      <img src={logo} alt="" width="40" height="40" class="size-10 rounded-[10px]" />
+    </a>
+    <div class="flex items-center justify-self-end">
+      {#if session.status === "loading"}
+        <Skeleton variant="circle" class="size-[33px]" />
+      {:else if session.status === "signed-in"}
+        <a href="/profile" aria-label="Your profile" class="rounded-full">
+          <Avatar name={session.name} size="sm" decorative class="size-[33px]! text-label-md!" />
+        </a>
+      {:else}
+        <Button size="sm" icon={LogIn} onclick={() => session.signIn()}>Sign in</Button>
+      {/if}
+    </div>
+  </div>
+</header>
+
+<Sheet bind:open={menuOpen} title="CMU Courses" side="left" class="lg:hidden">
+  <nav aria-label="Main" class="px-3 py-3">
+    <ul class="flex flex-col gap-1">
+      {#each NAV_ITEMS as item (item.href)}
+        {@const active = isActive(item, page.url.pathname)}
+        <li>
+          <a
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            class="flex items-center gap-3 rounded-[8px] px-3 py-3 text-heading-6 transition-colors {active
+              ? 'bg-paper text-accent-ink'
+              : 'text-ink hover:bg-hover'}"
+          >
+            <item.icon aria-hidden="true" class="size-6" />
+            {item.label}
+          </a>
+        </li>
+      {/each}
+    </ul>
+  </nav>
+  <div class="border-t border-line px-6 py-4">
+    <ThemeSwitch showLabel class="w-full justify-between" />
+  </div>
+  <div class="border-t border-line px-6 py-4">
+    {#if session.status === "signed-in"}
+      <div class="mb-3 flex items-center gap-3">
+        <Avatar name={session.name} size="md" decorative />
+        <div class="min-w-0">
+          <p class="truncate text-heading-6 text-strong">{session.name}</p>
+          {#if session.detail}<p class="truncate text-body-2 text-muted">{session.detail}</p>{/if}
+        </div>
+      </div>
+      <Button icon={LogOut} full onclick={() => session.signOut()}>Sign out</Button>
+    {:else if session.status === "signed-out"}
+      <Button variant="primary" icon={LogIn} full onclick={() => session.signIn()}>Sign in</Button>
+    {/if}
+  </div>
+</Sheet>

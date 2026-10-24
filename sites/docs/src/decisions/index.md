@@ -19,3 +19,11 @@
 | 15 | [Build the catalog in Rust, as one SQLite file](0015-build-the-catalog-in-rust.md) | accepted |
 | 16 | [Serve the catalog to the browser as JSON documents](0016-serve-the-catalog-as-json-documents.md) | accepted |
 | 17 | [Store personal data on the server](0017-store-personal-data-on-the-server.md) | accepted |
+| 21 | [Sort catalog strings with Unicode collation](0021-sort-catalog-strings-with-unicode-collation.md) | accepted |
+| 22 | [Leave build times out of FCE and program documents](0022-leave-build-times-out-of-fce-and-program-documents.md) | accepted |
+| 23 | [Persist sessions in the user database](0023-persist-sessions-in-the-user-database.md) | accepted |
+| 24 | [Serve syllabi from private object storage](0024-serve-syllabi-from-private-object-storage.md) | accepted |
+| 25 | [Render course head tags on the server](0025-render-course-head-tags-on-the-server.md) | accepted |
+| 26 | [Sign in locally without Keycloak](0026-sign-in-locally-without-keycloak.md) | accepted |
+| 30 | [Build UI primitives on native elements and the top layer](0030-build-ui-primitives-on-native-elements.md) | accepted |
+| 31 | [Scroll the page, with a sticky header and rail](0031-scroll-the-page-with-a-sticky-rail.md) | accepted |
