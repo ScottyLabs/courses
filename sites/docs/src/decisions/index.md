@@ -28,5 +28,8 @@
 | 24 | [Serve syllabi from private object storage](0024-serve-syllabi-from-private-object-storage.md) | accepted |
 | 25 | [Render course head tags on the server](0025-render-course-head-tags-on-the-server.md) | accepted |
 | 26 | [Sign in locally without Keycloak](0026-sign-in-locally-without-keycloak.md) | accepted |
+| 27 | [Keep the website's store logic in plain TypeScript, with Svelte state injected](0027-keep-store-logic-in-plain-typescript.md) | accepted |
+| 28 | [Replay edits onto the stored record after a conflict, and keep unsaved changes in the tab](0028-replay-edits-onto-the-stored-record.md) | accepted |
+| 29 | [Develop and test the website against an in-memory mock of the web API](0029-develop-against-an-in-memory-mock-api.md) | accepted |
 | 30 | [Build UI primitives on native elements and the top layer](0030-build-ui-primitives-on-native-elements.md) | accepted |
 | 31 | [Scroll the page, with a sticky header and rail](0031-scroll-the-page-with-a-sticky-rail.md) | accepted |
