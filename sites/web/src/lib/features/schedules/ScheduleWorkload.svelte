@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { LockKeyhole, LogIn } from "@lucide/svelte";
+  import WorkloadMeter, { TONE_TEXT } from "$lib/components/course/WorkloadMeter.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import { catalog, resource, session } from "$lib/data";
   import type { Term } from "$lib/core/data";
@@ -17,7 +18,6 @@
   } from "$lib/core/fce";
   import { scheduleLoad } from "$lib/core/fce/workload";
   import type { ResolvedEntry } from "$lib/core/state/schedule-view";
-  import WorkloadMeter, { TONE_TEXT } from "./WorkloadMeter.svelte";
 
   let { entries, term }: { entries: readonly ResolvedEntry[]; term: Term } = $props();
 
