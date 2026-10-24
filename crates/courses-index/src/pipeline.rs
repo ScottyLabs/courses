@@ -190,7 +190,10 @@ pub fn build(opts: &Options) -> Result<Summary> {
             )
         },
     );
-    let (catalog, built, scan, exams) = (catalog?, built?, scan?, exams?);
+    let (catalog, built, scan, mut exams) = (catalog?, built?, scan?, exams?);
+    if !opts.terms.is_empty() {
+        exams.retain(|term, _| opts.terms.contains(term));
+    }
     let (fce, programs) = (fce?, programs?);
     info!(elapsed = ?started.elapsed(), "inputs read");
 

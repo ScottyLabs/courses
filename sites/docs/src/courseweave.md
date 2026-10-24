@@ -83,7 +83,9 @@ document doesn't exist publicly.
 
 `<NN>` is a course-number prefix, such as `15`. `finals/<id>` is a list of
 `{ courseId, section, title, date, start, end, mode, location, instructors }` parsed from the registrar's PDF, with
-`date` as `YYYY-MM-DD` and times as minutes after midnight in Pittsburgh.
+`date` as `YYYY-MM-DD` and times as minutes after midnight in Pittsburgh. `title` is the registrar's abbreviation,
+`mode` is `In Person`, `Remote` or `Cancelled`, `location` is the room or the registrar's note about it (or null), and
+`instructors` are names as printed, last name first (`SHAW DIANE`).
 
 ### Raw inputs
 
