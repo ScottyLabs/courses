@@ -177,7 +177,10 @@
               onmouseenter={() => (active = index)}
               onmousedown={(event) => event.preventDefault()}
               onclick={() => void pick(course)}
-              onkeydown={() => {}}
+              onkeydown={(event) => {
+                // Options aren't focusable (the field keeps focus and moves through them with the arrow keys).
+                if (event.key === "Enter") void pick(course);
+              }}
               class="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-tag px-2.5 py-1.5 {index === active
                 ? 'bg-paper'
                 : ''}"

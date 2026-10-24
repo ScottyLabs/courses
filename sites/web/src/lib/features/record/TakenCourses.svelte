@@ -3,6 +3,7 @@
   // as cards or a compact list, grouped by semester, with grades editable. Courseweave's TakenSection
   // (features/record/TakenSection.tsx), shown the way the Figma's Courses Taken page shows courses.
   import { Plus } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import Button from "$lib/components/ui/Button.svelte";
   import Select from "$lib/components/ui/Select.svelte";
   import TextInput from "$lib/components/ui/TextInput.svelte";
@@ -35,6 +36,8 @@
 
   let view = $state<ListView>(storedView("profile-taken") ?? "cards");
   let filters = $state<ListFilters>({ ...ALL_FILTERS });
+  // Phones get the taller field selects (40px tap targets); wider screens the Figma's compact filter boxes.
+  const wide = new MediaQuery("(min-width: 40rem)");
 
   // ---- Adding ----
   let courseId = $state<string | null>(null);
@@ -171,9 +174,9 @@
 
   {#if taken.length > 0}
     <div class="flex flex-wrap items-end gap-3">
-      <Select label="Department" variant="compact" class="w-full sm:w-52" options={deptChoices} bind:value={filters.department} />
-      <Select label="Course level" variant="compact" class="w-full sm:w-44" options={levelChoices} bind:value={filters.level} />
-      <Select label="Semester" variant="compact" class="w-full sm:w-44" options={semesterChoices} bind:value={filters.semester} />
+      <Select label="Department" variant={wide.current ? "compact" : "field"} class="w-full sm:w-52" options={deptChoices} bind:value={filters.department} />
+      <Select label="Course level" variant={wide.current ? "compact" : "field"} class="w-full sm:w-44" options={levelChoices} bind:value={filters.level} />
+      <Select label="Semester" variant={wide.current ? "compact" : "field"} class="w-full sm:w-44" options={semesterChoices} bind:value={filters.semester} />
       <div class="ml-auto flex items-center gap-3">
         <p class="text-label-md text-muted" aria-live="polite">
           {shown.length} of {taken.length} {taken.length === 1 ? "course" : "courses"}

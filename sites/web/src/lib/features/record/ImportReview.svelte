@@ -131,35 +131,34 @@
         {#each group.items as item (item.key)}
           {@const info = review.lookup(item.row.courseId)}
           {@const status = STATUS_TEXT[item.status]}
-          <li class="flex min-h-11 items-center gap-2">
+          {@const inputId = `import-${item.key.replaceAll(":", "-")}`}
+          <li class="flex min-h-11 items-center gap-1">
             <Checkbox
+              id={inputId}
               checked={checked.has(item.key)}
               onchange={(event) => toggle(item.key, event.currentTarget.checked)}
-              aria-label="{codeOf(item.row.courseId)} {info.title ?? item.entry.label ?? item.row.title}"
-              class="min-w-0 flex-1 font-normal"
-            >
-              <span class="flex min-w-0 items-center gap-3">
-                <span class="tabular w-[60px] shrink-0 font-semibold whitespace-nowrap text-strong">
-                  {codeOf(item.row.courseId)}
-                </span>
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-body-2 text-ink">
-                    {info.title ?? item.entry.label ?? item.row.title}
-                  </span>
-                  {#if item.already}
-                    <span class="block text-label-md font-normal text-muted">Already in your record</span>
-                  {/if}
-                </span>
+            />
+            <label for={inputId} class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1 sm:gap-3">
+              <span class="tabular w-[56px] shrink-0 text-label-lg whitespace-nowrap text-strong">
+                {codeOf(item.row.courseId)}
               </span>
-            </Checkbox>
-            <span class="tabular shrink-0 text-body-2 text-muted">{item.row.units}u</span>
-            <span class="w-[84px] shrink-0 text-right text-label-md">
-              {#if item.entry.grade}
-                <span class="rounded-tag bg-surface-2 px-1.5 py-0.5 text-strong">{item.entry.grade}</span>
-              {:else if status}
-                <span class={item.status === "in-progress" ? "text-warn" : "text-muted"}>{status}</span>
-              {/if}
-            </span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-body-2 text-ink">
+                  {info.title ?? item.entry.label ?? item.row.title}
+                </span>
+                {#if item.already}
+                  <span class="block text-label-md font-normal text-muted">Already in your record</span>
+                {/if}
+              </span>
+              <span class="tabular shrink-0 text-body-2 text-muted">{item.row.units}u</span>
+              <span class="shrink-0 text-right text-label-md sm:w-[76px]">
+                {#if item.entry.grade}
+                  <span class="rounded-tag bg-surface-2 px-1.5 py-0.5 text-strong">{item.entry.grade}</span>
+                {:else if status}
+                  <span class={item.status === "in-progress" ? "text-warn" : "text-muted"}>{status}</span>
+                {/if}
+              </span>
+            </label>
           </li>
         {/each}
       </ul>

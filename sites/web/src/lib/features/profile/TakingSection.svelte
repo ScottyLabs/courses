@@ -2,6 +2,7 @@
   // Profile "Currently Taking": this semester's courses from the academic record, with the sections and times chosen
   // in the semester's active schedule when there is one. Figma "Profile Page (Currently Taking)".
   import { Calendar1, CalendarPlus, Plus } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import Button from "$lib/components/ui/Button.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import Select from "$lib/components/ui/Select.svelte";
@@ -41,6 +42,8 @@
 
   let view = $state<ListView>(storedView("profile-taking") ?? "cards");
   let filters = $state<ListFilters>({ ...ALL_FILTERS });
+  // Phones get the taller field selects (40px tap targets); wider screens the Figma's compact filter boxes.
+  const wide = new MediaQuery("(min-width: 40rem)");
 
   const taking = $derived(currentlyTaking(record.entries, termId));
   const schedule = $derived(schedules.active(termId));
@@ -83,8 +86,8 @@
             >{/if}
         </p>
       </div>
-      <Select label="Department" variant="compact" class="w-full sm:w-52" options={deptChoices} bind:value={filters.department} />
-      <Select label="Course level" variant="compact" class="w-full sm:w-44" options={levelChoices} bind:value={filters.level} />
+      <Select label="Department" variant={wide.current ? "compact" : "field"} class="w-full sm:w-52" options={deptChoices} bind:value={filters.department} />
+      <Select label="Course level" variant={wide.current ? "compact" : "field"} class="w-full sm:w-44" options={levelChoices} bind:value={filters.level} />
       <ViewToggle pageKey="profile-taking" bind:value={view} />
     </div>
   {/if}
