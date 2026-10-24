@@ -19,6 +19,9 @@
 | 15 | [Build the catalog in Rust, as one SQLite file](0015-build-the-catalog-in-rust.md) | accepted |
 | 16 | [Serve the catalog to the browser as JSON documents](0016-serve-the-catalog-as-json-documents.md) | accepted |
 | 17 | [Store personal data on the server](0017-store-personal-data-on-the-server.md) | accepted |
+| 18 | [Capture the Schedule of Classes with the scraper](0018-capture-the-schedule-of-classes-with-the-scraper.md) | accepted |
+| 19 | [Parse the registrar's final exam schedule](0019-parse-the-registrars-final-exam-schedule.md) | accepted |
+| 20 | [Redact public term documents](0020-redact-public-term-documents.md) | accepted |
 | 21 | [Sort catalog strings with Unicode collation](0021-sort-catalog-strings-with-unicode-collation.md) | accepted |
 | 22 | [Leave build times out of FCE and program documents](0022-leave-build-times-out-of-fce-and-program-documents.md) | accepted |
 | 23 | [Persist sessions in the user database](0023-persist-sessions-in-the-user-database.md) | accepted |
