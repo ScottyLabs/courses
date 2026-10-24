@@ -4,7 +4,7 @@
 // From Courseweave's state/nav-origin.ts; the app shell calls trackOrigin() after every navigation.
 
 const COURSE_PAGE = /^\/course\/[^/]+\/?$/u;
-const PLAN_PAGE = /^\/plan(?:\/|$)/u;
+const PLAN_PAGE = /^\/plan(?:[/?#]|$)/u;
 
 let origin: string | null = null;
 

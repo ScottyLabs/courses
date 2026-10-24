@@ -25,9 +25,9 @@ export function localStore(): Storage | null {
   }
 }
 
-function read(storage: Storage | null): DeviceState {
+function read(storage: () => Storage | null): DeviceState {
   try {
-    const raw: unknown = JSON.parse(storage?.getItem(KEY) ?? "null");
+    const raw: unknown = JSON.parse(storage()?.getItem(KEY) ?? "null");
     if (typeof raw !== "object" || raw === null) return DEFAULT_DEVICE;
     const lastTerm: unknown = Reflect.get(raw, "lastTerm");
     return {
@@ -45,7 +45,7 @@ export class DevicePrefs {
 
   constructor(cell: CellFactory, storage: () => Storage | null = localStore) {
     this.#storage = storage;
-    this.#state = cell(read(storage()));
+    this.#state = cell(read(storage));
   }
 
   get lastTerm(): string | null {
