@@ -17,7 +17,7 @@ Courseweave's source is the reference implementation: when this page says "as Co
 | Instructor explorer and FCE history | Instructors page (`/instructors`, `/instructors/[id]`), signed in only |
 | Schedule planner: several schedules a semester, section picker, week calendar, conflicts, colors, hidden courses, pass/fail, unit and workload totals, calendar display options, .ics and image export, share links, schedule generator, send to Stellic | Schedules page (`/schedules`) |
 | Saved courses (bookmarks) | Saved filter on the course and instructor lists; saved courses also listed on the profile |
-| Degree plan: programs, requirement audit, semester grid with drag and drop, progress bar, requisite problems | Plan page (`/plan`), signed in only (Stellic degree programs are member data) |
+| Degree plan: programs, requirement audit, semester grid with drag and drop, progress bar, requisite problems | Plan page (`/plan`); signed out it is a draft, and degree programs ask for a CMU sign-in ([decision 37](decisions/0037-let-signed-out-visitors-draft-a-degree-plan.md)) |
 | Academic record: SIO and Stellic PDF import, taken courses, transfer credit, exams, waivers | Profile, under "Courses Taken" and "Currently Taking" |
 | Accounts, sync, sign out and clear this device | Keycloak sign-in; data on the server ([decision 17](decisions/0017-store-personal-data-on-the-server.md)) |
 | Search-engine course pages and sitemap | The web API adds course head tags to `/course/[code]` and serves `/sitemap.xml` |

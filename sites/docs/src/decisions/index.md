@@ -37,4 +37,6 @@
 | 33 | [Open courses in a panel beside the course list](0033-open-courses-beside-the-course-list.md) | accepted |
 | 34 | [Show final exams in a dialog on each schedule](0034-show-final-exams-in-a-dialog-on-each-schedule.md) | accepted |
 | 35 | [Share schedules by token when signed in, by a link that carries the schedule when signed out](0035-share-schedules-by-token-or-by-a-link-that-carries-it.md) | accepted |
+| 36 | [Lay out the degree plan beside its requirements, not in a rail](0036-lay-out-the-degree-plan-beside-its-requirements.md) | accepted |
+| 37 | [Let signed-out visitors draft a degree plan; degree programs need a CMU sign-in](0037-let-signed-out-visitors-draft-a-degree-plan.md) | accepted |
 | 40 | [Adapt the Figma design to the features, borrowing from Courseweave](0040-follow-courseweaves-interaction-design.md) | accepted |

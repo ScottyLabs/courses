@@ -104,9 +104,9 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 
 ## Layout patterns
 
-The root layout renders the header, `<main>` and the footer around every page. Pages pick one of three patterns.
+The root layout renders the header, `<main>` and the footer around every page. Pages pick one of four patterns.
 
-**Rail layout** (courses, instructors, schedules, plan). A white rail on the left with a title and a Hide
+**Rail layout** (courses, instructors, schedules). A white rail on the left with a title and a Hide
 button, and the page on the right: a white toolbar band, then content on the page background. Below 1024px the rail is
 a sheet opened from the toolbar's Filter button, which shows the active filter count.
 
@@ -140,6 +140,10 @@ pill on phones) and right-aligned actions.
 Courses, Currently Taking, Courses Taken, Schedules, Friends, Settings) with the active row filled. The section title,
 `actions` and `filters` sit in a white band, or on the page background with `band={false}` as on Friends. On phones
 the sections become an accordion with the open one's content under it.
+
+**Plan layout** (`/plan`, [decision 36](decisions/0036-lay-out-the-degree-plan-beside-its-requirements.md)). A
+full-width page: a header, then the semester grid beside a sticky requirements column from 1180px up, and tabs below
+that.
 
 **Page container** (course page, shared schedule, invite, errors). A centered column, `narrow`, `default` or `wide`.
 
