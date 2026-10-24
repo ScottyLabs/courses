@@ -2,9 +2,9 @@
   "version": "5",
   "specifiers": {
     "npm:@lucide/svelte@1.56.0": "1.56.0_svelte@5.53.12",
-    "npm:@sveltejs/adapter-static@3.0.10": "3.0.10_@sveltejs+kit@2.57.0_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@sveltejs+vite-plugin-svelte@7.0.0_@types+node@24.12.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1",
-    "npm:@sveltejs/kit@*": "2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@types+node@24.12.0",
-    "npm:@sveltejs/kit@2.57.0": "2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@types+node@24.12.0",
+    "npm:@sveltejs/adapter-static@3.0.10": "3.0.10_@sveltejs+kit@2.57.0_typescript@6.0.3",
+    "npm:@sveltejs/kit@*": "2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@6.0.3_vite@8.0.1",
+    "npm:@sveltejs/kit@2.57.0": "2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@6.0.3_vite@8.0.1",
     "npm:@sveltejs/vite-plugin-svelte@7.0.0": "7.0.0_svelte@5.53.12_vite@8.0.1_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@types+node@24.12.0",
     "npm:@tailwindcss/forms@0.5.11": "0.5.11_tailwindcss@4.1.18",
     "npm:@tailwindcss/typography@0.5.19": "0.5.19_tailwindcss@4.1.18",
@@ -12,11 +12,13 @@
     "npm:@types/node@24.12.0": "24.12.0",
     "npm:@types/sql.js@1.4.9": "1.4.9",
     "npm:openapi-typescript@7.13.0": "7.13.0_typescript@5.9.3",
+    "npm:prettier-plugin-svelte@3.4.0": "3.4.0_prettier@3.6.2_svelte@5.53.12",
+    "npm:prettier@3.6.2": "3.6.2",
     "npm:sql.js@1.13.0": "1.13.0",
-    "npm:svelte-check@4.4.5": "4.4.5_svelte@5.53.12_typescript@5.9.3",
+    "npm:svelte-check@4.7.6": "4.7.6_svelte@5.53.12_typescript@6.0.3",
     "npm:svelte@5.53.12": "5.53.12",
     "npm:tailwindcss@4.1.18": "4.1.18",
-    "npm:typescript@5.9.3": "5.9.3",
+    "npm:typescript@6.0.3": "6.0.3",
     "npm:vite@8.0.1": "8.0.1_@types+node@24.12.0_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3"
   },
   "npm": {
@@ -212,13 +214,13 @@
         "acorn"
       ]
     },
-    "@sveltejs/adapter-static@3.0.10_@sveltejs+kit@2.57.0_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@sveltejs+vite-plugin-svelte@7.0.0_@types+node@24.12.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1": {
+    "@sveltejs/adapter-static@3.0.10_@sveltejs+kit@2.57.0_typescript@6.0.3": {
       "integrity": "sha512-7D9lYFWJmB7zxZyTE/qxjksvMqzMuYrrsyh1f4AlZqeZeACPRySjbC3aFiY55wb1tWUaKOQG9PVbm74JcN2Iew==",
       "dependencies": [
         "@sveltejs/kit"
       ]
     },
-    "@sveltejs/kit@2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@types+node@24.12.0": {
+    "@sveltejs/kit@2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@6.0.3_vite@8.0.1": {
       "integrity": "sha512-TMiqCTy9ZW4KBHvmTgeWU/hF6jcFpeMgR+9ekE06uhhGnbUZ7wpIY6l1Uk4ThRzlWYJnCVfzmtVNaHaDjaSiSg==",
       "dependencies": [
         "@standard-schema/spec",
@@ -235,13 +237,16 @@
         "set-cookie-parser",
         "sirv",
         "svelte",
-        "typescript",
+        "typescript@6.0.3",
         "vite"
       ],
       "optionalPeers": [
-        "typescript"
+        "typescript@6.0.3"
       ],
       "bin": true
+    },
+    "@sveltejs/load-config@0.2.3": {
+      "integrity": "sha512-VT3qmUb8pRV2QrZjd8iAmtg8lf4W0TIjZbvXtz5MKei/q96teWZgGJyyidJzOjzZzvdq616eSRVeMYIQChUTAQ=="
     },
     "@sveltejs/vite-plugin-svelte@7.0.0_svelte@5.53.12_vite@8.0.1_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@types+node@24.12.0": {
       "integrity": "sha512-ILXmxC7HAsnkK2eslgPetrqqW1BKSL7LktsFgqzNj83MaivMGZzluWq32m25j2mDOjmSKX7GGWahePhuEs7P/g==",
@@ -727,7 +732,7 @@
         "change-case",
         "parse-json",
         "supports-color",
-        "typescript",
+        "typescript@5.9.3",
         "yargs-parser"
       ],
       "bin": true
@@ -763,6 +768,17 @@
         "picocolors",
         "source-map-js"
       ]
+    },
+    "prettier-plugin-svelte@3.4.0_prettier@3.6.2_svelte@5.53.12": {
+      "integrity": "sha512-pn1ra/0mPObzqoIQn/vUTR3ZZI6UuZ0sHqMK5x2jMLGrs53h0sXhkVuDcrlssHwIMk7FYrMjHBPoUSyyEEDlBQ==",
+      "dependencies": [
+        "prettier",
+        "svelte"
+      ]
+    },
+    "prettier@3.6.2": {
+      "integrity": "sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==",
+      "bin": true
     },
     "readdirp@4.1.2": {
       "integrity": "sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg=="
@@ -821,16 +837,17 @@
     "supports-color@10.2.2": {
       "integrity": "sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g=="
     },
-    "svelte-check@4.4.5_svelte@5.53.12_typescript@5.9.3": {
-      "integrity": "sha512-1bSwIRCvvmSHrlK52fOlZmVtUZgil43jNL/2H18pRpa+eQjzGt6e3zayxhp1S7GajPFKNM/2PMCG+DZFHlG9fw==",
+    "svelte-check@4.7.6_svelte@5.53.12_typescript@6.0.3": {
+      "integrity": "sha512-t2scM//ZuVbSY/T2w6FSBw1v9s2NEmh/g+sy1lqtosW5ylBV5AF4wFb1Ts9Kf3MbfPDUDJDZ9L436YT0SPTdvw==",
       "dependencies": [
         "@jridgewell/trace-mapping",
+        "@sveltejs/load-config",
         "chokidar",
         "fdir",
         "picocolors",
         "sade",
         "svelte",
-        "typescript"
+        "typescript@6.0.3"
       ],
       "bin": true
     },
@@ -879,6 +896,10 @@
     },
     "typescript@5.9.3": {
       "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+      "bin": true
+    },
+    "typescript@6.0.3": {
+      "integrity": "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==",
       "bin": true
     },
     "undici-types@7.16.0": {
@@ -940,11 +961,13 @@
         "npm:@types/node@24.12.0",
         "npm:@types/sql.js@1.4.9",
         "npm:openapi-typescript@7.13.0",
+        "npm:prettier-plugin-svelte@3.4.0",
+        "npm:prettier@3.6.2",
         "npm:sql.js@1.13.0",
-        "npm:svelte-check@4.4.5",
+        "npm:svelte-check@4.7.6",
         "npm:svelte@5.53.12",
         "npm:tailwindcss@4.1.18",
-        "npm:typescript@5.9.3",
+        "npm:typescript@6.0.3",
         "npm:vite@8.0.1"
       ]
     }

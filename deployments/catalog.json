@@ -1,0 +1,47 @@
+{
+  "id": "baa90f5b-b05d-41a0-aadb-62036ae09e44",
+  "files": {
+    "public.sqlite": {
+      "url": "https://cdn.scottylabs.org/courses/sqlite-releases/baa90f5b-b05d-41a0-aadb-62036ae09e44/public.sqlite.enc",
+      "sha256": "cdb966f6ef4e1fa8e43c850882fc44cb4c662761c93acdd794d8e8378f061b43",
+      "bytes": 9473427,
+      "plain_sha256": "540863f9478d37614512db0b1a98c672d9d5c93875346fe6785ceb13aa6b55b2",
+      "plain_bytes": 197812224
+    },
+    "member.sqlite": {
+      "url": "https://cdn.scottylabs.org/courses/sqlite-releases/baa90f5b-b05d-41a0-aadb-62036ae09e44/member.sqlite.enc",
+      "sha256": "ed23a1a8b832a4a6db1ea68507b715f24b1dfb1c9106d38362d1ef1a5401d39b",
+      "bytes": 23506006,
+      "plain_sha256": "347a2f0d4e802538e068f7b9477e6ae5e14c64037ef373f0a1aff514907f8311",
+      "plain_bytes": 359960576
+    },
+    "public-browser.sqlite": {
+      "url": "https://cdn.scottylabs.org/courses/sqlite-releases/baa90f5b-b05d-41a0-aadb-62036ae09e44/public-browser.sqlite.enc",
+      "sha256": "072d16d5f6bf4408276f14ffa7fa13b83c97a7f0ac7545c45736fd7efa724ff3",
+      "bytes": 4568323,
+      "plain_sha256": "0498b2fcce14697da93a1849a9aabf7a94c7996f45a85777a1a88bee69c63e3d",
+      "plain_bytes": 47095808
+    },
+    "member-browser.sqlite": {
+      "url": "https://cdn.scottylabs.org/courses/sqlite-releases/baa90f5b-b05d-41a0-aadb-62036ae09e44/member-browser.sqlite.enc",
+      "sha256": "ca3ec5563b055c7a2bdce0af75538c969d4b79696a4bf6877c6035d8bc06671b",
+      "bytes": 6346917,
+      "plain_sha256": "3a5badccc9ee149b6e0a0ae127976dcf01a33265aee3227cc8cf8994f93dcbf9",
+      "plain_bytes": 57905152
+    },
+    "public-browser.sqlite.gz": {
+      "url": "https://cdn.scottylabs.org/courses/sqlite-releases/baa90f5b-b05d-41a0-aadb-62036ae09e44/public-browser.sqlite.gz.enc",
+      "sha256": "9d3cf5c082e49c6c511ad0ffa0a5d16ac644a5ba55cb60a2586afa146d621e92",
+      "bytes": 4542872,
+      "plain_sha256": "50ef1f6b927b339ff3bc47a38b7e28cc3ff58c5e20ba4fc8cf4b4df47bd3f75c",
+      "plain_bytes": 4568317
+    },
+    "member-browser.sqlite.gz": {
+      "url": "https://cdn.scottylabs.org/courses/sqlite-releases/baa90f5b-b05d-41a0-aadb-62036ae09e44/member-browser.sqlite.gz.enc",
+      "sha256": "91f92960c707744f990db59ab6578372d8a6ebc0074db8606b3f5ca83dbb9f5a",
+      "bytes": 6312081,
+      "plain_sha256": "2ff93cc98402fb6e08a06dbe8f4d249c1e87f745b79693064dafcc9b16f3fd14",
+      "plain_bytes": 6346911
+    }
+  }
+}

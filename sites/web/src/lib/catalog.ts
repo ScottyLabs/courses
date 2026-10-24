@@ -20,14 +20,8 @@ async function version(signal: AbortSignal): Promise<string> {
 }
 
 async function digest(value: string) {
-  const bytes = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value),
-  );
-  return Array.from(
-    new Uint8Array(bytes),
-    (byte) => byte.toString(16).padStart(2, "0"),
-  ).join("");
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 async function directory() {
@@ -38,19 +32,15 @@ async function directory() {
   } // Unsupported/private storage: use memory instead.
 }
 
-async function remove(
-  root: FileSystemDirectoryHandle | undefined,
-  name: string,
-) {
+async function remove(root: FileSystemDirectoryHandle | undefined, name: string) {
   try {
     await root?.removeEntry(name);
-  } catch { /* best effort */ }
+  } catch {
+    /* best effort */
+  }
 }
 
-async function readLimited(
-  stream: ReadableStream<Uint8Array>,
-  signal: AbortSignal,
-) {
+async function readLimited(stream: ReadableStream<Uint8Array>, signal: AbortSignal) {
   const reader = stream.getReader();
   const chunks: Uint8Array<ArrayBuffer>[] = [];
   let size = 0;
@@ -84,7 +74,9 @@ export async function loadCatalog(scope: string, signal: AbortSignal) {
     if (file && file.size <= MAX_BYTES) {
       bytes = new Uint8Array(await file.arrayBuffer());
     }
-  } catch { /* miss or storage unavailable */ }
+  } catch {
+    /* miss or storage unavailable */
+  }
   const fromCache = !!bytes;
   if (!bytes) {
     const response = await fetch("/api/catalog/binary", {
@@ -104,7 +96,7 @@ export async function loadCatalog(scope: string, signal: AbortSignal) {
         signal,
       );
     }
-    if (await version(signal) !== hash) {
+    if ((await version(signal)) !== hash) {
       throw new Error("Catalog changed during download");
     }
   }
@@ -126,9 +118,9 @@ export async function loadCatalog(scope: string, signal: AbortSignal) {
       if (!root || fromCache) return;
       signal.throwIfAborted();
       try {
-        const writable =
-          await (await root.getFileHandle(filename, { create: true }))
-            .createWritable();
+        const writable = await (
+          await root.getFileHandle(filename, { create: true })
+        ).createWritable();
         try {
           await writable.write(validatedBytes);
           signal.throwIfAborted();
@@ -142,7 +134,9 @@ export async function loadCatalog(scope: string, signal: AbortSignal) {
             await remove(root, name);
           }
         }
-      } catch { /* Quota/cache failure must not prevent local queries. */ }
+      } catch {
+        /* Quota/cache failure must not prevent local queries. */
+      }
     },
   };
 }
@@ -154,5 +148,7 @@ export async function clearCatalogCache() {
     for await (const name of root.keys()) {
       if (name.startsWith(PREFIX) || name.startsWith("catalog-v1-")) await remove(root, name);
     }
-  } catch { /* best effort */ }
+  } catch {
+    /* best effort */
+  }
 }

@@ -1,25 +1,12 @@
 import { type api as Api, ApiError } from "./contracts";
-import type {
-  CatalogState,
-  LocalCatalog,
-  LocalCatalogFactory,
-} from "./data-source";
+import type { CatalogState, LocalCatalog, LocalCatalogFactory } from "./data-source";
 
 type RemoteApi = typeof Api;
-type CatalogMethod =
-  | "terms"
-  | "courses"
-  | "course"
-  | "instructors"
-  | "instructor"
-  | "geneds";
+type CatalogMethod = "terms" | "courses" | "course" | "instructors" | "instructor" | "geneds";
 const SESSION_CHECK_MS = 60_000;
 
 /** UI-facing repository: API during warmup; local catalog reads after readiness. */
-export function createDataClient(
-  remote: RemoteApi,
-  loadLocal: LocalCatalogFactory,
-) {
+export function createDataClient(remote: RemoteApi, loadLocal: LocalCatalogFactory) {
   let local: LocalCatalog | undefined;
   let controller: AbortController | undefined;
   let generation = 0;
@@ -54,63 +41,69 @@ export function createDataClient(
     const signal = controller.signal;
     const started = generation;
     publish({ status: "loading" });
-    void loadLocal(null, signal).then((loaded) => {
-      if (signal.aborted || started !== generation) { loaded.dispose(); return; }
-      local = loaded; publish({ status: "ready" });
-    }).catch((cause) => {
-      if (!signal.aborted && started === generation) publish({ status: "unavailable", error: String(cause) });
-    });
+    void loadLocal(null, signal)
+      .then((loaded) => {
+        if (signal.aborted || started !== generation) {
+          loaded.dispose();
+          return;
+        }
+        local = loaded;
+        publish({ status: "ready" });
+      })
+      .catch((cause) => {
+        if (!signal.aborted && started === generation) {
+          publish({ status: "unavailable", error: String(cause) });
+        }
+      });
   }
 
   async function me() {
     if (identityRequest) return identityRequest;
     const started = generation;
-    identityRequest = remote.me().then((user) => {
-      if (started !== generation) {
-        throw new ApiError(401, "Session changed. Please try again.");
-      }
-      checkedAt = Date.now();
-      const nextScope = JSON.stringify([
-        user.subject,
-        user.can_create,
-        user.is_admin,
-      ]);
-      if (scope !== nextScope || state.status === "unavailable") {
-        if (scope && scope !== nextScope) reset();
+    identityRequest = remote
+      .me()
+      .then((user) => {
+        if (started !== generation) {
+          throw new ApiError(401, "Session changed. Please try again.");
+        }
         checkedAt = Date.now();
-        scope = nextScope;
-        controller = new AbortController();
-        const signal = controller.signal;
-        const loadingGeneration = generation;
-        publish({ status: "loading" });
-        // Loading never delays the identity request or the first catalog query.
-        void Promise.resolve().then(() => loadLocal(user, signal)).then(
-          (loaded) => {
-            if (signal.aborted || loadingGeneration !== generation) {
-              loaded.dispose();
-              return;
-            }
-            local = loaded;
-            publish({ status: "ready" });
-          },
-        ).catch((cause) => {
-          if (signal.aborted || loadingGeneration !== generation) return;
-          publish({
-            status: "unavailable",
-            error: cause instanceof Error
-              ? cause.message
-              : "Local catalog unavailable",
-          });
-        });
-      }
-      return user;
-    }).catch((cause) => {
-      if (started === generation) {
-        if (cause instanceof ApiError && cause.status === 401) warmPublic();
-        else if (scope) reset();
-      }
-      throw cause;
-    })
+        const nextScope = JSON.stringify([user.subject, user.can_create, user.is_admin]);
+        if (scope !== nextScope || state.status === "unavailable") {
+          if (scope && scope !== nextScope) reset();
+          checkedAt = Date.now();
+          scope = nextScope;
+          controller = new AbortController();
+          const signal = controller.signal;
+          const loadingGeneration = generation;
+          publish({ status: "loading" });
+          // Loading never delays the identity request or the first catalog query.
+          void Promise.resolve()
+            .then(() => loadLocal(user, signal))
+            .then((loaded) => {
+              if (signal.aborted || loadingGeneration !== generation) {
+                loaded.dispose();
+                return;
+              }
+              local = loaded;
+              publish({ status: "ready" });
+            })
+            .catch((cause) => {
+              if (signal.aborted || loadingGeneration !== generation) return;
+              publish({
+                status: "unavailable",
+                error: cause instanceof Error ? cause.message : "Local catalog unavailable",
+              });
+            });
+        }
+        return user;
+      })
+      .catch((cause) => {
+        if (started === generation) {
+          if (cause instanceof ApiError && cause.status === 401) warmPublic();
+          else if (scope) reset();
+        }
+        throw cause;
+      })
       .finally(() => {
         identityRequest = undefined;
       });
@@ -124,8 +117,11 @@ export function createDataClient(
     if (local) {
       // Recheck the session before using protected cached data after the TTL.
       if (Date.now() - checkedAt >= SESSION_CHECK_MS) {
-        try { await me(); } catch (cause) {
-          if (!(cause instanceof ApiError && cause.status === 401 && scope === "public")) throw cause;
+        try {
+          await me();
+        } catch (cause) {
+          if (!(cause instanceof ApiError && cause.status === 401 && scope === "public"))
+            throw cause;
           checkedAt = Date.now();
         }
       }
@@ -133,9 +129,9 @@ export function createDataClient(
       const started = generation;
       if (provider) {
         try {
-          const result = await (provider[method] as (
-            ...values: typeof args
-          ) => Promise<unknown>)(...args);
+          const result = await (provider[method] as (...values: typeof args) => Promise<unknown>)(
+            ...args,
+          );
           if (started !== generation) {
             throw new ApiError(401, "Session changed. Please try again.");
           }
@@ -149,62 +145,55 @@ export function createDataClient(
           local = undefined;
           publish({
             status: "unavailable",
-            error: cause instanceof Error
-              ? cause.message
-              : "Local query failed",
+            error: cause instanceof Error ? cause.message : "Local query failed",
           });
         }
       }
     }
     const started = generation;
     try {
-      const result =
-        await (remote[method] as (...values: typeof args) => Promise<unknown>)(
-          ...args,
-        );
+      const result = await (remote[method] as (...values: typeof args) => Promise<unknown>)(
+        ...args,
+      );
       if (started !== generation) {
         throw new ApiError(401, "Session changed. Please try again.");
       }
       return result as Awaited<ReturnType<RemoteApi[K]>>;
     } catch (cause) {
-      if (
-        started === generation && cause instanceof ApiError &&
-        [401, 403].includes(cause.status)
-      ) reset();
+      if (started === generation && cause instanceof ApiError && [401, 403].includes(cause.status))
+        reset();
       throw cause;
     }
   }
 
   const server = Object.fromEntries(
-    Object.entries(remote).map((
-      [name, method],
-    ) => [name, async (...args: unknown[]) => {
-      const started = generation;
-      try {
-        return await (method as (...values: unknown[]) => Promise<unknown>)(
-          ...args,
-        );
-      } catch (cause) {
-        if (
-          started === generation && cause instanceof ApiError &&
-          [401, 403].includes(cause.status)
-        ) reset();
-        throw cause;
-      }
-    }]),
+    Object.entries(remote).map(([name, method]) => [
+      name,
+      async (...args: unknown[]) => {
+        const started = generation;
+        try {
+          return await (method as (...values: unknown[]) => Promise<unknown>)(...args);
+        } catch (cause) {
+          if (
+            started === generation &&
+            cause instanceof ApiError &&
+            [401, 403].includes(cause.status)
+          )
+            reset();
+          throw cause;
+        }
+      },
+    ]),
   ) as RemoteApi;
 
   return {
     ...server, // Personal data and every mutation always use the API.
     me,
     terms: () => read("terms", []),
-    courses: (...args: Parameters<RemoteApi["courses"]>) =>
-      read("courses", args),
+    courses: (...args: Parameters<RemoteApi["courses"]>) => read("courses", args),
     course: (...args: Parameters<RemoteApi["course"]>) => read("course", args),
-    instructors: (...args: Parameters<RemoteApi["instructors"]>) =>
-      read("instructors", args),
-    instructor: (...args: Parameters<RemoteApi["instructor"]>) =>
-      read("instructor", args),
+    instructors: (...args: Parameters<RemoteApi["instructors"]>) => read("instructors", args),
+    instructor: (...args: Parameters<RemoteApi["instructor"]>) => read("instructor", args),
     geneds: () => read("geneds", []),
     resetLocalCatalog: reset,
     subscribeCatalog(listener: (state: CatalogState) => void) {

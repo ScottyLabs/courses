@@ -79,6 +79,7 @@ export type Instructor = {
 };
 export type InstructorResults = { items: Instructor[]; total: number };
 export type Friend = {
+  status: "accepted" | "incoming" | "outgoing";
   id: string;
   name: string;
   department?: string;
@@ -112,7 +113,10 @@ export type Schedule = {
 };
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -133,7 +137,9 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
     let message = `Request failed (${response.status})`;
     try {
       message = (await response.json()).message ?? message;
-    } catch { /* empty response */ }
+    } catch {
+      /* empty response */
+    }
     throw new ApiError(response.status, message);
   }
   if (response.status === 204) return undefined as T;
@@ -149,30 +155,50 @@ const query = (params: Record<string, string | number | undefined>) => {
 };
 
 export const api = {
-  savedCourses: (status = "saved") => json<Course[]>(`/api/profile/courses?${query({ status })}`),
-  saveCourse: (code: string) => json(`/api/profile/courses/${encodeURIComponent(code)}`, { method: "PUT", body: JSON.stringify({ status: "saved" }) }),
-  unsaveCourse: (code: string) => json<void>(`/api/profile/courses/${encodeURIComponent(code)}`, { method: "DELETE" }),
-  programs: (search = "") => json<{ items: { id: string; name: string; audit_name: string }[]; total: number }>(`/api/programs?${query({ search })}`),
-  program: (id: string) => json<{ id: string; name: string; tree: unknown; requirements_text?: string; source_url?: string; catalog_year?: string }>(`/api/programs/${encodeURIComponent(id)}`),
+  savedCourses: (status = "saved") =>
+    json<(Course & { term_id?: string })[]>(`/api/profile/courses?${query({ status })}`),
+  saveCourse: (code: string) =>
+    json(`/api/profile/courses/${encodeURIComponent(code)}`, {
+      method: "PUT",
+      body: JSON.stringify({ status: "saved" }),
+    }),
+  unsaveCourse: (code: string) =>
+    json<void>(`/api/profile/courses/${encodeURIComponent(code)}`, {
+      method: "DELETE",
+    }),
+  programs: (search = "") =>
+    json<{
+      items: { id: string; name: string; audit_name: string }[];
+      total: number;
+    }>(`/api/programs?${query({ search })}`),
+  program: (id: string) =>
+    json<{
+      id: string;
+      name: string;
+      tree: unknown;
+      requirements_text?: string;
+      source_url?: string;
+      catalog_year?: string;
+    }>(`/api/programs/${encodeURIComponent(id)}`),
   me: () => json<User>("/api/me"),
   terms: () => json<Term[]>("/api/terms"),
-  courses: (params: CourseQuery) =>
-    json<CourseResults>(`/api/courses?${query(params)}`),
+  courses: (params: CourseQuery) => json<CourseResults>(`/api/courses?${query(params)}`),
   course: (code: string, term?: string) =>
     json<Course>(`/api/courses/${encodeURIComponent(code)}?${query({ term })}`),
-  instructors: (search: string) =>
-    json<InstructorResults>(`/api/instructors?${query({ search })}`),
-  instructor: (id: string) =>
-    json<Instructor>(`/api/instructors/${encodeURIComponent(id)}`),
+  instructors: (search: string) => json<InstructorResults>(`/api/instructors?${query({ search })}`),
+  instructor: (id: string) => json<Instructor>(`/api/instructors/${encodeURIComponent(id)}`),
   geneds: () => json<Gened[]>("/api/geneds"),
   finals: (term: string, courses?: string[]) =>
-    json<FinalExam[]>(
-      `/api/finals?${query({ term, courses: courses?.join(",") })}`,
-    ),
-  uploadFinals: async (file: File) => {
+    json<FinalExam[]>(`/api/finals?${query({ term, courses: courses?.join(",") })}`),
+  clearFinals: (term: string) =>
+    json<void>(`/api/finals/import?${query({ term })}`, { method: "DELETE" }),
+  uploadFinals: async (file: File, term: string) => {
     const body = new FormData();
     body.set("calendar", file);
-    return json<FinalExam[]>("/api/finals/import", { method: "POST", body });
+    return json<FinalExam[]>(`/api/finals/import?${query({ term })}`, {
+      method: "POST",
+      body,
+    });
   },
   schedules: () => json<Schedule[]>("/api/schedules"),
   saveSchedule: (schedule: Schedule) =>
@@ -192,19 +218,48 @@ export const api = {
   sharedSchedule: (shareId: string) =>
     json<Schedule>(`/api/shared-schedules/${encodeURIComponent(shareId)}`),
   shareSchedule: (id: string) =>
-    json<{ share_id: string }>(
-      `/api/schedules/${encodeURIComponent(id)}/share`,
-      {
-        method: "POST",
-      },
-    ),
-  revokeScheduleShare: (id: string) => json<void>(`/api/schedules/${encodeURIComponent(id)}/share`, { method: "DELETE" }),
+    json<{ share_id: string }>(`/api/schedules/${encodeURIComponent(id)}/share`, {
+      method: "POST",
+    }),
+  revokeScheduleShare: (id: string) =>
+    json<void>(`/api/schedules/${encodeURIComponent(id)}/share`, {
+      method: "DELETE",
+    }),
+  setHistory: (code: string, status: "taking" | "taken", term_id: string) =>
+    json(`/api/profile/courses/${encodeURIComponent(code)}`, {
+      method: "PUT",
+      body: JSON.stringify({ status, term_id }),
+    }),
+  removeHistory: (code: string, status: "taking" | "taken", term_id: string) =>
+    json<void>(`/api/profile/courses/${encodeURIComponent(code)}?${query({ status, term_id })}`, {
+      method: "DELETE",
+    }),
+  acceptFriend: (id: string) =>
+    json<void>(`/api/profile/friends/${encodeURIComponent(id)}/accept`, {
+      method: "POST",
+    }),
+  removeFriend: (id: string) =>
+    json<void>(`/api/profile/friends/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
+  redeemFriendInvite: (token: string) =>
+    json<void>(`/api/profile/friend-invites/${encodeURIComponent(token)}/redeem`, {
+      method: "POST",
+    }),
+  revokeFriendInvite: (token: string) =>
+    json<void>(`/api/profile/friend-invites/${encodeURIComponent(token)}`, {
+      method: "DELETE",
+    }),
+  setFriendVisibility: (share_courses: boolean) =>
+    json(`/api/profile/friend-visibility`, {
+      method: "PUT",
+      body: JSON.stringify({ share_courses }),
+    }),
   friends: () => json<Friend[]>("/api/profile/friends"),
   addFriend: (andrewId: string) =>
     json<Friend>("/api/profile/friends", {
       method: "POST",
       body: JSON.stringify({ andrew_id: andrewId }),
     }),
-  friendInvite: () =>
-    json<{ url: string }>("/api/profile/friend-invites", { method: "POST" }),
+  friendInvite: () => json<{ url: string }>("/api/profile/friend-invites", { method: "POST" }),
 };

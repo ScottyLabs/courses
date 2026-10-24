@@ -26,8 +26,7 @@ values nullable; missing ratings, enrollment, and meeting times are not zero.
 ### Stable identifiers
 
 - Give application records opaque stable IDs. Resolve the authenticated
-  principal to an internal user ID using the unique pair `(oidc_issuer,
-  oidc_subject)`; names and Andrew IDs are not identity keys.
+  principal to an internal user ID using the unique pair `(oidc_issuer, oidc_subject)`; names and Andrew IDs are not identity keys.
 - Use canonical course codes such as `15-251` for durable course references.
   The dense `CourseId` in `crates/courses-index/src/doc.rs` is assigned at
   build time and must not be persisted as a cross-build foreign key.

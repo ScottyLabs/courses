@@ -20,10 +20,7 @@ export interface LocalCatalog {
   dispose(): void;
 }
 
-export type LocalCatalogFactory = (
-  user: User | null,
-  signal: AbortSignal,
-) => Promise<LocalCatalog>;
+export type LocalCatalogFactory = (user: User | null, signal: AbortSignal) => Promise<LocalCatalog>;
 export type CatalogState = {
   status: "idle" | "loading" | "ready" | "unavailable";
   error?: string;

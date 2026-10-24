@@ -2,6 +2,10 @@
 
 Course browsing app with a Svelte frontend and Rust API.
 
+## Maintainers
+
+Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matrix](sites/docs/src/features.md), and [deployment runbook](sites/docs/src/deployment.md).
+
 ## Setup
 
 Log in to OpenBao and set up devenv by following kennel's [local development](https://docs.kennel.scottylabs.org/guides/secrets.html#local-development) and [devenv setup](https://docs.kennel.scottylabs.org/guides/deploying.html#2-set-up-devenv) guides. The `dev` profile loads secrets automatically.

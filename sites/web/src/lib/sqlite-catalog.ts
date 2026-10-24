@@ -1,7 +1,9 @@
 import type { Course, CourseQuery, Gened, Instructor, Term } from "./contracts";
 import type { LocalCatalog } from "./data-source";
 
-export type SqlConnection = { query(sql: string, params?: (string | number)[]): Promise<Record<string, any>[]> };
+export type SqlConnection = {
+  query(sql: string, params?: (string | number)[]): Promise<Record<string, any>[]>;
+};
 async function rows(connection: SqlConnection, sql: string, params: (string | number)[] = []) {
   return connection.query(sql, params);
 }
@@ -14,20 +16,12 @@ export async function createSQLiteCatalog(
   connection: SqlConnection,
   dispose: () => void,
 ): Promise<LocalCatalog> {
-  const metadata = await rows(
-    connection,
-    "SELECT schema_version FROM catalog_metadata",
-  );
+  const metadata = await rows(connection, "SELECT schema_version FROM catalog_metadata");
   if (metadata.length !== 1 || metadata[0].schema_version !== 1) {
     throw new Error("Unsupported SQLite catalog schema");
   }
-  const coverageRows = await rows(
-    connection,
-    "SELECT dataset, term_id FROM catalog_coverage",
-  );
-  const coverage = new Set(
-    coverageRows.map((row) => `${row.dataset}:${row.term_id}`),
-  );
+  const coverageRows = await rows(connection, "SELECT dataset, term_id FROM catalog_coverage");
+  const coverage = new Set(coverageRows.map((row) => `${row.dataset}:${row.term_id}`));
   // Validate expected columns before switching any reads away from the API.
   const schemas = [
     "SELECT id, sort_order, payload_json FROM catalog_terms LIMIT 0",
@@ -36,16 +30,14 @@ export async function createSQLiteCatalog(
     "SELECT id, payload_json FROM catalog_geneds LIMIT 0",
   ];
   for (const sql of schemas) await rows(connection, sql);
-  const covered = (dataset: string, term = "") =>
-    coverage.has(`${dataset}:${term}`);
+  const covered = (dataset: string, term = "") => coverage.has(`${dataset}:${term}`);
 
   return {
     async terms() {
       if (!covered("terms")) return undefined;
-      return (await rows(
-        connection,
-        "SELECT payload_json FROM catalog_terms ORDER BY sort_order, id",
-      )).map((row) => payload<Term>(row));
+      return (
+        await rows(connection, "SELECT payload_json FROM catalog_terms ORDER BY sort_order, id")
+      ).map((row) => payload<Term>(row));
     },
     async courses(query: CourseQuery) {
       const term = query.term ?? "";
@@ -56,10 +48,7 @@ export async function createSQLiteCatalog(
         where.push(
           "(instr(lower(code || ' ' || name || ' ' || description), ?) > 0 OR instr(replace(code, '-', ''), ?) > 0)",
         );
-        params.push(
-          query.search.trim().toLowerCase(),
-          query.search.trim().replaceAll("-", ""),
-        );
+        params.push(query.search.trim().toLowerCase(), query.search.trim().replaceAll("-", ""));
       }
       if (query.department) {
         where.push("(lower(department) = lower(?) OR substr(code,1,length(?)) = ?)");
@@ -83,10 +72,7 @@ export async function createSQLiteCatalog(
       }
       const clause = where.join(" AND ");
       const page = Math.max(1, Math.trunc(query.page ?? 1));
-      const pageSize = Math.max(
-        1,
-        Math.min(100, Math.trunc(query.page_size ?? 12)),
-      );
+      const pageSize = Math.max(1, Math.min(100, Math.trunc(query.page_size ?? 12)));
       const count = await rows(
         connection,
         `SELECT count(*) AS total FROM catalog_courses WHERE ${clause}`,
@@ -137,10 +123,9 @@ export async function createSQLiteCatalog(
     },
     async geneds() {
       if (!covered("geneds")) return undefined;
-      return (await rows(
-        connection,
-        "SELECT payload_json FROM catalog_geneds ORDER BY id",
-      )).map((row) => payload<Gened>(row));
+      return (await rows(connection, "SELECT payload_json FROM catalog_geneds ORDER BY id")).map(
+        (row) => payload<Gened>(row),
+      );
     },
     dispose,
   };

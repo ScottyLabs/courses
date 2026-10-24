@@ -1,6 +1,7 @@
 //! CMU-authenticated personal storage and public/member SQLite course catalogs.
 mod auth;
 mod backend;
+mod catalog_release;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -128,15 +129,12 @@ async fn main() -> Result<()> {
 }
 
 async fn build_app(oidc_config: OidcConfig) -> Result<Router> {
-    let backend = backend::Backend::open(
-        std::env::var("CATALOG_DIR")
-            .unwrap_or_else(|_| "data/catalog".into())
-            .into(),
-        std::env::var("USER_DB_PATH")
-            .unwrap_or_else(|_| "data/private/users.sqlite".into())
-            .into(),
-        oidc_config.app_url.clone(),
-    )?;
+    let user_path = std::env::var("USER_DB_PATH")
+        .or_else(|_| std::env::var("DATABASE_PATH"))
+        .unwrap_or_else(|_| "data/private/users.sqlite".into());
+    let catalog_path = catalog_release::prepare(&user_path).await?;
+    let backend =
+        backend::Backend::open(catalog_path, user_path.into(), oidc_config.app_url.clone())?;
     let session_store = MemoryStore::default();
     let session_layer = ServiceBuilder::new().layer(
         SessionManagerLayer::new(session_store)
@@ -207,6 +205,11 @@ async fn build_app(oidc_config: OidcConfig) -> Result<Router> {
         .route("/api/instructors", get(backend::instructors))
         .route("/api/instructors/{id}", get(backend::instructor))
         .route("/api/geneds", get(backend::geneds))
+        .route("/api/finals", get(backend::finals))
+        .route(
+            "/api/finals/import",
+            axum::routing::post(backend::import_finals).delete(backend::clear_finals),
+        )
         .route("/api/programs", get(backend::programs))
         .route("/api/programs/{id}", get(backend::program))
         .route(
@@ -222,6 +225,34 @@ async fn build_app(oidc_config: OidcConfig) -> Result<Router> {
             axum::routing::post(backend::share).delete(backend::revoke_share),
         )
         .route("/api/shared-schedules/{id}", get(backend::shared))
+        .route(
+            "/api/profile/friend-visibility",
+            axum::routing::put(backend::friend_visibility),
+        )
+        .route(
+            "/api/profile/friends",
+            get(backend::friends).post(backend::request_friend),
+        )
+        .route(
+            "/api/profile/friends/{id}/accept",
+            axum::routing::post(backend::accept_friend),
+        )
+        .route(
+            "/api/profile/friends/{id}",
+            axum::routing::delete(backend::remove_friend),
+        )
+        .route(
+            "/api/profile/friend-invites",
+            axum::routing::post(backend::invite),
+        )
+        .route(
+            "/api/profile/friend-invites/{token}/redeem",
+            axum::routing::post(backend::redeem_invite),
+        )
+        .route(
+            "/api/profile/friend-invites/{token}",
+            axum::routing::delete(backend::revoke_invite),
+        )
         .route("/api/profile/courses", get(backend::saved))
         .route(
             "/api/profile/courses/{code}",
@@ -278,8 +309,11 @@ async fn build_app(oidc_config: OidcConfig) -> Result<Router> {
 }
 
 #[utoipa::path(get, path = "/api/health", tag = "health", responses((status = OK, body = str)))]
-async fn health() -> &'static str {
-    "ok"
+async fn health(
+    Extension(backend): Extension<backend::Backend>,
+) -> Result<&'static str, backend::ApiError> {
+    backend.ready()?;
+    Ok("ok")
 }
 
 /// Login entry point that runs OIDC then returns to the app root

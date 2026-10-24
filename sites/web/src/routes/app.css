@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 :root {
-  font-family: Inter,Arial,sans-serif;
+  font-family: Inter, Arial, sans-serif;
   color: #4a5662;
   background: #f0f4f8;
 }
@@ -190,7 +190,7 @@ p {
   width: 18px;
   height: 18px;
 }
-.rail-section input:not([type=range]),
+.rail-section input:not([type="range"]),
 .rail-section select,
 .schedule-rail-section select,
 .aggregate select {
@@ -203,7 +203,7 @@ p {
   width: 100%;
   outline: none;
 }
-.rail-section input:not([type=range]) {
+.rail-section input:not([type="range"]) {
   height: 30px;
 }
 .rail-section input:focus,
@@ -220,7 +220,7 @@ p {
   margin-top: 10px;
 }
 .rail-section select:disabled {
-  opacity: .55;
+  opacity: 0.55;
 }
 .inline-icon {
   font-size: 18px;
@@ -379,7 +379,7 @@ p {
   border-radius: 9px;
   padding: 31px 35px 28px;
   display: grid;
-  grid-template-columns: minmax(0,1.45fr) minmax(185px,.6fr) 72px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(185px, 0.6fr) 72px;
   grid-template-rows: auto 1fr;
   column-gap: 22px;
   color: #4a5662;
@@ -543,7 +543,7 @@ p {
   border-radius: 5px;
 }
 .pager button:disabled {
-  opacity: .4;
+  opacity: 0.4;
 }
 .site-footer {
   height: 81px;
@@ -637,7 +637,7 @@ p {
   color: #4a5662;
   font-size: 24px;
   font-weight: 500;
-  width: min(100%,250px);
+  width: min(100%, 250px);
 }
 .schedule-title span {
   font-size: 22px;
@@ -666,7 +666,7 @@ p {
 }
 .weekly-calendar {
   display: grid;
-  grid-template-columns: 24px repeat(5,minmax(0,1fr));
+  grid-template-columns: 24px repeat(5, minmax(0, 1fr));
   padding: 20px 0 0;
   background: #fff;
   border-top: 20px solid #f0f4f8;
@@ -794,7 +794,7 @@ p {
   border: 1px solid #c7d5e1;
   border-radius: 7px;
   padding: 32px;
-  width: min(100%,520px);
+  width: min(100%, 520px);
 }
 .profile-initial {
   width: 55px;
@@ -823,7 +823,7 @@ p {
   z-index: 20;
 }
 .drawer {
-  width: min(530px,100%);
+  width: min(530px, 100%);
   height: 100%;
   overflow: auto;
   background: #fff;
@@ -919,9 +919,9 @@ p {
   padding: 10px;
 }
 .dark {
-  filter: invert(.9) hue-rotate(180deg);
+  filter: invert(0.9) hue-rotate(180deg);
 }
-@media (max-width:1250px) {
+@media (max-width: 1250px) {
   .filter-rail {
     flex-basis: 285px;
     width: 285px;
@@ -948,7 +948,7 @@ p {
     font-size: 14px;
   }
   .figma-course-card {
-    grid-template-columns: minmax(0,1fr) 160px 50px;
+    grid-template-columns: minmax(0, 1fr) 160px 50px;
   }
   .requirements {
     white-space: normal;
@@ -957,7 +957,7 @@ p {
     font-size: 14px;
   }
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .site-header {
     height: 64px;
     padding: 0 18px;
@@ -1014,14 +1014,14 @@ p {
     top: 64px;
     bottom: 0;
     overflow: auto;
-    width: min(90vw,360px);
+    width: min(90vw, 360px);
   }
   .catalog-search {
     height: auto;
     padding: 15px 20px;
   }
   .catalog-search:before {
-    content: '☷  Filter by';
+    content: "☷  Filter by";
     display: block;
     margin-bottom: 12px;
   }
@@ -1032,7 +1032,7 @@ p {
   .figma-course-card {
     padding: 19px;
     min-height: 0;
-    grid-template-columns: minmax(0,1fr) 110px 32px;
+    grid-template-columns: minmax(0, 1fr) 110px 32px;
     column-gap: 10px;
   }
   .course-title {
@@ -1072,7 +1072,7 @@ p {
     min-height: calc(100vh - 130px);
   }
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .header-actions .signout img {
     display: none;
   }
@@ -1086,7 +1086,7 @@ p {
     width: 100px;
   }
   .figma-course-card {
-    grid-template-columns: minmax(0,1fr) 32px;
+    grid-template-columns: minmax(0, 1fr) 32px;
     grid-template-rows: auto auto auto;
   }
   .course-main {
@@ -1130,7 +1130,7 @@ p {
   }
   .weekly-calendar {
     overflow: auto;
-    grid-template-columns: 24px repeat(5,minmax(110px,1fr));
+    grid-template-columns: 24px repeat(5, minmax(110px, 1fr));
     width: 100%;
   }
   .finals-row {
@@ -1155,7 +1155,7 @@ p {
 .mobile-avatar {
   display: none;
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .site-header {
     height: 111px;
     position: relative;
@@ -1233,7 +1233,7 @@ p {
     background: #f0f4f8;
   }
   .catalog-search:before {
-    content: 'Search';
+    content: "Search";
     font-size: 24px;
     color: #000;
     font-weight: 500;
@@ -1249,7 +1249,7 @@ p {
     display: none;
   }
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .site-nav {
     gap: 27px;
   }
@@ -1390,7 +1390,7 @@ p {
 }
 .saved-grid {
   display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 .saved-card {
@@ -1441,7 +1441,7 @@ p {
   padding: 30px;
   color: #7a8fa3;
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .profile-rail {
     display: block;
     min-height: auto;
@@ -1476,7 +1476,7 @@ p {
     gap: 12px;
   }
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .profile-rail {
     flex-basis: 90px;
     width: 90px;
@@ -1532,7 +1532,7 @@ p {
 }
 .instructor-summary {
   display: grid;
-  grid-template-columns: 1.2fr repeat(3,1fr);
+  grid-template-columns: 1.2fr repeat(3, 1fr);
   gap: 12px;
   align-items: start;
 }
@@ -1587,7 +1587,7 @@ p {
 .instructor-data-head,
 .instructor-data-row {
   display: grid;
-  grid-template-columns: .8fr .8fr .8fr .8fr .9fr .9fr .9fr;
+  grid-template-columns: 0.8fr 0.8fr 0.8fr 0.8fr 0.9fr 0.9fr 0.9fr;
   gap: 12px;
   padding: 5px 10px;
 }
@@ -1597,7 +1597,7 @@ p {
 .instructor-data-row {
   color: #4a5662;
 }
-@media (max-width:1100px) {
+@media (max-width: 1100px) {
   .instructor-summary {
     grid-template-columns: 1fr 1fr;
   }
@@ -1609,7 +1609,7 @@ p {
     min-width: 650px;
   }
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .instructor-results {
     padding: 15px;
   }
@@ -1632,7 +1632,7 @@ p {
 .expand-course {
   display: none;
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .filter-rail.visible {
     position: fixed;
     z-index: 30;
@@ -1747,9 +1747,9 @@ p {
     accent-color: #0096db;
   }
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .figma-course-card {
-    grid-template-columns: minmax(0,1fr) 90px 26px;
+    grid-template-columns: minmax(0, 1fr) 90px 26px;
     grid-template-rows: auto auto auto auto;
     gap: 0 6px;
     padding: 16px;
@@ -1813,7 +1813,7 @@ p {
     font-size: 16px;
     height: 42px;
   }
-  .rail-section input:not([type=range]),
+  .rail-section input:not([type="range"]),
   .rail-section select {
     font-size: 14px;
   }
@@ -1831,7 +1831,7 @@ p {
 .mobile-search-input {
   display: none;
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .site-nav::-webkit-scrollbar {
     display: none;
   }
@@ -1869,7 +1869,7 @@ p {
     position: relative;
   }
   .unit-range:before {
-    content: '';
+    content: "";
     width: 10px;
     height: 10px;
     background: #0096db;
@@ -1880,15 +1880,18 @@ p {
     transform: translateY(-50%);
     pointer-events: none;
   }
-  .unit-range input[type=range] {
+  .unit-range input[type="range"] {
     appearance: none;
     -webkit-appearance: none;
-    background: linear-gradient(to right,#0096db var(--unit-progress),#9eb1c2
-      var(--unit-progress));
+    background: linear-gradient(
+      to right,
+      #0096db var(--unit-progress),
+      #9eb1c2 var(--unit-progress)
+    );
     height: 2px;
     outline: none;
   }
-  .unit-range input[type=range]::-webkit-slider-thumb {
+  .unit-range input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 12px;
     height: 12px;
@@ -1896,7 +1899,7 @@ p {
     border: 0;
     border-radius: 50%;
   }
-  .unit-range input[type=range]::-moz-range-thumb {
+  .unit-range input[type="range"]::-moz-range-thumb {
     width: 12px;
     height: 12px;
     background: #0096db;
@@ -1904,9 +1907,9 @@ p {
     border-radius: 50%;
   }
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .figma-course-card {
-    grid-template-columns: minmax(0,1fr) 102px 26px;
+    grid-template-columns: minmax(0, 1fr) 102px 26px;
   }
   .course-title {
     max-width: calc(100% - 105px);
@@ -1946,13 +1949,13 @@ p {
 .filter-group-label span:last-child {
   margin-left: auto;
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .filter-group-label {
     font-size: 16px;
     height: 42px;
   }
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .figma-course-card {
     display: block;
     position: relative;
@@ -1999,7 +2002,7 @@ p {
 .mobile-profile {
   display: none;
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .app-body:has(.mobile-profile) .profile-rail,
   .app-body:has(.mobile-profile) .profile-work {
     display: none;
@@ -2114,13 +2117,14 @@ p {
     color: #7a8fa3;
   }
 }
-@media (max-width:800px) {}
-@media (max-width:800px) {
+@media (max-width: 800px) {
+}
+@media (max-width: 800px) {
   .site-header:has(+ .app-body .catalog-search) .site-nav button:nth-child(3) {
     display: none;
   }
 }
-@media (min-width:801px) and (max-width:1399px) {
+@media (min-width: 801px) and (max-width: 1399px) {
   .filter-rail {
     flex-basis: 27.65%;
     width: 27.65%;
@@ -2154,7 +2158,7 @@ p {
   width: 16px;
   height: 16px;
 }
-@media (max-width:540px) {
+@media (max-width: 540px) {
   .requirements span {
     display: flex;
   }
@@ -2235,7 +2239,7 @@ p {
 .friend-card a {
   color: #0096db;
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .friends-actions {
     margin-bottom: 5px;
   }
@@ -2250,7 +2254,7 @@ p {
 .mobile-active-filters {
   display: none;
 }
-@media (max-width:800px) {
+@media (max-width: 800px) {
   .catalog-search {
     position: relative;
   }

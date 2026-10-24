@@ -41,6 +41,7 @@ pub struct CurrentUser {
     pub subject: String,
     pub name: String,
     pub groups: Vec<String>,
+    pub andrew_id: String,
 }
 
 impl CurrentUser {
@@ -78,7 +79,16 @@ where
             .unwrap_or_else(|| subject.clone());
         let groups = claims.additional_claims().groups.clone();
 
+        let andrew_id = claims
+            .email()
+            .unwrap()
+            .as_str()
+            .split('@')
+            .next()
+            .unwrap()
+            .to_ascii_lowercase();
         Ok(CurrentUser {
+            andrew_id,
             subject,
             name,
             groups,
@@ -100,13 +110,18 @@ pub struct UserInfo {
     tag = "auth",
     responses((status = OK, body = UserInfo), (status = UNAUTHORIZED))
 )]
-pub async fn me(user: CurrentUser, Extension(auth): Extension<Arc<AuthConfig>>) -> Json<UserInfo> {
-    Json(UserInfo {
+pub async fn me(
+    user: CurrentUser,
+    Extension(auth): Extension<Arc<AuthConfig>>,
+    Extension(backend): Extension<crate::backend::Backend>,
+) -> Result<Json<UserInfo>, crate::backend::ApiError> {
+    crate::backend::register_user(&backend, &user)?;
+    Ok(Json(UserInfo {
         can_create: true,
         is_admin: user.is_admin(&auth),
         name: user.name,
         subject: user.subject,
-    })
+    }))
 }
 
 fn verified_cmu_email(email: Option<&str>, verified: bool) -> bool {

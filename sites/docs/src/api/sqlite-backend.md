@@ -22,7 +22,7 @@ Project membership alone no longer grants access. Verify that the issuer's
 university identity mapping actually verifies email ownership before deployment.
 No development login bypass exists. Live CMU login was not exercised in this change.
 
-`USER_DB_PATH` is a durable SQLite database using WAL and a busy timeout. Mount
+`USER_DB_PATH` (or Kennel’s provisioned `DATABASE_PATH`) is a durable SQLite database using WAL and a busy timeout. Mount
 it on persistent storage, keep it outside `STATIC_DIR`, and back it up with
 SQLite's backup API (do not copy only the main file during writes). This is a
 single-host deployment; replicas require a shared transactional storage design.
@@ -62,8 +62,7 @@ remain local drafts, without copying protected fields. Personal mutations never
 run against the browser database. `taking` and `taken` are separate from stars
 and require `term_id` on mutations; removing a star preserves history.
 
-Friendship/invites and finals/calendar import remain unimplemented; those were
-in the earlier frontend wishlist, outside this backend's schedule/catalog work.
+Friendship requests, expiring invites, explicit sharing consent, persistent course history and personal finals imports are now implemented. See [personal API](user.md) for their contracts.
 The generated OpenAPI currently describes the auth/health routes; the route list
 above and `contracts.ts` describe these new handlers.
 
@@ -151,6 +150,4 @@ Changing semesters clears selected sections and reloads course details; courses
 not offered in the new semester must be removed before saving. Major requirement
 references reload with saved schedules.
 
-Before deployment: configure the OIDC environment described above, verify one
-real CMU sign-in/sign-out, and mount persistent personal storage outside the
-static web root. This implementation has not been deployed.
+See the [deployment runbook](../deployment.md) for persistent storage, encrypted catalog releases, the rollout status and live acceptance checks.

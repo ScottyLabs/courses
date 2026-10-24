@@ -17,8 +17,13 @@ self.onmessage = async ({ data: { id, sql, params, bytes } }) => {
       const result = [];
       while (statement.step()) result.push(statement.getAsObject());
       self.postMessage({ id, result });
-    } finally { statement.free(); }
+    } finally {
+      statement.free();
+    }
   } catch (cause) {
-    self.postMessage({ id, error: cause instanceof Error ? cause.message : String(cause) });
+    self.postMessage({
+      id,
+      error: cause instanceof Error ? cause.message : String(cause),
+    });
   }
 };

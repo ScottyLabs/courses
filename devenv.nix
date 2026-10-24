@@ -18,6 +18,7 @@
 
     secrets.enable = true;
     postgres.enable = true;
+    sqlite.enable = true;
 
     ricochet = {
       enable = true;
@@ -27,13 +28,16 @@
     kennel = {
       services = {
         api.customDomain = "api.cmu.courses";
-        web-api.customDomain = "web-api.cmu.courses";
+        web-api.customDomain = "cmu.courses";
       };
       sites.docs.customDomain = "docs.cmu.courses";
     };
   };
 
-  packages = [ pkgs.zensical ];
+  packages = [
+    pkgs.zensical
+    pkgs.nodejs
+  ];
 
   treefmt.config.settings.global.excludes = [
     ".devenv/**"

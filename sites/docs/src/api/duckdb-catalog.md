@@ -12,13 +12,13 @@ between the HTTP adapter (`contracts.ts`) and the read-only SQL adapter
 (`duckdb-catalog.ts`); components do not choose a source themselves.
 
 1. Initial reads use the JSON API immediately.
-2. A successful identity request starts the local provider in the background.
+1. A successful identity request starts the local provider in the background.
    Signed-out clients continue using the API.
-3. The provider checks the catalog version, loads an OPFS-cached file or
+1. The provider checks the catalog version, loads an OPFS-cached file or
    downloads the database, then opens it read-only in a DuckDB WASM worker.
-4. After schema validation, covered course, term, instructor, and gen ed
+1. After schema validation, covered course, term, instructor, and gen ed
    queries use SQL. The current screen refreshes through the same repository.
-5. An uncovered dataset/term, missing detail record, initialization failure,
+1. An uncovered dataset/term, missing detail record, initialization failure,
    or SQL error falls back to the API. Storage/quota failures permit an
    in-memory database without persistent caching.
 

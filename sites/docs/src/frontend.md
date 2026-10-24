@@ -1,3 +1,5 @@
+> The current implementation uses SQLite WASM. See [the maintainer guide](maintaining.md) and [backend handoff](api/sqlite-backend.md); older DuckDB references below describe the original design.
+
 # Frontend implementation notes
 
 The SvelteKit application lives in `sites/web`. Its layout follows the
