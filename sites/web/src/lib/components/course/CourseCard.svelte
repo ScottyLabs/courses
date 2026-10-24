@@ -81,7 +81,11 @@
 >
   <div class="head">
     <svelte:element this={`h${headingLevel}`} id="{id}-title" class="[grid-area:title] min-w-0 text-heading-5">
-      <a href={href} class="rounded-tag hover:underline hover:decoration-line-strong hover:underline-offset-4">
+      <a
+        {href}
+        data-course-preview="off"
+        class="rounded-tag hover:underline hover:decoration-line-strong hover:underline-offset-4"
+      >
         <span class="tabular mr-1.5 font-bold sm:mr-2">{course.code}</span>{course.title}
       </a>
     </svelte:element>
@@ -210,7 +214,7 @@
       {expanded ? "Show less" : "Expand All"}
     </button>
     {#if expanded}
-      <a href={pageHref} class="text-body-2 text-accent-ink underline-offset-4 hover:underline">
+      <a href={pageHref} data-course-preview="off" class="text-body-2 text-accent-ink underline-offset-4 hover:underline">
         Sections, requisites and syllabi
       </a>
     {/if}

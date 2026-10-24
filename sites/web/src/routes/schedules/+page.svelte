@@ -2,6 +2,7 @@
   import { CalendarClock, CalendarDays, Info, LogIn, RotateCw, WandSparkles } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { coursePreview } from "$lib/components/course/preview";
   import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
   import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
   import RailGroup from "$lib/components/layout/RailGroup.svelte";
@@ -296,6 +297,7 @@
               label={e.course.code}
               onremove={() => schedules.removeCourse(target(), e.course.id)}
               removeLabel="Remove {e.course.code} from the schedule"
+              attrs={coursePreview(e.course.id, termId)}
               class={e.entry.hidden ? "opacity-60" : ""}
             >
               <span class="inline-flex items-center gap-1.5" style={courseColorStyle(e.entry.color)}>
