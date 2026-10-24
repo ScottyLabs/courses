@@ -40,7 +40,7 @@
     type CalendarSelection,
     type Preview,
   } from "$lib/features/schedules/planner";
-  import RequisiteSummary from "$lib/features/schedules/RequisiteSummary.svelte";
+  import ScheduleRequisiteSummary from "$lib/features/schedules/ScheduleRequisiteSummary.svelte";
   import SavedCourses from "$lib/features/schedules/SavedCourses.svelte";
   import ScheduleGenerator from "$lib/features/schedules/ScheduleGenerator.svelte";
   import ScheduleTabs from "$lib/features/schedules/ScheduleTabs.svelte";
@@ -263,7 +263,7 @@
       </RailGroup>
       {#if view.entries.length > 0}
         <RailGroup title="Requisites">
-          <RequisiteSummary entries={view.entries} {term} />
+          <ScheduleRequisiteSummary entries={view.entries} {term} />
         </RailGroup>
       {/if}
       <RailGroup title="Workload">
