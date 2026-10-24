@@ -19,3 +19,5 @@
 | 15 | [Build the catalog in Rust, as one SQLite file](0015-build-the-catalog-in-rust.md) | accepted |
 | 16 | [Serve the catalog to the browser as JSON documents](0016-serve-the-catalog-as-json-documents.md) | accepted |
 | 17 | [Store personal data on the server](0017-store-personal-data-on-the-server.md) | accepted |
+| 21 | [Sort catalog strings with Unicode collation](0021-sort-catalog-strings-with-unicode-collation.md) | accepted |
+| 22 | [Leave build times out of FCE and program documents](0022-leave-build-times-out-of-fce-and-program-documents.md) | accepted |
