@@ -133,6 +133,25 @@ describe("catalog documents", () => {
     expect(term.courseById.get("15122")?.instructors).toEqual(["Ada Lovelace"]);
   });
 
+  it("doesn't request member documents a gate says would be refused", async () => {
+    const { server, catalog } = await setup(false);
+    let answer: "signin" | "forbidden" | null = "signin";
+    catalog.setMemberGate(() => Promise.resolve(answer));
+    expect(await settle(catalog.fceSummary())).toEqual({ status: "signin" });
+    answer = "forbidden";
+    expect(await settle(catalog.programsIndex())).toEqual({ status: "forbidden" });
+    expect(server.log.some((l) => l.includes("fce/summary") || l.includes("programs/"))).toBe(
+      false,
+    );
+    // Public documents don't ask.
+    expect((await catalog.term("S27")).courses).toHaveLength(2);
+
+    server.signedIn = true;
+    answer = null;
+    catalog.invalidate();
+    expect((await catalog.fceSummary())?.courses.get("15122")?.hours).toBe(10.5);
+  });
+
   it("decodes FCE rows and treats missing chunks as empty", async () => {
     const { catalog } = await setup(true);
     const rows = await catalog.courseFce("15122");

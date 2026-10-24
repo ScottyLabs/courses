@@ -76,7 +76,7 @@ document doesn't exist publicly.
 | `term/<id>` | `TermData` (`types.ts`), from `build-data.ts` | without instructors and rooms | full |
 | `offerings` | `OfferingsData` | yes | same |
 | `catalog/index` | `CatalogIndex` (`catalog-types.ts`), from `build-catalog.ts` | yes | same |
-| `catalog/details/<NN>` | `Record<courseId, CatalogDetails>` | yes | same |
+| `catalog/details/<NN>` | `Record<courseId, CatalogDetails>`; every course-number prefix has one, `{}` when none of its courses has details | yes | same |
 | `teaching` | `TeachingData` | no | full |
 | `fce/summary`, `fce/courses/index`, `fce/courses/<NN>`, `fce/instructors` | FCE files from `build-fce.ts` | no | full |
 | `instructors/<id>`, `instructors/all` | The instructor list's rows, new ([decision 43](decisions/0043-list-instructors-from-their-own-documents.md), [format](api/catalog-fce-programs.md#instructor-list-documents)) | no | full |

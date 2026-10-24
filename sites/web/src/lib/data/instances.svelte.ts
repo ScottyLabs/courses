@@ -22,4 +22,11 @@ session.onChange((_user, { initial }) => {
   if (!initial) catalog.invalidate();
 });
 
-if (typeof window !== "undefined") void session.refresh();
+const firstAnswer = typeof window === "undefined" ? Promise.resolve() : session.refresh();
+
+// Member-only documents wait for the first answer, then aren't requested when the server would refuse them.
+catalog.setMemberGate(async () => {
+  await firstAnswer;
+  if (session.authError === "not-cmu") return "forbidden";
+  return session.status === "signed-out" ? "signin" : null;
+});

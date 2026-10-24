@@ -26,6 +26,7 @@ import type { TeachingData, TermIndexEntry } from "../core/types.ts";
 import type { CellFactory, Cell } from "./cell.ts";
 import {
   docs,
+  isMemberOnly,
   prefixOf,
   type BuildInfo,
   type DocumentTypes,
@@ -50,10 +51,17 @@ async function orIfMissing<T, F>(promise: Promise<T>, fallback: F): Promise<T | 
   }
 }
 
+/**
+ * Says before a member-only document is requested whether the request would be refused: "signin" when nobody is
+ * signed in, "forbidden" for an account that isn't a CMU one, null to go ahead.
+ */
+export type MemberGate = () => Promise<"signin" | "forbidden" | null>;
+
 export class Catalog {
   readonly #api: Api;
   readonly #generation: Cell<number>;
   readonly #cache = new Map<string, Promise<unknown>>();
+  #memberGate: MemberGate | null = null;
 
   constructor(api: Api, cell: CellFactory) {
     this.#api = api;
@@ -66,6 +74,14 @@ export class Catalog {
    */
   get generation(): number {
     return this.#generation.value;
+  }
+
+  /**
+   * Skips member-only documents the server would refuse, so a signed-out page doesn't request them only to get a
+   * 401 (and a console error). Without a gate every document is requested.
+   */
+  setMemberGate(gate: MemberGate): void {
+    this.#memberGate = gate;
   }
 
   /** Forgets every document, for a session change. */
@@ -98,6 +114,9 @@ export class Catalog {
   /** Any document by name, as JSON. Rejects with SignInRequiredError on 401 and ApiError otherwise. */
   document<T>(name: string): Promise<T> {
     return this.#memo(`doc:${name}`, async () => {
+      const refused =
+        this.#memberGate !== null && isMemberOnly(name) ? await this.#memberGate() : null;
+      if (refused !== null) throw new SignInRequiredError(name, refused);
       try {
         return await this.#api.catalog<T>(name);
       } catch (error) {

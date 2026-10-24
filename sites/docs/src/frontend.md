@@ -45,7 +45,9 @@ document (404) becomes the empty value Courseweave used (no details, no syllabi,
 so the next call tries again.
 
 Member documents reject with `SignInRequiredError`: its `reason` is `signin` when nobody is signed in and `forbidden`
-for a signed-in account that isn't a CMU one. `settle(promise)` turns any load into
+for a signed-in account that isn't a CMU one. The website's catalog waits for the session's first answer before
+requesting a member document and doesn't request it at all when the server would refuse it (`setMemberGate`), so a
+signed-out page makes no requests that end in 401. `settle(promise)` turns any load into
 `{ status: "ready" | "signin" | "forbidden" | "error" }` without throwing. In a component, `resource()` does the same
 as reactive state and loads again whenever what the loader reads changes:
 
