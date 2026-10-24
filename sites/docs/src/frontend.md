@@ -1,4 +1,4 @@
-> The current implementation uses SQLite WASM. See [the maintainer guide](maintaining.md) and [backend handoff](api/sqlite-backend.md); older DuckDB references below describe the original design.
+> The current implementation uses SQLite WASM. See [the maintainer guide](maintaining.md) and [web API](api/web-api.md); older DuckDB references below describe the original design.
 
 # Frontend implementation notes
 
