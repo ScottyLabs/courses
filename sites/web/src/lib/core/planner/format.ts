@@ -50,10 +50,16 @@ export function meetingSummary(section: Section): string {
 /**
  * Meeting times plus where: one shared room is returned separately (shown after the times); when meetings are in
  * different rooms, each time carries its own ("TR 9:30-10:50 AM (DH 2210), W 7:00-8:20 PM (GHC 4401)").
+ * `roomsHidden` is for signed-out visitors, whose term documents leave rooms out (decision 20): no room is
+ * returned rather than a misleading "Room TBA".
  */
-export function timesAndRoom(section: Section): { times: string; room: string | null } {
+export function timesAndRoom(
+  section: Section,
+  roomsHidden = false,
+): { times: string; room: string | null } {
   const scheduled = section.meetings.filter(isScheduled);
   if (!scheduled.length) return { times: "Time TBA", room: null };
+  if (roomsHidden) return { times: meetingSummary(section), room: null };
   const rooms = [...new Set(scheduled.map(formatLocation))];
   if (rooms.length === 1)
     return { times: meetingSummary(section), room: rooms[0] === "TBA" ? "Room TBA" : rooms[0] };
@@ -65,7 +71,9 @@ export function timesAndRoom(section: Section): { times: string; room: string | 
   };
 }
 
-export function locationSummary(section: Section): string {
+/** Where a section meets; with `roomsHidden` (signed out, decision 20), a note that rooms need a sign-in. */
+export function locationSummary(section: Section, roomsHidden = false): string {
+  if (roomsHidden) return "Sign in to see rooms";
   const places = [...new Set(section.meetings.map(formatLocation))];
   return places.join(", ");
 }

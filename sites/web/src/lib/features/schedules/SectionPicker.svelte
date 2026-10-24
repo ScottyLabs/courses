@@ -15,6 +15,7 @@
     timesAndRoom,
   } from "$lib/core/planner/format";
   import type { Section } from "$lib/core/types";
+  import { session } from "$lib/data";
   import InstructorLine from "./InstructorLine.svelte";
 
   let {
@@ -53,7 +54,9 @@
   let button = $state<HTMLButtonElement>();
 
   const nounTitle = $derived(`${noun.charAt(0).toUpperCase()}${noun.slice(1)}`);
-  const where = $derived(current === null ? null : timesAndRoom(current));
+  // Signed out, term documents leave rooms out: say so rather than "Room TBA".
+  const roomsHidden = $derived(!session.signedIn);
+  const where = $derived(current === null ? null : timesAndRoom(current, roomsHidden));
 
   function close(): void {
     open = false;
@@ -184,7 +187,7 @@
           </span>
           <span class="block text-ink">{meetingSummary(s)}</span>
           <span class="flex flex-wrap gap-x-3 text-label-md font-normal text-muted">
-            <span class="shrink-0">{locationSummary(s)}</span>
+            <span class="shrink-0">{locationSummary(s, roomsHidden)}</span>
           </span>
           {#if s.instructors.length > 0}
             {#if fceCourseId}
