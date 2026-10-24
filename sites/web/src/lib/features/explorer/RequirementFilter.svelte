@@ -8,6 +8,7 @@
   import type { Option } from "$lib/components/ui/types";
   import { entryYearOf } from "$lib/core/degree/hooks";
   import type { ReqRef } from "$lib/core/explorer/filters";
+  import type { ProgramInfo } from "$lib/core/plan-types";
   import { defaultVersion } from "$lib/core/programs";
   import { flattenRequirements } from "$lib/core/requirement-match";
   import { catalog, resource } from "$lib/data";
@@ -40,6 +41,9 @@
 
   const GEN_ED = /general education|gen ?ed/iu;
 
+  /** A program's newest entry year, for ordering gen eds. */
+  const newest = (p: ProgramInfo): number => p.versions[0]?.entryYear ?? 0;
+
   const programOptions = $derived.by((): Option[] => {
     const entryYear = plan ? entryYearOf(plan.startTerm) : null;
     const seen = new Set<string>();
@@ -55,8 +59,10 @@
       add({ value: String(v.auditId), label: v.programName, description: `In your degree plan, ${v.name}` });
     const programs = index.value?.programs ?? [];
     const genEds = programs.filter((p) => p.kind === "requirements" && GEN_ED.test(p.name));
-    const rest = programs.filter((p) => !genEds.includes(p) && p.kind !== "requirements");
-    for (const p of [...genEds.toSorted((a, b) => b.name.localeCompare(a.name)), ...rest]) {
+    const rest = programs.filter((p) => !genEds.includes(p));
+    // Newest gen eds first: students mostly want their own college's current requirements.
+    const byYear = genEds.toSorted((a, b) => newest(b) - newest(a) || a.name.localeCompare(b.name));
+    for (const p of [...byYear, ...rest]) {
       const v = defaultVersion(p, entryYear);
       if (v === null) continue;
       add({

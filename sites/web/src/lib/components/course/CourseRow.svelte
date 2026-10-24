@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Star } from "@lucide/svelte";
   import { formatHours } from "$lib/core/fce";
   import { meetingSummary } from "$lib/core/explorer/summary";
   import { termLabel } from "$lib/core/requisites";
@@ -59,7 +60,7 @@
     <a
       {href}
       aria-current={selected ? "true" : undefined}
-      class="block truncate text-body-1 font-medium text-ink outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:rounded-tag focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent"
+      class="title block text-body-1 font-medium text-ink outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:rounded-tag focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent"
       >{course.title}</a
     >
     <span class="flex min-w-0 gap-2 text-label-md text-muted">
@@ -85,7 +86,11 @@
         {#if showFce && stats}
           <span class="narrow-fce ml-auto flex shrink-0 gap-2 text-muted">
             {#if stats.hours !== null}<span><span class="tabular text-ink">{formatHours(stats.hours)}</span> h/wk</span>{/if}
-            {#if stats.courseRate !== null}<span><span class="tabular text-ink">{stats.courseRate.toFixed(1)}</span> rating</span
+            {#if stats.courseRate !== null}<span class="inline-flex items-center gap-0.5"
+                ><span class="tabular text-ink">{stats.courseRate.toFixed(1)}</span><Star
+                  aria-hidden="true"
+                  class="size-3 fill-current"
+                /><span class="sr-only">course rating</span></span
               >{/if}
           </span>
         {/if}
@@ -140,6 +145,15 @@
     display: none;
   }
 
+  /* Narrow lists give the title two lines; wider ones keep every row one line tall. */
+  .title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
   @container course-list (min-width: 34rem) {
     .course-row {
       grid-template-columns: 4.25rem minmax(0, 1fr) 4rem 2.75rem 2rem;
@@ -151,6 +165,12 @@
 
     .narrow-fce {
       display: none;
+    }
+
+    .title {
+      display: block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 

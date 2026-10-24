@@ -319,7 +319,8 @@
             termId={x.allMode ? null : x.termId}
             contextTermId={x.termId}
             {closeHref}
-            courseHref={(courseId) => url.href({ course: codeOf(parseCourseCode(courseId)) })}
+            courseHref={(courseId, termId) =>
+              url.href({ course: codeOf(parseCourseCode(courseId)), term: termId ?? ALL_SEMESTERS })}
           />
         {/key}
       </aside>

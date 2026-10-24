@@ -3,15 +3,25 @@
 // loaded once and shared through ./data.svelte.ts.
 export { default as CourseCard } from "./CourseCard.svelte";
 export { default as CourseCardSmall } from "./CourseCardSmall.svelte";
+export { default as CourseChipList } from "./CourseChipList.svelte";
+export { default as CourseFcePanel } from "./CourseFcePanel.svelte";
 export { default as CourseList } from "./CourseList.svelte";
 export { default as CourseRow } from "./CourseRow.svelte";
 export { default as FceAggregate } from "./FceAggregate.svelte";
+export { default as FceHistory } from "./FceHistory.svelte";
 export { default as FceTable } from "./FceTable.svelte";
 export { default as FriendsTaking } from "./FriendsTaking.svelte";
 export { default as HoursScatter } from "./HoursScatter.svelte";
+export { default as InstructorFceBadge } from "./InstructorFceBadge.svelte";
+export { default as LineChart } from "./LineChart.svelte";
+export { default as MemberSignIn } from "./MemberSignIn.svelte";
 export { default as RequisiteExpression } from "./RequisiteExpression.svelte";
 export { default as RequisiteSummary } from "./RequisiteSummary.svelte";
+export { default as RequisiteTreeNode } from "./RequisiteTreeNode.svelte";
+export { default as RequiresAndUnlocks } from "./RequiresAndUnlocks.svelte";
 export { default as SaveButton } from "./SaveButton.svelte";
+export { default as UnlocksList } from "./UnlocksList.svelte";
+export { default as WorkloadMeter } from "./WorkloadMeter.svelte";
 export {
   catalogIndex,
   courseDetails,
