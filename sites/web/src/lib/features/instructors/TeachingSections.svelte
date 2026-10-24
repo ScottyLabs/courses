@@ -1,6 +1,6 @@
 <script lang="ts">
   import StatBox from "$lib/components/ui/StatBox.svelte";
-  import { NO_VALUE } from "$lib/components/instructor/format";
+  import { NO_VALUE } from "$lib/components/course/fce-format";
   import { isUnscheduled, sectionLabel } from "$lib/core/blocks";
   import { instructorSlug, type Instructor, type Term } from "$lib/core/data";
   import { coInstructors, taughtSections, weeklyHours } from "$lib/core/instructors/instructorData";

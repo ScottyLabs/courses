@@ -1,7 +1,12 @@
-// How course cards aggregate FCEs (the rail's "Aggregate FCEs" group): a device convenience, kept in localStorage
-// and shared by every card on the page.
+// How course and instructor cards aggregate FCEs (the rails' "Aggregate FCEs" group): a device convenience, kept in
+// localStorage (design.md, "Conventions") and shared by every card and page that shows the aggregate.
 import { readLocal, writeLocal } from "$lib/components/ui/storage";
-import { DEFAULT_FCE_OPTIONS, parseFceOptions, type FceAggregateOptions } from "./fce-aggregate";
+import {
+  DEFAULT_FCE_OPTIONS,
+  normalizeFceOptions,
+  parseFceOptions,
+  type FceAggregateOptions,
+} from "./fce-aggregate";
 
 const KEY = "cmucourses:fce-aggregate";
 
@@ -13,7 +18,7 @@ class FceOptions {
   }
 
   set(next: Partial<FceAggregateOptions>): void {
-    this.#value = { ...this.#value, ...next };
+    this.#value = normalizeFceOptions({ ...this.#value, ...next });
     writeLocal(KEY, JSON.stringify(this.#value));
   }
 

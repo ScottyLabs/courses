@@ -8,7 +8,9 @@ export { default as CourseFcePanel } from "./CourseFcePanel.svelte";
 export { default as CourseList } from "./CourseList.svelte";
 export { default as CourseRow } from "./CourseRow.svelte";
 export { default as FceAggregate } from "./FceAggregate.svelte";
+export { default as FceAggregateSettings } from "./FceAggregateSettings.svelte";
 export { default as FceHistory } from "./FceHistory.svelte";
+export { default as FceStats } from "./FceStats.svelte";
 export { default as FceTable } from "./FceTable.svelte";
 export { default as FriendsTaking } from "./FriendsTaking.svelte";
 export { default as HoursScatter } from "./HoursScatter.svelte";
@@ -37,6 +39,10 @@ export {
 export { termRequisites } from "./requisite-context.svelte";
 export type { ChipStatus, ChipStatusFn } from "./requisite-context.svelte";
 export type { Shared, SharedStatus } from "./data.svelte";
-export { aggregateFce, DEFAULT_FCE_OPTIONS, selectFceRows } from "./fce-aggregate";
-export type { FceAggregate as FceAggregateData, FceAggregateOptions } from "./fce-aggregate";
+export { aggregateFce, DEFAULT_FCE_OPTIONS, responseRate, selectFceRows } from "./fce-aggregate";
+export type {
+  FceAggregate as FceAggregateData,
+  FceAggregateOptions,
+  FceSeasonLetter,
+} from "./fce-aggregate";
 export { fceOptions } from "./fce-options.svelte";
