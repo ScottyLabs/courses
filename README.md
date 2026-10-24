@@ -10,14 +10,19 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 
 Log in to OpenBao and set up devenv by following kennel's [local development](https://docs.kennel.scottylabs.org/guides/secrets.html#local-development) and [devenv setup](https://docs.kennel.scottylabs.org/guides/deploying.html#2-set-up-devenv) guides. The `dev` profile loads secrets automatically.
 
-The browser-facing API reads audience-separated SQLite catalogs from
-`data/catalog` and stores personal schedules/saved courses in
-`data/private/users.sqlite`. See [backend setup and API](sites/docs/src/api/sqlite-backend.md)
-and [data audit](sites/docs/src/api/data-audit.md).
+The browser-facing API reads the catalog from `data/catalog/catalog.sqlite` and
+stores personal schedules/saved courses in `data/private/users.sqlite`. See
+[backend setup and API](sites/docs/src/api/sqlite-backend.md).
 
-Build the local catalog with `python3 scripts/import_catalog.py data/raw` after
-copying the supplied source exports to `data/raw`. No S3 credentials are required
-for the web API's catalog.
+Build the local catalog from the scraper's output in `exported/` (see
+[catalog data](sites/docs/src/api/data.md) for the inputs and how to refresh them):
+
+```sh
+cargo run --release -p courses-index -- build
+```
+
+It writes `data/catalog/catalog.sqlite` in a few seconds. No S3 credentials are
+required for the web API's catalog.
 
 ```sh
 git clone ssh://forgejo@git.cmu.dev/ScottyLabs/courses.git

@@ -1,4 +1,8 @@
-# Source data audit — October 23, 2026
+# Source data audit - October 23, 2026
+
+This audit describes the inputs of the Python importer, which `courses-index build` replaced
+([decision 15](../decisions/0015-build-the-catalog-in-rust.md)). The current inputs and refresh procedure are in
+[catalog data](data.md).
 
 The entire supplied `/Users/etashj/Downloads/data` directory was copied into
 `data/raw`. **90,778 non-DS_Store files, 1,718,136,834 bytes** were checked against
@@ -13,22 +17,22 @@ data are local artifacts, not committed or placed in the frontend's static folde
 | --- | --- | --- |
 | Courses | 10,089 distinct merged course codes | Stellic course info plus legacy course records; not all are currently offered |
 | Schedules | 48,796 legacy course/term records; 100,541 merged section records | Legacy export includes 3,355 course records for Fall 2026, 3,315 for Spring 2026, and 114 for Summer 2026 |
-| Stellic sections | Dated starts August 30, 2021–June 30, 2025 | Older than the legacy schedule export; dates come from records, not `ly*` filenames |
-| Offering metadata | 2015–Fall 2026 | Spring 2027 is absent; metadata alone does not establish a complete section schedule |
-| FCE CSV | 90,052 rows, 2012–2026; 3,566 rows in 2026 | This is newer than the Mongo FCE export and is the selected aggregate source |
-| Mongo FCEs | 447,411 rows, 2012–2025 | Retained, not combined with CSV; repeated historical records would bias aggregates |
+| Stellic sections | Dated starts August 30, 2021-June 30, 2025 | Older than the legacy schedule export; dates come from records, not `ly*` filenames |
+| Offering metadata | 2015-Fall 2026 | Spring 2027 is absent; metadata alone does not establish a complete section schedule |
+| FCE CSV | 90,052 rows, 2012-2026; 3,566 rows in 2026 | This is newer than the Mongo FCE export and is the selected aggregate source |
+| Mongo FCEs | 447,411 rows, 2012-2025 | Retained, not combined with CSV; repeated historical records would bias aggregates |
 | Gen ed mappings | 1,679 course rows, 35 school/category groups | 758 rows labeled October 2024, 319 May 2025, 602 undated |
-| Syllabi | 19,794 links, 2018–2025 | Imported for authenticated users; link availability was not individually tested |
+| Syllabi | 19,794 links, 2018-2025 | Imported for authenticated users; link availability was not individually tested |
 | Instructors | 3,534 Stellic identities | Catalog identity coverage is incomplete relative to names in legacy schedules; legacy professor export is retained |
 | Stellic programs | 2,848 audits for 1,291 program IDs | Includes historical entry-year variants; newest explicitly labeled entry year is 2026; no verified retrieval timestamp |
-| Current public requirements | 204/204 discovered program pages | Scraped October 23, 2026, all labeled **2026–2027**, zero failed pages; includes majors, additional majors and minors |
+| Current public requirements | 204/204 discovered program pages | Scraped October 23, 2026, all labeled **2026-2027**, zero failed pages; includes majors, additional majors and minors |
 | Advanced credit | AP, IB, Cambridge and non-offered-course files | Preserved in raw data; not yet exposed as scheduling equivalency rules |
 | Finals | Existing repository `data/exams.pdf` | Not imported; no verified current finals feed in this migration |
 
 File modification/copy timestamps are **not** evidence of scrape freshness.
 Fall 2026 schedule coverage is useful, but its exact retrieval date is unknown.
 The newer public requirements come from the official
-[Programs A–Z](https://coursecatalog.web.cmu.edu/programs/) and are archived in
+[Programs A-Z](https://coursecatalog.web.cmu.edu/programs/) and are archived in
 `data/programs-current` with source URLs, HTML hashes and retrieval timestamps.
 This verifies all links discovered by the scraper, not every possible graduate
 or unpublished program.
@@ -39,7 +43,7 @@ or unpublished program.
   labels. Prefer dated Stellic sections for overlapping course/terms; retain
   newer legacy terms. Keep only explicit fields intended for the app.
 - FCE summaries are respondent-weighted across the available CSV history;
-  teaching-assistant rows are excluded. They are not “current semester ratings.”
+  teaching-assistant rows are excluded. They are not "current semester ratings."
 - Two Stellic sections lack dates (`11605/ly3_sm3.json`,
   `36641/ly3_sm3.json`) and are omitted from the normalized schedule, with warnings.
   Their source files are retained.
@@ -64,9 +68,5 @@ Imported the public [CourseWeave S27 snapshot](https://courseweave.jay3332.tech/
 
 Original JSON, semester metadata, retrieval time and SHA-256 are preserved in ignored `data/raw/courseweave/`. The importer automatically includes that snapshot when present; `--courseweave PATH` selects another S27 snapshot. It validates semester, unique course/section IDs, minute-of-day times and Monday-based weekday indices. Missing times remain TBA. Public catalogs still omit instructors, FCE and locations; member catalogs preserve section instructors and rooms. No Stellic credentials are sent to CourseWeave.
 
-Rebuild and verify:
-
-```sh
-python3 scripts/import_catalog.py data/raw
-python3 scripts/verify_catalog.py
-```
+The S27 schedule CSV and Stellic sections behind that snapshot are now inputs of `courses-index build` directly
+(`exported/schedules/S27.csv`, `exported/stellic-terms/S27`).

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Publish encrypted catalogs and write a pinned manifest after every upload succeeds.
+"""Publish the encrypted catalog and write a pinned manifest after the upload succeeds.
 
 Requires boto3, cryptography and the catalog_publish secretspec scope.
-Only the six audience-separated catalog files are uploaded, never raw exports.
+Only data/catalog/catalog.sqlite, as `courses-index build` writes it, is uploaded, never raw exports.
 """
 
 import base64
@@ -15,14 +15,7 @@ import uuid
 import boto3
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-FILES = (
-    "public.sqlite",
-    "member.sqlite",
-    "public-browser.sqlite",
-    "member-browser.sqlite",
-    "public-browser.sqlite.gz",
-    "member-browser.sqlite.gz",
-)
+FILES = ("catalog.sqlite",)
 
 
 def publish():

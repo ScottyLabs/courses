@@ -27,13 +27,13 @@ The catalog encryption key is server-only. Do not put it in a Vite/build scope, 
 
 ## Release procedure
 
-1. Import into a new catalog directory and run the verifier. Review the data report and source dates.
+1. Build the catalog with `courses-index build` ([catalog data](api/data.md)). Review the printed counts and source dates.
 
-1. Run backend, frontend, importer and browser checks described in the [maintainer guide](maintaining.md).
+1. Run backend, frontend, builder and browser checks described in the [maintainer guide](maintaining.md).
 
 1. With a dedicated encryption key provisioned, install publisher dependencies in a virtual environment: `pip install -r scripts/publish-requirements.txt`.
 
-1. Run the publisher from the repository root with the catalog directory at `data/catalog`:
+1. Run the publisher from the repository root with the catalog at `data/catalog/catalog.sqlite`:
 
    ```sh
    secretspec --reason 'Publish verified CMU Courses catalog' run \
@@ -64,8 +64,8 @@ For application/catalog rollback, redeploy a known-good Git commit and its relea
 
 ## Diagnosing startup failure
 
-- “Read-only filesystem”: verify `scottylabs.sqlite.enable`, `DATABASE_PATH`, and the service's persistent directory.
-- “Catalog key required” or authentication failure: verify the release key in the correct profile; never print it.
+- "Read-only filesystem": verify `scottylabs.sqlite.enable`, `DATABASE_PATH`, and the service's persistent directory.
+- "Catalog key required" or authentication failure: verify the release key in the correct profile; never print it.
 - Checksum mismatch: verify the committed manifest and immutable CDN object. Do not skip verification.
 - OIDC discovery failure: check issuer URL, realm, connectivity and certificates.
 - Login succeeds but `/api/me` returns 403: inspect the issuer's verified CMU email mapping, not project-group membership.

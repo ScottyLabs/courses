@@ -29,8 +29,7 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 | `local-catalog.ts`, `sqlite.worker.ts`, `sqlite-catalog.ts` | Worker lifecycle, SQLite runtime and parameterized queries |
 | `components/CourseHistory.svelte`, `components/Friends.svelte` | Personal-history and consent UI |
 | `routes/+page.svelte` | Main navigation, catalog, schedules and requirement reference UI |
-| `scripts/import_catalog.py` | Local source normalization and independently sanitized database generation |
-| `scripts/courseweave.py` | Explicit S27 snapshot conversion and source checks |
+| `crates/courses-index` | Catalog builder: raw inputs to `catalog.sqlite` ([catalog data](api/data.md)) |
 | `scripts/scrape_programs.py` | Public CMU catalog requirement discovery and retrieval |
 | `scripts/publish_catalog.py` | Encrypted catalog publishing; never uploads personal data |
 
@@ -46,20 +45,18 @@ Authentication gates **bytes**, not just UI elements. Public SQLite is generated
 
 ## Changing the code
 
-Keep SQL parameterized. Keep ownership in each mutation's SQL predicate, even when the UI has already checked it. Never infer CMU membership from project groups. When adding a protected field, update both the JSON/public export policy and `verify_catalog.py`.
+Keep SQL parameterized. Keep ownership in each mutation's SQL predicate, even when the UI has already checked it. Never infer CMU membership from project groups. When adding a protected field, leave it out of the public document versions and the relational tables, and test that (decision 20).
 
 When changing catalog queries, update both `backend/catalog.rs` and `sqlite-catalog.ts`. Add coverage metadata only when the browser export actually includes that dataset/term. The fallback depends on honest coverage declarations.
 
 Personal schema changes must preserve existing records. Current additions are `CREATE TABLE IF NOT EXISTS`; `PRAGMA user_version` identifies the schema. Future column changes need a version-gated migration, a test opening a previous schema, and a backup/rollback plan. Never run a catalog importer against the personal database.
 
-Requirement text is a reference, not a degree-audit algorithm. Preserve source URLs and catalog/entry years. Do not translate a list of referenced courses into “all required” without interpreting alternatives, minimum grades, double-counting and substitutions.
+Requirement text is a reference, not a degree-audit algorithm. Preserve source URLs and catalog/entry years. Do not translate a list of referenced courses into "all required" without interpreting alternatives, minimum grades, double-counting and substitutions.
 
 ## Verification
 
 ```sh
-cargo test -p courses-web-api -p courses-scraper
-python3 -m unittest discover -s scripts -p 'test_*.py'
-python3 scripts/verify_catalog.py
+cargo test -p courses-web-api -p courses-scraper -p courses-index
 cd sites/web
 deno task check
 deno task test
