@@ -5,10 +5,10 @@
   "type": "module",
   "dependencies": {
     "@lucide/svelte": "1.56.0",
-    "@types/sql.js": "1.4.9",
-    "sql.js": "1.13.0"
+    "pdfjs-dist": "6.4.299"
   },
   "devDependencies": {
+    "@std/expect": "jsr:1.0.20",
     "@sveltejs/adapter-static": "3.0.10",
     "@sveltejs/kit": "2.57.0",
     "@sveltejs/vite-plugin-svelte": "7.0.0",

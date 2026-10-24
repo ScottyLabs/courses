@@ -1,0 +1,406 @@
+/* oxlint-disable eslint/eqeqeq, eslint/max-lines, eslint/no-negated-condition, unicorn/explicit-length-check, unicorn/no-array-sort, unicorn/no-negated-condition -- Courseweave's code, ported unchanged (decision 14) so fixes carry over between the two codebases */
+// Faculty Course Evaluation data (the catalog builder's fce/* documents). Everything degrades to "no data" when the
+// FCE files aren't present, so the app still works without access to the CMU-internal export.
+import { NameIndex, sameInstructor, termName, termOrder } from "./fce-names.ts";
+import {
+  expectedHours,
+  isMostlyMini,
+  splitHalves,
+  type FceMiniInfo,
+  type HalfLoad,
+} from "./fce-minis.ts";
+import type { Course } from "./types.ts";
+
+export { expectedHours, isMostlyMini, sameInstructor, splitHalves, termName, termOrder };
+export type { FceMiniInfo, HalfLoad };
+
+/** What students reported in the hours question; shown in tooltips wherever FCE hours appear. */
+export const FCE_HOURS_HELP =
+  "Average hours per week students reported spending on the course in FCEs, including class time, readings, assignments and studying. CMU expects about 1 hour of work per unit each week over a full semester. Minis run for half a semester, so expect about 2 hours per unit each week while one runs.";
+
+export interface FceSummary {
+  /** Response-weighted hours/week over the recent terms; null when not reported. */
+  hours: number | null;
+  /** Overall course rating (1-5). */
+  courseRate: number | null;
+  /** Overall teaching rating (1-5). */
+  teachingRate: number | null;
+  /** Responses in the recent window. */
+  responses: number;
+  /** Terms in the recent window (at most `recentTerms`). */
+  terms: number;
+  /** Terms with any responses, ever. */
+  totalTerms: number;
+  /** Latest term with responses, e.g. "S26". */
+  last: string;
+  /** Hours now minus hours in the window before, when both exist. */
+  hoursDelta: number | null;
+  /** Average enrollment per recent term. */
+  enrolled: number | null;
+  /** Share of recent sections taught as minis, and which half they ran in. */
+  mini: FceMiniInfo;
+}
+
+export interface FceSummaryData {
+  latest: string;
+  recentTerms: number;
+  courses: Map<string, FceSummary>;
+}
+
+export interface FceRow {
+  term: string;
+  section: string;
+  /** As it appears in FCEs: "LAST, First". */
+  instructor: string;
+  enrolled: number;
+  responses: number;
+  hours: number | null;
+  teachingRate: number | null;
+  courseRate: number | null;
+  /** The seven teaching questions, in FCE_QUESTIONS order. */
+  questions: (number | null)[];
+  /** Mini number from the section name ("A3" -> 3), or null for a full-semester section. */
+  mini: number | null;
+}
+
+export const FCE_QUESTIONS = [
+  "Interest in student learning",
+  "Explains course requirements clearly",
+  "Clear learning objectives and goals",
+  "Gives feedback to help students improve",
+  "Shows why the subject matters",
+  "Explains the subject matter",
+  "Shows respect for all students",
+];
+
+export interface InstructorCourseFce {
+  courseId: string;
+  terms: number;
+  responses: number;
+  teachingRate: number | null;
+  courseRate: number | null;
+  hours: number | null;
+  last: string;
+  first: string;
+}
+
+export interface InstructorFce {
+  name: string;
+  courses: InstructorCourseFce[];
+  /** Oldest first. */
+  terms: { term: string; teachingRate: number | null; responses: number }[];
+}
+
+/**
+ * Whether FCE data can be shown:
+ * - unknown: not checked yet;
+ * - available: the data loaded;
+ * - locked: FCEs are member data and nobody is signed in (401);
+ * - unavailable: this deployment has no FCEs (404) or they failed to load.
+ */
+export type FceAccess = "unknown" | "available" | "locked" | "unavailable";
+
+// The FCE documents (`fce/summary`, `fce/courses/<NN>`, `fce/instructors`) store rows as tuples to stay small. These
+// decoders turn them into the objects the rest of the app uses; lib/data loads the documents.
+
+type SummaryTuple = [
+  number | null,
+  number | null,
+  number | null,
+  number,
+  number,
+  number,
+  string,
+  number | null,
+  number | null,
+  number?,
+  number?,
+];
+const HALF_CODES: FceMiniInfo["half"][] = [null, "first", "second", "either"];
+
+/** The `fce/summary` document. */
+export interface FceSummaryFile {
+  latest: string;
+  recentTerms: number;
+  courses: Record<string, SummaryTuple>;
+}
+
+export function decodeFceSummary(raw: FceSummaryFile): FceSummaryData {
+  const courses = new Map<string, FceSummary>();
+  for (const [id, t] of Object.entries(raw.courses)) {
+    courses.set(id, {
+      hours: t[0],
+      courseRate: t[1],
+      teachingRate: t[2],
+      responses: t[3],
+      terms: t[4],
+      totalTerms: t[5],
+      last: t[6],
+      hoursDelta: t[7],
+      enrolled: t[8],
+      mini: { share: t[9] ?? 0, half: HALF_CODES[t[10] ?? 0] ?? null },
+    });
+  }
+  return { latest: raw.latest, recentTerms: raw.recentTerms, courses };
+}
+
+type RowTuple = [
+  string,
+  string,
+  string,
+  number,
+  number,
+  number | null,
+  number | null,
+  number | null,
+  (number | null)[],
+  (number | null)?,
+];
+
+/** An `fce/courses/<NN>` document: course id to its rows, newest first. */
+export type FceCoursesFile = Record<string, RowTuple[]>;
+
+export function decodeFceCourses(raw: FceCoursesFile): Map<string, FceRow[]> {
+  const out = new Map<string, FceRow[]>();
+  for (const [id, rows] of Object.entries(raw)) {
+    out.set(
+      id,
+      rows.map((r) => ({
+        term: r[0],
+        section: r[1],
+        instructor: r[2],
+        enrolled: r[3],
+        responses: r[4],
+        hours: r[5],
+        teachingRate: r[6],
+        courseRate: r[7],
+        questions: r[8],
+        mini: r[9] ?? null,
+      })),
+    );
+  }
+  return out;
+}
+
+/** The `fce/instructors` document. */
+export interface FceInstructorsFile {
+  instructors: Record<
+    string,
+    {
+      name: string;
+      courses: Record<
+        string,
+        [number, number, number | null, number | null, number | null, string, string]
+      >;
+      terms: [string, number | null, number][];
+    }
+  >;
+}
+
+export function decodeFceInstructors(raw: FceInstructorsFile): NameIndex<InstructorFce> {
+  const index = new NameIndex<InstructorFce>();
+  for (const [key, inst] of Object.entries(raw.instructors)) {
+    index.addKey(key, {
+      name: inst.name,
+      courses: Object.entries(inst.courses)
+        .map(([courseId, c]) => ({
+          courseId,
+          terms: c[0],
+          responses: c[1],
+          teachingRate: c[2],
+          courseRate: c[3],
+          hours: c[4],
+          last: c[5],
+          first: c[6],
+        }))
+        .sort(
+          (a, b) => termOrder(b.last) - termOrder(a.last) || a.courseId.localeCompare(b.courseId),
+        ),
+      terms: inst.terms.map(([term, teachingRate, responses]) => ({
+        term,
+        teachingRate,
+        responses,
+      })),
+    });
+  }
+  return index;
+}
+
+// ---- Derived values and formatting ----
+
+/**
+ * Reported hours over the hours the units suggest (units, or 2 x units for a mini); null when either is unknown
+ * or units is 0. 1 means "about what its units suggest".
+ */
+export function workloadRatio(
+  hours: number | null | undefined,
+  units: number | null | undefined,
+  mini = false,
+): number | null {
+  if (hours == null || units == null || units <= 0) return null;
+  return hours / expectedHours(units, mini)!;
+}
+
+/**
+ * Whether a course runs as a mini. The routed term's sections win: all top-level sections minis -> mini, none ->
+ * full semester. Mixed or unknown falls back to how its recent FCE sections ran.
+ */
+export function courseIsMini(
+  course: Course | null | undefined,
+  summary?: FceSummary | null,
+): boolean {
+  const tops = course?.sections.filter((s) => s.parent === null) ?? [];
+  if (tops.length) {
+    const minis = tops.filter((s) => s.mini !== null).length;
+    if (minis === tops.length) return true;
+    if (minis === 0) return false;
+  }
+  return isMostlyMini(summary?.mini);
+}
+
+/** "6u mini ~ 12 h/wk", "12u ~ 12 h/wk": what the units mean in weekly hours. */
+export function expectedHoursText(units: number | null, mini: boolean): string {
+  if (units === null) return mini ? "variable-unit mini" : "variable units";
+  const e = expectedHours(units, mini)!;
+  return `${units}u${mini ? " mini" : ""} \u2248 ${Number.isInteger(e) ? e : e.toFixed(1)} h/wk`;
+}
+
+export type WorkloadTone = "light" | "even" | "heavy" | "very-heavy";
+
+/** How the reported hours compare with what the units imply. */
+export function workloadTone(ratio: number | null): WorkloadTone | null {
+  if (ratio === null) return null;
+  if (ratio < 0.85) return "light";
+  if (ratio <= 1.15) return "even";
+  if (ratio <= 1.5) return "heavy";
+  return "very-heavy";
+}
+
+export const WORKLOAD_TONE_LABEL: Record<WorkloadTone, string> = {
+  light: "Lighter than its units",
+  even: "About what its units suggest",
+  heavy: "Heavier than its units",
+  "very-heavy": "Much heavier than its units",
+};
+
+/** Text color class for a workload tone. */
+export const WORKLOAD_TONE_CLASS: Record<WorkloadTone, string> = {
+  light: "text-ok",
+  even: "text-ink-2",
+  heavy: "text-warn",
+  "very-heavy": "text-danger",
+};
+
+export function formatHours(h: number | null | undefined): string {
+  return h == null ? "\u2014" : h.toFixed(1);
+}
+
+export function formatRating(r: number | null | undefined): string {
+  return r == null ? "\u2014" : r.toFixed(2);
+}
+
+/** Weighted mean helper for UI aggregates. */
+export function weightedMean<T>(
+  items: T[],
+  value: (x: T) => number | null,
+  weight: (x: T) => number,
+): number | null {
+  let sum = 0;
+  let w = 0;
+  for (const x of items) {
+    const v = value(x);
+    const wt = weight(x);
+    if (v === null || wt <= 0) continue;
+    sum += v * wt;
+    w += wt;
+  }
+  return w ? sum / w : null;
+}
+
+/**
+ * Weekly hours the units suggest for a set of FCE rows, weighted by responses: units for full-semester rows,
+ * 2 x units for mini rows. Null when units are unknown or no row has responses.
+ */
+export function rowsExpectedHours(rows: FceRow[], units: number | null): number | null {
+  if (units === null) return null;
+  return weightedMean(
+    rows,
+    (r) => expectedHours(units, r.mini !== null),
+    (r) => r.responses,
+  );
+}
+
+export interface FceTerm {
+  term: string;
+  hours: number | null;
+  courseRate: number | null;
+  teachingRate: number | null;
+  responses: number;
+  /** Response-weighted share of the term's rows that were mini sections. */
+  miniShare: number;
+}
+
+/** Groups FCE rows by term (newest first), with response-weighted aggregates per term. */
+export function fceByTerm(rows: FceRow[]): FceTerm[] {
+  const groups = new Map<string, FceRow[]>();
+  for (const r of rows) groups.set(r.term, [...(groups.get(r.term) ?? []), r]);
+  return [...groups.entries()]
+    .sort((a, b) => termOrder(b[0]) - termOrder(a[0]))
+    .map(([term, list]) => {
+      const answered = list.filter((r) => r.responses > 0);
+      return {
+        term,
+        hours: weightedMean(
+          answered,
+          (r) => r.hours,
+          (r) => r.responses,
+        ),
+        courseRate: weightedMean(
+          answered,
+          (r) => r.courseRate,
+          (r) => r.responses,
+        ),
+        teachingRate: weightedMean(
+          answered,
+          (r) => r.teachingRate,
+          (r) => r.responses,
+        ),
+        responses: answered.reduce((n, r) => n + r.responses, 0),
+        miniShare:
+          weightedMean(
+            answered.length ? answered : list,
+            (r) => (r.mini !== null ? 1 : 0),
+            (r) => (answered.length ? r.responses : 1),
+          ) ?? 0,
+      };
+    });
+}
+
+/** Recent FCE stats for one instructor teaching one course (from that course's rows). */
+export function instructorCourseStats(rows: FceRow[], scheduleName: string, recentTerms = 4) {
+  const mine = rows.filter((r) => r.responses > 0 && sameInstructor(r.instructor, scheduleName));
+  if (!mine.length) return null;
+  const terms = [...new Set(mine.map((r) => r.term))].sort((a, b) => termOrder(b) - termOrder(a));
+  const recent = new Set(terms.slice(0, recentTerms));
+  const window = mine.filter((r) => recent.has(r.term));
+  return {
+    terms: terms.length,
+    last: terms[0],
+    responses: window.reduce((n, r) => n + r.responses, 0),
+    teachingRate: weightedMean(
+      window,
+      (r) => r.teachingRate,
+      (r) => r.responses,
+    ),
+    courseRate: weightedMean(
+      window,
+      (r) => r.courseRate,
+      (r) => r.responses,
+    ),
+    hours: weightedMean(
+      window,
+      (r) => r.hours,
+      (r) => r.responses,
+    ),
+  };
+}
