@@ -7,7 +7,7 @@
   import { termName, type FceRow } from "$lib/core/fce";
   import { displayFceName } from "$lib/core/fce-names";
   import { codeOf } from "$lib/core/requisite-format";
-  import { coursePath, instructorPath } from "$lib/core/routes";
+  import { ALL_TERMS, coursePath, instructorPath } from "$lib/core/routes";
   import { responseRate } from "./fce-aggregate";
   import { NO_VALUE, hoursText, ratingText } from "./fce-format";
 
@@ -78,7 +78,7 @@
     {:else if column.key === "instructor"}
       {#if row.instructor}
         <a
-          href={instructorPath(instructorSlug(displayFceName(row.instructor)))}
+          href={instructorPath(instructorSlug(displayFceName(row.instructor)), ALL_TERMS)}
           class="underline decoration-line-strong underline-offset-2 hover:text-accent-ink hover:decoration-current"
           >{displayFceName(row.instructor)}</a
         >

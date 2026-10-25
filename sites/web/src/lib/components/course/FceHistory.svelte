@@ -17,7 +17,7 @@
     type FceRow,
   } from "$lib/core/fce";
   import { displayFceName, fceNameKeys } from "$lib/core/fce-names";
-  import { instructorPath } from "$lib/core/routes";
+  import { ALL_TERMS, instructorPath } from "$lib/core/routes";
   import { TONE_TEXT } from "./WorkloadMeter.svelte";
 
   type Mode = "instructor" | "term";
@@ -247,7 +247,7 @@
             <tr>
               <td class="max-w-[14rem] px-2 py-1.5">
                 <a
-                  href={instructorPath(slugOf("", r.name))}
+                  href={instructorPath(slugOf("", r.name), ALL_TERMS)}
                   class="block truncate underline decoration-line-strong underline-offset-2 hover:text-accent-ink {r.current
                     ? 'font-semibold text-strong'
                     : ''}"
@@ -276,7 +276,7 @@
               <td class="max-w-[12rem] truncate px-2 py-1.5">
                 {#if r.instructor}
                   <a
-                    href={instructorPath(slugOf(r.instructor, ""))}
+                    href={instructorPath(slugOf(r.instructor, ""), ALL_TERMS)}
                     class="underline decoration-line-strong underline-offset-2 hover:text-accent-ink"
                     >{displayFceName(r.instructor)}</a
                   >
