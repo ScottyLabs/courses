@@ -35,8 +35,13 @@
       {responses.toLocaleString("en-US")} responses in all.
     </p>
   </div>
-  <div class="grid gap-4 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
-    <div class="grid grid-cols-2 gap-2 self-start sm:gap-3 md:grid-cols-1">
+  <!-- With a chart, the stats stack in a column beside it; without one they sit side by side. -->
+  <div class="grid gap-4 {fce.terms.length >= 2 ? 'md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]' : ''}">
+    <div
+      class="grid grid-cols-2 gap-2 self-start sm:gap-3 {fce.terms.length >= 2
+        ? 'md:grid-cols-1'
+        : 'sm:max-w-xl'}"
+    >
       <div
         title="Overall teaching rating over the last {RECENT} semesters with responses, weighted by responses"
         class="grid"

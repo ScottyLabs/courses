@@ -179,7 +179,7 @@
 {#if partners.length > 0}
   <section aria-labelledby="partners-heading" class="flex flex-col gap-3">
     <h2 id="partners-heading" class="text-heading-5 text-strong">Teaches with</h2>
-    <ul class="grid gap-x-6 sm:grid-cols-2">
+    <ul class="grid gap-x-6 {partners.length > 1 ? 'sm:grid-cols-2' : ''}">
       {#each partners as partner (partner.name)}
         <li class="flex min-h-11 items-center justify-between gap-3 border-b border-line py-1.5">
           <a
