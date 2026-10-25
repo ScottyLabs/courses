@@ -244,6 +244,7 @@
           label="Session"
           options={sessionOptions}
           bind:value={() => f.sessions, (next) => set("sessions", next)}
+          stretch
         />
       </RailSection>
     {/if}

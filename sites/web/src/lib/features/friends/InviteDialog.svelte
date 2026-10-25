@@ -79,7 +79,7 @@
       Make an invite link
     </Button>
   {:else}
-    <CopyField value={url} label="Your invite link" copyLabel="Copy link" variant="primary" hint="Works once, until {expires}." />
+    <CopyField value={url} label="Your invite link" copyLabel="Copy link" hint="Works once, until {expires}." />
     <div class="mt-5 flex flex-wrap gap-2">
       {#if canShare}<Button icon={Share2} onclick={share}>Share</Button>{/if}
       <Button icon={Link} loading={busy === "create"} onclick={create}>Make a new link</Button>

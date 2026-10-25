@@ -100,7 +100,8 @@
     return data.list
       .map((d) => {
         const clamped = d.unitEq > xMax;
-        const u = clamped ? xMax : Math.max(0, d.unitEq + jitter(d.course.id) * jitterWidth);
+        // Jitter spreads a column of points, but never past either end of the axis.
+        const u = clamped ? xMax : Math.min(xMax, Math.max(0, d.unitEq + jitter(d.course.id) * jitterWidth));
         const point: Point = {
           course: d.course,
           summary: d.summary,
