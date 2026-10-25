@@ -8,7 +8,6 @@
     "pdfjs-dist": "6.4.299"
   },
   "devDependencies": {
-    "@std/expect": "jsr:1.0.20",
     "@sveltejs/adapter-static": "3.0.10",
     "@sveltejs/kit": "2.57.0",
     "@sveltejs/vite-plugin-svelte": "7.0.0",
@@ -16,6 +15,7 @@
     "@tailwindcss/typography": "0.5.19",
     "@tailwindcss/vite": "4.1.18",
     "@types/node": "24.12.0",
+    "expect": "30.5.2",
     "openapi-typescript": "7.13.0",
     "prettier": "3.6.2",
     "prettier-plugin-svelte": "3.4.0",
