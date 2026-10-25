@@ -1,10 +1,11 @@
 <script lang="ts">
-  // A chosen program: its name and kind, the requirements version (entry year, campus), optional concentrations,
-  // and what's checked alongside it.
+  // A chosen program: its name and kind, the requirements version (entry year, campus), optional concentrations
+  // (any number, as in Courseweave; press one again to clear it), and what's checked alongside it.
   import { X } from "@lucide/svelte";
   import Chip from "$lib/components/ui/Chip.svelte";
   import IconButton from "$lib/components/ui/IconButton.svelte";
   import Select from "$lib/components/ui/Select.svelte";
+  import ToggleChips from "$lib/components/ui/ToggleChips.svelte";
   import type { ProgramVersion } from "$lib/core/degree-types";
   import type { ProgramInfo, ProgramSelection } from "$lib/core/plan-types";
   import { KIND_LABEL, programCampus } from "./programs";
@@ -25,67 +26,74 @@
 
   const name = $derived(info?.name ?? version?.programName ?? `Program ${selection.catalogId}`);
   const campus = $derived(info ? programCampus(info) : null);
-  const chosen = $derived(new Set(selection.concentrations ?? []));
-  const attached = $derived(version?.attached.filter((a) => a.auditId !== null) ?? []);
+  const chosen = $derived(selection.concentrations ?? []);
+  const concentrationOptions = $derived(
+    (version?.concentrations ?? []).map((c) => ({ value: String(c.id), label: c.name })),
+  );
+  // What the audit checks alongside the program: its gen-ed bundles, then each chosen concentration's requirements.
+  const chosenInfo = $derived(
+    (version?.concentrations ?? []).filter((c) => chosen.includes(c.id)),
+  );
+  const alsoChecks = $derived([
+    ...(version?.attached.filter((a) => a.auditId !== null).map((a) => a.name) ?? []),
+    ...chosenInfo.flatMap((c) => (c.programs[0] ? [c.programs[0].name] : [])),
+  ]);
+  const unchecked = $derived(chosenInfo.filter((c) => c.programs.length === 0).map((c) => c.name));
   const versionOptions = $derived(
     (info?.versions ?? []).map((v) => ({
       value: String(v.auditId),
       label: `${v.name}${v.campus !== null && !v.name.includes(v.campus) ? ` (${v.campus})` : ""}`,
     })),
   );
-
-  function toggleConcentration(id: number): void {
-    const next = new Set(chosen);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    onchange({ ...selection, concentrations: [...next] });
-  }
 </script>
 
-<li class="rounded-card border border-pressed bg-surface p-3">
+<li class="flex flex-col gap-2.5 py-3 first:pt-0">
   <div class="flex items-start gap-2">
-    <div class="min-w-0 flex-1">
-      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span class="text-label-lg text-strong">{name}</span>
-        {#if campus}<Chip tone="neutral" size="sm" label={campus} />{/if}
-        {#if info}<Chip tone="soft" size="sm" label={KIND_LABEL[info.kind]} />{/if}
-      </div>
-      {#if info && info.versions.length > 1}
-        <Select
-          class="mt-2"
-          variant="compact"
-          label="Requirements version for {name}"
-          value={String(selection.auditId)}
-          options={versionOptions}
-          onchange={(event) =>
-            onchange({ catalogId: selection.catalogId, auditId: Number(event.currentTarget.value) })}
-        />
-      {:else if info?.versions[0]}
-        <p class="mt-1 text-label-md font-normal text-muted">{info.versions[0].name} requirements</p>
-      {/if}
+    <div class="flex min-h-8 min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+      <span class="text-label-lg text-strong">{name}</span>
+      {#if campus}<Chip tone="neutral" size="sm" label={campus} />{/if}
+      {#if info}<Chip tone="soft" size="sm" label={KIND_LABEL[info.kind]} />{/if}
     </div>
-    <IconButton label="Remove {name}" icon={X} size="sm" class="max-md:size-10" onclick={onremove} />
+    <IconButton label="Remove {name}" icon={X} size="sm" class="-mr-1.5 max-md:size-10" onclick={onremove} />
   </div>
 
-  {#if version && version.concentrations.length > 0}
-    <div class="mt-2">
+  {#if info && info.versions.length > 1}
+    <Select
+      class="w-full sm:w-72"
+      label="Requirements version for {name}"
+      value={String(selection.auditId)}
+      options={versionOptions}
+      onchange={(event) => onchange({ catalogId: selection.catalogId, auditId: Number(event.currentTarget.value) })}
+    />
+  {:else if info?.versions[0]}
+    <p class="-mt-1.5 text-label-md font-normal text-muted">{info.versions[0].name} requirements</p>
+  {/if}
+
+  {#if concentrationOptions.length > 0}
+    <div class="flex flex-col gap-1.5">
       <p class="text-label-md font-normal text-muted">Concentration (optional)</p>
-      <div class="mt-1 flex flex-wrap gap-1.5">
-        {#each version.concentrations as c (c.id)}
-          <Chip
-            shape="pill"
-            pressed={chosen.has(c.id)}
-            onclick={() => toggleConcentration(c.id)}
-            title={c.programs[0] ? `Audited with ${c.programs[0].name}` : "Requirements for this concentration aren't available"}
-            class="max-md:h-10"
-            label={c.name}
-          />
-        {/each}
-      </div>
+      <ToggleChips
+        label="Concentrations for {name}"
+        check
+        options={concentrationOptions}
+        bind:value={
+          () => chosen.map(String),
+          (next) => onchange({ ...selection, concentrations: next.map(Number) })
+        }
+        class="max-md:[&>button]:h-10"
+      />
     </div>
   {/if}
 
-  {#if attached.length > 0}
-    <p class="mt-2 text-label-md font-normal text-muted">Also checks {attached.map((a) => a.name).join(", ")}</p>
+  {#if alsoChecks.length > 0 || unchecked.length > 0}
+    <p class="text-label-md font-normal text-muted">
+      {#if alsoChecks.length > 0}Also checks {alsoChecks.join(", ")}.{/if}
+      {#if unchecked.length > 0}
+        {unchecked.join(", ")}
+        {unchecked.length === 1 ? "isn't" : "aren't"} checked: the degree audit doesn't publish {unchecked.length === 1
+          ? "its"
+          : "their"} requirements.
+      {/if}
+    </p>
   {/if}
 </li>

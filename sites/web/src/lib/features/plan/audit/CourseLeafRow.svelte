@@ -21,9 +21,11 @@
   const drag = $derived(canDrag ? dragNew(id, ctx) : {});
 </script>
 
+<!-- In a narrow panel (the column beside the semesters, phones) the title takes a second line under the number, so
+     the number and Add share the first; from 32rem it sits between them on one line. -->
 <li
   id="req-{r.nodeId}"
-  class="flex min-h-11 items-center gap-2 border-t border-line py-1 first:border-t-0 md:min-h-9 {drag.draggable
+  class="flex min-h-11 flex-wrap items-center gap-x-2 border-t border-line py-1 first:border-t-0 md:min-h-9 {drag.draggable
     ? 'cursor-grab'
     : ''}"
   {...drag}
@@ -38,20 +40,28 @@
   >
     {codeOf(id)}
   </a>
-  <span class="min-w-0 flex-1 truncate text-body-2 {state === 'skipped' ? 'text-muted' : 'text-ink'}" title={title}>
+  <span
+    class="order-last min-w-0 basis-full truncate pb-1 pl-6 text-body-2 @lg/req:order-none @lg/req:flex-1 @lg/req:basis-auto @lg/req:pb-0 @lg/req:pl-0 {state ===
+    'skipped'
+      ? 'text-muted'
+      : 'text-ink'}"
+    {title}
+  >
     {title ?? ""}{#if counted}<span class="text-muted"> (as {codeOf(counted)})</span>{/if}
   </span>
-  {#if a}
-    <span class="shrink-0 text-label-md text-muted">{assignedStatus(a)}</span>
-  {:else if !done && state !== "skipped" && ctx.onAddCourse && !ctx.inPlan.has(id)}
-    <AddButton courseId={id} nodeId={r.nodeId} {ctx} />
-  {:else if !ctx.offered(id) && !done}
-    <span class="shrink-0 text-label-md text-muted">Not offered in {ctx.termName}</span>
-  {/if}
-  {#if r.notes.length > 0}
-    <span title={r.notes.join("\n")} class="grid size-7 shrink-0 place-items-center text-muted">
-      <Info aria-hidden="true" class="size-3.5" />
-      <span class="sr-only">{r.notes.join(". ")}</span>
-    </span>
-  {/if}
+  <span class="ml-auto flex shrink-0 items-center gap-1 @lg/req:ml-0">
+    {#if a}
+      <span class="text-label-md text-muted">{assignedStatus(a)}</span>
+    {:else if !done && state !== "skipped" && ctx.onAddCourse && !ctx.inPlan.has(id)}
+      <AddButton courseId={id} nodeId={r.nodeId} {ctx} />
+    {:else if !ctx.offered(id) && !done}
+      <span class="text-label-md text-muted">Not offered in {ctx.termName}</span>
+    {/if}
+    {#if r.notes.length > 0}
+      <span title={r.notes.join("\n")} class="grid size-7 shrink-0 place-items-center text-muted">
+        <Info aria-hidden="true" class="size-3.5" />
+        <span class="sr-only">{r.notes.join(". ")}</span>
+      </span>
+    {/if}
+  </span>
 </li>

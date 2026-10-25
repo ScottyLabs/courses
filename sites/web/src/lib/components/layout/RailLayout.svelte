@@ -7,7 +7,7 @@
   import Sheet from "../ui/Sheet.svelte";
   import { readLocal, writeLocal } from "../ui/storage";
   import type { IconComponent } from "../ui/types";
-  import { setRail } from "./rail-context";
+  import { RAIL_WIDTH, setRail } from "./rail-context";
 
   let {
     title = "Filter by",
@@ -120,6 +120,9 @@
     open: () => {
       sheetOpen = true;
     },
+    close: () => {
+      sheetOpen = false;
+    },
   });
 
   $effect(() => {
@@ -132,9 +135,7 @@
     <aside
       bind:this={aside}
       aria-label={title}
-      class="shrink-0 border-r border-line bg-surface {shownCollapsed
-        ? 'w-16'
-        : 'w-[340px] xl:w-[380px] min-[90rem]:w-[418px]'}"
+      class="shrink-0 border-r border-line bg-surface {shownCollapsed ? 'w-16' : RAIL_WIDTH}"
     >
       <div
         class="scrollbar-thin sticky top-(--header-h) h-[calc(100dvh-var(--header-h))] overflow-y-auto overscroll-contain"

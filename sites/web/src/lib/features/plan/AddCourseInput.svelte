@@ -76,7 +76,7 @@
 
 <div bind:this={root} class="relative" {onfocusout}>
   <label
-    class="focus-field flex min-h-10 cursor-text items-center gap-2 rounded-tag border border-transparent px-2 text-ink focus-within:bg-paper hover:bg-paper md:min-h-8"
+    class="focus-field flex min-h-10 cursor-text items-center gap-2 rounded-field border border-transparent px-2 text-ink focus-within:bg-paper hover:bg-paper md:min-h-8"
   >
     <Plus aria-hidden="true" class="size-4 shrink-0" />
     <span class="sr-only">Add a course to {termLabel(term)}</span>
@@ -100,7 +100,7 @@
       id="{id}-list"
       role="listbox"
       aria-label="Matching courses"
-      class="scrollbar-thin absolute top-full right-0 left-0 z-40 mt-1 max-h-80 overflow-y-auto rounded-[8px] border border-line bg-surface py-1 shadow-popover"
+      class="scrollbar-thin absolute top-full right-0 left-0 z-40 mt-1 max-h-80 overflow-y-auto rounded-[8px] border border-line bg-surface py-1 text-ink shadow-popover"
     >
       {#if results.length === 0}
         <li class="px-3 py-3 text-body-2 text-muted">No courses match "{query.trim()}".</li>

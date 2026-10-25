@@ -121,7 +121,7 @@
       {#if info.passFail}
         <span
           title={info.passFailOnly ? "Pass/fail only: units are not factorable" : "Taking pass/fail: units are not factorable"}
-          class="shrink-0 rounded-tag border border-pressed px-1 text-label-sm font-semibold text-muted">P/F</span
+          class="shrink-0 rounded-tag bg-line px-1 text-label-sm font-semibold text-ink">P/F</span
         >
       {/if}
     </span>
