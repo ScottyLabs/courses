@@ -234,6 +234,11 @@
   storageKey="courses"
   filterCount={x.filterCount}
   backLabel="Search"
+  sheetDone={x.loading
+    ? "Show courses"
+    : x.results.length === 0
+      ? "No courses match"
+      : `Show ${x.results.length.toLocaleString("en-US")} ${x.results.length === 1 ? "course" : "courses"}`}
   header={panelAlone ? undefined : toolbar}
   autoCollapse={squeezed}
   bind:railCollapsed

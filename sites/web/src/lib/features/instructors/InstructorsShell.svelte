@@ -166,6 +166,11 @@
   storageKey="instructors"
   filterCount={scope.filterCount + (open ? scope.courses.length : 0)}
   backLabel={open ? "Instructor" : "Instructors"}
+  sheetDone={!scope.signedIn || open
+    ? undefined
+    : !scope.ready
+      ? "Show instructors"
+      : `Show ${scope.results.length.toLocaleString("en-US")} ${scope.results.length === 1 ? "instructor" : "instructors"}`}
   header={scope.signedIn && (!open || split) ? toolbar : undefined}
 >
   {#snippet rail()}
