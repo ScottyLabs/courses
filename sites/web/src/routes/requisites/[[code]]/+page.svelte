@@ -11,6 +11,11 @@
     return /^\d{5}$/u.test(digits) ? digits : code;
   });
   const requestedTerm = $derived(page.url.searchParams.get("term"));
+  // `?view=graph` opens the graph (the course page's "Prerequisite tree" link); otherwise the device's last choice.
+  const requestedView = $derived.by(() => {
+    const view = page.url.searchParams.get("view");
+    return view === "graph" || view === "list" ? view : null;
+  });
 </script>
 
-<RequisitesExplorer {courseId} {requestedTerm} />
+<RequisitesExplorer {courseId} {requestedTerm} {requestedView} />

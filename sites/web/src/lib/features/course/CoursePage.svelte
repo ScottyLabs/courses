@@ -129,11 +129,6 @@
 
   /** A white section card on the page background. */
   const card = "min-w-0 rounded-card border border-pressed bg-surface p-5 sm:p-6";
-
-  let tree = $state<HTMLElement>();
-  function showTree(): void {
-    tree?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 </script>
 
 {#snippet termSelect(variant: "field" | "compact", className = "")}
@@ -242,7 +237,7 @@
             {#if !wide.current}<ScheduleCalendar {sched} />{/if}
             <CourseSections {course} {sched} meta={term.value.meta} />
           {/if}
-          <div class={card}><CourseAbout {courseId} termId={checkTerm} onshowtree={showTree} /></div>
+          <div class={card}><CourseAbout {courseId} termId={checkTerm} /></div>
           <div class={card}><CountsToward {courseId} termId={checkTerm} /></div>
           {#if course}
             <div class={card}><OfferingHistory {courseId} currentTerm={termId} terms={terms.value ?? []} /></div>
@@ -268,7 +263,7 @@
 
       <div class={card}><CourseSyllabi {courseId} {code} /></div>
 
-      <section bind:this={tree} aria-labelledby="course-requisites" class="scroll-mt-24">
+      <section aria-labelledby="course-requisites" class="scroll-mt-24">
         <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 id="course-requisites" class="text-heading-4 text-strong">Prerequisites and what it unlocks</h2>
           <a
