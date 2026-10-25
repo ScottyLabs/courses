@@ -296,7 +296,7 @@
   </GraphCanvas>
 
   <div class="flex flex-col gap-2 border-t border-line px-4 py-3 {lonely ? 'hidden' : ''}">
-    <GraphLegend {unchecked} unlocks={showUnlocks && unlocks.length > 0} />
+    <GraphLegend unlocks={showUnlocks && unlocks.length > 0} />
     <p id="{uid}-keys" class="text-label-md text-muted">
       Drag or scroll to move around; ctrl and scroll, or pinch, to zoom. With the keyboard, the arrow keys move between
       courses, Enter does what a click does, and + and &minus; zoom.

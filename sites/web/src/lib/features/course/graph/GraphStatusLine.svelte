@@ -3,6 +3,7 @@
   // it changes. With nothing on record it asks for the courses taken instead, as the course pages do.
   import { Info } from "@lucide/svelte";
   import RequisiteLevelIcon from "$lib/components/course/RequisiteLevelIcon.svelte";
+  import { getSession } from "$lib/components/shell/session";
   import { codeOf } from "$lib/core/requisite-format";
   import { profilePath } from "$lib/core/routes";
   import type { GraphSummary } from "./status";
@@ -22,6 +23,9 @@
     /** No course lists it as a requisite. */
     unlocksNothing: boolean;
   } = $props();
+
+  const session = getSession();
+  const link = "text-accent-ink underline underline-offset-2";
 </script>
 
 <div class="flex items-start gap-2 px-4 pt-3 pb-1" aria-live="polite">
@@ -30,8 +34,14 @@
   {:else if unchecked && summary.level !== "none"}
     <Info aria-hidden="true" class="mt-[3px] size-4 shrink-0 text-muted" />
     <p class="min-w-0 text-body-2 text-ink">
-      <a href={profilePath("taken")} class="text-accent-ink underline underline-offset-2">Add the courses you've taken</a>
-      to check {codeOf(courseId)}'s requisites against them.
+      {#if session.status === "signed-out"}
+        <!-- The record is member data: signed out, there's nothing to check against until signing in. -->
+        <button type="button" class="{link} rounded-tag" onclick={() => session.signIn()}>Sign in</button> and add the
+        courses you've taken to check {codeOf(courseId)}'s requisites against them.
+      {:else}
+        <a href={profilePath("taken")} class={link}>Add the courses you've taken</a>
+        to check {codeOf(courseId)}'s requisites against them.
+      {/if}
     </p>
   {:else}
     <RequisiteLevelIcon level={summary.level} class="mt-[3px] size-4" />
