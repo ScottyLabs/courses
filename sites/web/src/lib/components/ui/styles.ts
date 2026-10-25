@@ -1,9 +1,15 @@
 // Class lists shared by several components, kept in one place so the pill and
 // field styles stay identical everywhere.
 
+/** A toggle's look without its size: the border, the text and the pressed fill. */
+const toggleLook =
+  "inline-flex min-w-0 items-center justify-center rounded-full border border-line-strong text-label-md text-ink transition-colors hover:bg-hover aria-pressed:bg-line aria-pressed:text-strong disabled:opacity-50";
+
 /** Toggle pill used by RangeSlider presets and ToggleChips (Figma "6 Units"). */
-export const togglePill =
-  "inline-flex h-[34px] min-w-0 items-center justify-center rounded-full border border-line-strong px-2 text-label-md text-ink transition-colors hover:bg-hover aria-pressed:bg-line aria-pressed:text-strong disabled:opacity-50";
+export const togglePill = `${toggleLook} h-[34px] px-2`;
+
+/** A round toggle for a single letter, such as a weekday: a 40px tap target on touch layouts, the pill's 34px from lg. */
+export const toggleCircle = `${toggleLook} size-10 shrink-0 lg:size-[34px]`;
 
 /** Bordered form field (Figma "Text field"): selects, comboboxes, text inputs. */
 export const fieldBox =

@@ -20,8 +20,8 @@
   import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
   import Select from "$lib/components/ui/Select.svelte";
   import Switch from "$lib/components/ui/Switch.svelte";
-  import ToggleChips from "$lib/components/ui/ToggleChips.svelte";
-  import { togglePill } from "$lib/components/ui/styles";
+  import ToggleChips, { type ToggleChip } from "$lib/components/ui/ToggleChips.svelte";
+  import { toggleCircle } from "$lib/components/ui/styles";
   import type { Option } from "$lib/components/ui/types";
   import FceAggregateSettings from "$lib/components/course/FceAggregateSettings.svelte";
   import type { Department } from "$lib/core/data";
@@ -121,8 +121,9 @@
     set("days", days);
   }
 
-  const sessionOptions = $derived<Option[]>([
-    { value: "full", label: "Full semester" },
+  // "Full" keeps the chips on one line in the narrowest rail; it's announced as "Full semester".
+  const sessionOptions = $derived<ToggleChip[]>([
+    { value: "full", label: "Full", fullLabel: "Full semester" },
     ...minis.map((m) => ({ value: String(m.number), label: m.name })),
   ]);
 
@@ -205,12 +206,13 @@
 {#if sections}
   <RailGroup title="Schedule">
     <RailSection title="Days" icon={CalendarDays} badge={f.days.length}>
-      <div role="group" aria-label="Days" class="flex gap-1.5">
+      <!-- Seven circles spread across the rail, the first and last on its edges like the control under them. -->
+      <div role="group" aria-label="Days" class="flex justify-between gap-1">
         {#each DAY_LETTERS as letter, index (letter)}
           {@const day = index as Day}
           <button
             type="button"
-            class="{togglePill} min-w-0 flex-1 px-0"
+            class={toggleCircle}
             aria-pressed={f.days.includes(day)}
             aria-label={DAY_LONG[day]}
             title={DAY_LONG[day]}
@@ -221,6 +223,7 @@
       <SegmentedControl
         label="Day matching"
         size="sm"
+        full
         options={[
           { value: "only", label: "Only these days" },
           { value: "any", label: "Any of these" },

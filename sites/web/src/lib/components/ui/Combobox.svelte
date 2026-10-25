@@ -166,7 +166,7 @@
       {onkeydown}
       onclick={show}
       onblur={hide}
-      class="focus-field h-10 w-full rounded-field border border-line-strong bg-surface pl-4 text-body-2 text-ink placeholder:text-muted hover:border-muted disabled:border-line disabled:text-faint disabled:placeholder:text-faint {clearable &&
+      class="focus-field h-10 w-full rounded-field border border-line-strong bg-surface pl-4 text-ellipsis text-body-2 text-ink placeholder:text-muted hover:border-muted disabled:border-line disabled:text-faint disabled:placeholder:text-faint {clearable &&
       selected
         ? 'pr-[4.5rem]'
         : 'pr-11'}"
@@ -193,7 +193,7 @@
     bind:this={panel}
     popover="manual"
     data-floating
-    class="{panelSurface} overflow-hidden"
+    class="{panelSurface} max-w-[calc(100vw-1rem)] overflow-hidden"
   >
     <!-- Pointer presses in the list must not blur the input, which would close the list. -->
     <ul

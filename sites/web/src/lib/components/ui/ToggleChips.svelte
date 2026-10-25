@@ -1,6 +1,14 @@
+<script lang="ts" module>
+  import type { Option } from "./types";
+
+  export interface ToggleChip extends Option {
+    /** The full name, for a label shortened to fit ("Full" for "Full semester"): the tooltip and accessible name. */
+    fullLabel?: string;
+  }
+</script>
+
 <script lang="ts">
   import { togglePill } from "./styles";
-  import type { Option } from "./types";
 
   let {
     options,
@@ -10,7 +18,7 @@
     stretch = false,
     class: className = "",
   }: {
-    options: readonly Option[];
+    options: readonly ToggleChip[];
     /** Selected option values. With `multiple` false it holds at most one. */
     value?: string[];
     multiple?: boolean;
@@ -31,8 +39,10 @@
   {#each options as option (option.value)}
     <button
       type="button"
-      class="{togglePill} {stretch ? 'flex-1' : 'px-4'}"
+      class="{togglePill} whitespace-nowrap {stretch ? 'flex-1' : 'px-4'}"
       aria-pressed={value.includes(option.value)}
+      aria-label={option.fullLabel}
+      title={option.fullLabel}
       disabled={option.disabled}
       onclick={() => toggle(option.value)}
     >
