@@ -135,7 +135,9 @@ answer, in localStorage. The color theme and the cards/list choice belong to the
 The root layout already supplies the session. The shell should also:
 
 - call `installUpdateReload()` (from `$lib/data`) once, and `handleStaleBuild(error)` from `handleError` in
-  `src/hooks.client.ts`, so a tab opened before a deploy reloads instead of failing to load a page;
+  `src/hooks.client.ts`, so a tab opened before a deploy reloads instead of failing to load a page; SvelteKit also
+  checks for a new build every five minutes (`kit.version.pollInterval`), and the root layout then shows a toast
+  offering to reload, which loses nothing since unsaved changes survive a reload;
 - call `trackOrigin(url.pathname, url.search)` and `device.rememberTerm(term)` after each navigation;
 - after the session loads, go to `session.consumeReturnPath()` when it isn't null.
 

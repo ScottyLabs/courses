@@ -16,6 +16,10 @@ const config = {
     alias: {
       "@": "./src",
     },
+    // Ask every five minutes whether a new build is out, so an open tab can offer to reload (routes/+layout.svelte).
+    version: {
+      pollInterval: 300_000,
+    },
   },
 };
 
