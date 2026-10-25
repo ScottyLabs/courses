@@ -82,7 +82,7 @@
             options={semesterOptions(scope.terms.value)}
             value={scope.allMode ? ALL_SEMESTERS : (scope.termId ?? "")}
             onchange={(event) => setTerm(event.currentTarget.value)}
-            class="w-full sm:w-44 [&_select]:max-sm:h-10"
+            class="w-full sm:w-44"
           />
         {/if}
       </div>

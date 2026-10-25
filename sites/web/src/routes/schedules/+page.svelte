@@ -224,7 +224,7 @@
           label="Semester"
           hideLabel={false}
           options={t.terms.value.map((x) => ({ value: x.id, label: x.name }))}
-          onchange={(event) => t.set((event.currentTarget as HTMLSelectElement).value)}
+          onchange={(event) => t.set(event.currentTarget.value)}
         />
       {:else}
         <Skeleton variant="block" class="h-16" />
