@@ -3,7 +3,6 @@
   import { getSession } from "$lib/components/shell/session";
   import Button from "$lib/components/ui/Button.svelte";
   import Combobox from "$lib/components/ui/Combobox.svelte";
-  import Select from "$lib/components/ui/Select.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
   import type { Option } from "$lib/components/ui/types";
   import { entryYearOf } from "$lib/core/degree/hooks";
@@ -84,12 +83,17 @@
     const ids = plan?.programs.map((p) => p.catalogId) ?? [];
     return flattenRequirements(v, ids)
       .filter((f) => !f.broad)
-      .map((f) => ({
-        value: String(f.nodeId),
-        // Indented to show the tree in a native select.
-        // The target only when the name doesn't already say it ("Science/Engineering (4 courses)").
-        label: `${"\u00A0\u00A0\u00A0".repeat(f.depth)}${f.name}${f.target && !f.name.includes(f.target) ? ` (${f.target})` : ""}`,
-      }));
+      .map((f) => {
+        // Where it sits in the program, as Courseweave's picker shows it: "Computer Science Core \u203A Systems".
+        const path = f.path.join(" \u203A ");
+        return {
+          value: String(f.nodeId),
+          // The target only when the name doesn't already say it ("Science/Engineering (4 courses)").
+          label: `${f.name}${f.target && !f.name.includes(f.target) ? ` (${f.target})` : ""}`,
+          description: path === "" ? undefined : path,
+          keywords: path,
+        };
+      });
   });
 
   const nodeValue = $derived(value !== null && String(value.auditId) === program ? String(value.nodeId) : "");
@@ -121,7 +125,7 @@
       }
     }
   />
-  <Select
+  <Combobox
     label="Requirement"
     placeholder={program === null
       ? "Select gen ed or requirement"
@@ -131,11 +135,18 @@
           ? "No course requirements to filter by"
           : "Select gen ed or requirement"}
     options={requirementOptions}
+    emptyText="No requirement matches"
+    limit={1000}
     disabled={program === null || requirementOptions.length === 0}
     bind:value={
-      () => nodeValue,
+      () => (nodeValue === "" ? null : nodeValue),
       (next) => {
-        if (program !== null && next !== "") onchange({ auditId: Number(program), nodeId: Number(next) });
+        if (program === null) return;
+        if (next === null) {
+          // Clearing the requirement keeps its program chosen, ready for another pick.
+          picked = program;
+          onchange(null);
+        } else onchange({ auditId: Number(program), nodeId: Number(next) });
       }
     }
   />
