@@ -1,5 +1,5 @@
 <!--
-  The semester's schedules as tabs (Courseweave's ScheduleTabs), each with its units: switch, create (blank or from
+  The semester's schedules as tabs (Courseweave's ScheduleTabs), each with its units in a pill: switch, create (blank or from
   a degree plan's semester), rename (double-click or the menu), duplicate, share and delete. A tab synced with the
   active degree plan's semester is marked, as is one friends can see.
 -->
@@ -19,6 +19,7 @@
   } from "@lucide/svelte";
   import { tick } from "svelte";
   import Button from "$lib/components/ui/Button.svelte";
+  import Chip from "$lib/components/ui/Chip.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
   import IconButton from "$lib/components/ui/IconButton.svelte";
   import Menu, { type MenuEntry } from "$lib/components/ui/Menu.svelte";
@@ -164,19 +165,22 @@
     const strip = tablist;
     const tab = strip?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
     if (strip === undefined || tab === null || tab === undefined) return;
-    const left = tab.offsetLeft - strip.offsetLeft;
+    // Room for the focus ring on either side (the strip's padding).
+    const left = tab.offsetLeft - strip.offsetLeft - 4;
+    const right = left + tab.offsetWidth + 8;
     if (left < strip.scrollLeft) strip.scrollLeft = left;
-    else if (left + tab.offsetWidth > strip.scrollLeft + strip.clientWidth)
-      strip.scrollLeft = left + tab.offsetWidth - strip.clientWidth;
+    else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = right - strip.clientWidth;
   });
 </script>
 
-<div bind:this={tabs} class="flex items-end gap-2 border-b border-line">
+<div bind:this={tabs} class="flex items-end gap-3 border-b border-line">
+  <!-- The padding (offset by negative margins) keeps the 2px focus rings of the tabs and the rename field inside the
+       scrolling strip, which would otherwise clip them. -->
   <div
     bind:this={tablist}
     role="tablist"
     aria-label="Schedules"
-    class="scrollbar-thin flex min-w-0 items-end gap-5 overflow-x-auto"
+    class="scrollbar-thin -mx-1 -mt-1 -mb-1.5 flex min-w-0 items-end gap-5 overflow-x-auto px-1 pt-1 pb-1.5"
   >
     {#each list.length > 0 ? list : [null] as s (s?.id ?? "placeholder")}
       {@const id = s?.id ?? null}
@@ -226,8 +230,8 @@
               <span class="sr-only">(friends can see it)</span>
             </span>
           {/if}
-          <span class="tabular text-label-md font-normal text-muted"
-            >{plural(s === null ? 0 : scheduleUnits(s, term), "unit")}</span
+          <Chip tone="neutral" size="sm" shape="pill" class="tabular font-normal"
+            >{plural(s === null ? 0 : scheduleUnits(s, term), "unit")}</Chip
           >
         </button>
       {/if}

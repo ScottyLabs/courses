@@ -1,10 +1,12 @@
 <!--
-  What calendar blocks show besides the course code (the Figma's "Show" dropdown; Courseweave's DisplayMenu). The
-  choice is the student's calendar display preference, so every calendar on the site follows it.
+  What calendar blocks show besides the course code (the Figma's "Show" dropdown; Courseweave's DisplayMenu), behind
+  a settings button at the end of the toolbar. The choice is the student's calendar display preference, so every
+  calendar on the site follows it.
 -->
 <script lang="ts">
-  import { ChevronDown, Eye } from "@lucide/svelte";
+  import { Settings2 } from "@lucide/svelte";
   import Checkbox from "$lib/components/ui/Checkbox.svelte";
+  import IconButton from "$lib/components/ui/IconButton.svelte";
   import Popover from "$lib/components/ui/Popover.svelte";
   import type { CalendarDisplay } from "$lib/core/state/store";
   import { preferences } from "$lib/state";
@@ -21,17 +23,8 @@
 
 <Popover bind:open label="Calendar display" placement="bottom-end" class="w-72 p-2">
   {#snippet trigger(props)}
-    <button
-      type="button"
-      {...props}
-      title="Calendar display"
-      class="inline-flex h-10 items-center gap-6 rounded-tag border-[0.5px] border-muted bg-surface pr-3 pl-3.5 text-body-2 text-ink hover:border-ink max-sm:w-10 max-sm:justify-center max-sm:rounded-full max-sm:border max-sm:border-line-strong max-sm:p-0 max-sm:hover:bg-hover lg:h-9 lg:w-52 lg:justify-between"
-    >
-      <!-- Phones show an eye icon; the name stays for screen readers. -->
-      <Eye aria-hidden="true" class="size-5 sm:hidden" />
-      <span class="max-sm:sr-only">Show</span>
-      <ChevronDown aria-hidden="true" class="size-5 transition-transform max-sm:hidden {open ? 'rotate-180' : ''}" />
-    </button>
+    <!-- As tall as the toolbar's other buttons: 40px on phones, 36px on desktops. -->
+    <IconButton {...props} label="Calendar display" icon={Settings2} variant="outline" class="lg:size-9" />
   {/snippet}
   {#snippet children()}
     <p class="px-2 pt-1 pb-1 text-label-md font-normal text-muted">

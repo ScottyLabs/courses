@@ -6,6 +6,7 @@
   import IconButton from "../ui/IconButton.svelte";
   import Sheet from "../ui/Sheet.svelte";
   import { readLocal, writeLocal } from "../ui/storage";
+  import type { IconComponent } from "../ui/types";
   import { setRail } from "./rail-context";
 
   let {
@@ -17,6 +18,8 @@
     children,
     filterCount = 0,
     sheetLabel = "Filter",
+    sheetButtonLabel,
+    sheetIcon,
     backLabel = "Back",
     sheetDone,
     storageKey,
@@ -40,6 +43,10 @@
     filterCount?: number;
     /** Text on the phone button that opens the rail, and the sheet's title. */
     sheetLabel?: string;
+    /** The phone button's whole text when it should differ from `sheetLabel` and the count, such as "Courses (3)". */
+    sheetButtonLabel?: string;
+    /** The phone button's icon in place of the filter icon. */
+    sheetIcon?: IconComponent;
     /** Back button text in the phone sheet (Figma "< Search"). */
     backLabel?: string;
     /** A button at the foot of the phone sheet that closes it, such as "Show 85 courses". */
@@ -103,6 +110,12 @@
     },
     get label() {
       return sheetLabel;
+    },
+    get buttonLabel() {
+      return sheetButtonLabel;
+    },
+    get icon() {
+      return sheetIcon;
     },
     open: () => {
       sheetOpen = true;
