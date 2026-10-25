@@ -137,7 +137,10 @@ the sheet's foot that closes it, such as "Show 85 courses".
 </RailLayout>
 ```
 
-`RailGroup`s stack with dividers between them; `RailSection` is a collapsible filter with an icon, label and chevron.
+`RailGroup`s stack with dividers between them; a group's `count` shows a pill after its title and `summary` puts
+short lines under it (the schedule's courses and totals). `RailSection` is a collapsible filter with an icon, label
+and chevron. `sheetButtonLabel` and `sheetIcon` replace the Filter button's text and icon where the rail isn't
+filters (the schedules page's "Courses (6)").
 `RailLayout`'s `autoCollapse` folds the rail to its strip while something sits beside the results (the Courses page's
 course panel below 1440px), with `bind:railCollapsed` to follow it.
 `PageToolbar` has slots for the title, an intro, the search field, the result count, removable chips (plus a Reset
