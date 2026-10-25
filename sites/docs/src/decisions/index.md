@@ -44,3 +44,4 @@
 | 40 | [Adapt the Figma design to the features, borrowing from Courseweave](0040-follow-courseweaves-interaction-design.md) | accepted |
 | 41 | [Preview every course link, by hover or by press and hold](0041-preview-every-course-link.md) | accepted |
 | 42 | [Ask before adding signed-out drafts to an account](0042-ask-before-adding-signed-out-drafts-to-an-account.md) | accepted |
+| 43 | [List instructors from their own documents](0043-list-instructors-from-their-own-documents.md) | accepted |
