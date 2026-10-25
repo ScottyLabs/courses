@@ -1,15 +1,14 @@
 <script lang="ts">
-  import { CalendarClock, CalendarDays, Info, LogIn, RotateCw, WandSparkles } from "@lucide/svelte";
+  import { CalendarClock, CalendarDays, Info, ListPlus, LogIn, RotateCw, WandSparkles } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { coursePreview } from "$lib/components/course/preview";
   import WeekGrid from "$lib/components/calendar/WeekGrid.svelte";
   import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
   import RailGroup from "$lib/components/layout/RailGroup.svelte";
   import RailLayout from "$lib/components/layout/RailLayout.svelte";
   import Title from "$lib/components/shell/Title.svelte";
   import Button from "$lib/components/ui/Button.svelte";
-  import Chip from "$lib/components/ui/Chip.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
@@ -17,7 +16,6 @@
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
   import { session } from "$lib/data";
-  import { courseColorStyle } from "$lib/core/colors";
   import { childForSection, initialChoice, partLabel } from "$lib/core/planner/format";
   import { coursesPath } from "$lib/core/routes";
   import { childSections, topSections } from "$lib/core/sections";
@@ -70,6 +68,10 @@
   let copyText = $state<{ title: string; text: string } | null>(null);
   let copyOpen = $state(false);
 
+  // Wide desktops have room for the session switch in the toolbar row; narrower screens show it above the calendar.
+  const wideToolbar = new MediaQuery("(min-width: 80rem)");
+  const courseCount = $derived(view?.entries.length ?? 0);
+
   // `?schedule=<id>` (links from the profile and shared schedules) shows that schedule.
   $effect(() => {
     const wanted = page.url.searchParams.get("schedule");
@@ -118,6 +120,7 @@
 
   // The session toggle matters only when a placed course runs in one mini.
   const hasMinis = $derived(view?.placed.some((e) => e.parts.some((p) => p.mini !== null)) ?? false);
+  const showSessions = $derived(hasMinis && (term?.meta.minis.length ?? 0) > 0);
   const mini = $derived(hasMinis ? miniChoice : null);
 
   const blocks = $derived.by(() => {
@@ -186,15 +189,32 @@
 
 <Title value="Schedules" />
 
+{#snippet sessions()}
+  {#if term}
+    <SegmentedControl
+      label="Session"
+      value={mini === null ? "all" : String(mini)}
+      onchange={(value) => (miniChoice = value === "all" ? null : Number(value))}
+      options={[
+        { value: "all", label: "Full semester" },
+        ...term.meta.minis.map((m) => ({ value: String(m.number), label: m.name })),
+      ]}
+      class="self-start"
+    />
+  {/if}
+{/snippet}
+
 <ImportLinkDialog {term} onswitch={(id) => t.set(id)} />
 
 <RailLayout
   title="Schedule"
   name="schedule panel"
   sheetLabel="Courses"
+  sheetButtonLabel={courseCount > 0 ? `Courses (${courseCount})` : "Add courses"}
+  sheetIcon={ListPlus}
   backLabel="Schedule"
   storageKey="schedules"
-  filterCount={view?.entries.length ?? 0}
+  filterCount={courseCount}
 >
   {#snippet rail()}
     <RailGroup>
@@ -211,46 +231,60 @@
       {/if}
     </RailGroup>
 
-    <RailGroup title="Courses">
-      {#if session.status === "signed-out"}
-        <p class="-mt-3 text-body-2 text-muted">
-          <button type="button" class="text-accent-ink underline underline-offset-2" onclick={() => session.signIn()}
-            >Sign in</button
-          > to see rooms and instructors.
-        </p>
-      {/if}
-      {#if view && termId && !loadingAccount}
-        {#if view.entries.length > 0}
-          <ul class="-mx-2.5 flex flex-col gap-1" aria-label="Courses in this schedule">
-            {#each view.entries as resolved, i (resolved.course.id)}
-              {@const id = resolved.course.id}
-              <CourseEntryRow
-                {resolved}
-                {view}
-                {termId}
-                first={i === 0}
-                last={i === view.entries.length - 1}
-                selected={selected?.courseId === id}
-                onselect={() => (selected = selected?.courseId === id ? null : { courseId: id, level: "section" })}
-                onsection={(name) => switchSection(id, name)}
-                onchild={(name) => schedules.setChild(target(), id, name)}
-                oncolor={(c) => schedules.setColor(target(), id, c)}
-                onpassfail={(p) => schedules.setPassFail(target(), id, p)}
-                ontogglehidden={() => schedules.toggleHidden(target(), id)}
-                onremove={() => schedules.removeCourse(target(), id)}
-                onmove={(d) => schedules.moveEntry(target(), id, view.entries[i + (d === 1 ? 2 : -1)]?.course.id ?? null)}
-                onpreview={(sections) => (preview = sections === null ? null : { courseId: id, sections })}
-              />
-            {/each}
-          </ul>
-        {:else}
+    <RailGroup title="Courses" count={view && !loadingAccount && courseCount > 0 ? courseCount : undefined}>
+      {#snippet summary()}
+        {#if view && term && !loadingAccount}
+          <WorkloadTotals {view} {term} />
+        {/if}
+      {/snippet}
+      <!-- The search adds to the list under it, so the two sit closer than the rail's groups. -->
+      <div class="flex flex-col gap-3">
+        {#if session.status === "signed-out"}
           <p class="text-body-2 text-muted">
-            Courses you add show up here, with their sections and any time conflicts.
+            <button type="button" class="text-accent-ink underline underline-offset-2" onclick={() => session.signIn()}
+              >Sign in</button
+            > to see rooms, instructors and hours a week.
           </p>
         {/if}
-      {:else}
-        <Skeleton variant="text" lines={3} />
-      {/if}
+        {#if view && term && termId && !loadingAccount}
+          <AddCourseSearch
+            {term}
+            {view}
+            onadd={add}
+            onpreview={(id) => (preview = id === null ? null : { courseId: id, sections: null })}
+          />
+          {#if view.entries.length > 0}
+            <ul class="-mx-2.5 flex flex-col gap-1" aria-label="Courses in this schedule">
+              {#each view.entries as resolved, i (resolved.course.id)}
+                {@const id = resolved.course.id}
+                <CourseEntryRow
+                  {resolved}
+                  {view}
+                  {termId}
+                  first={i === 0}
+                  last={i === view.entries.length - 1}
+                  selected={selected?.courseId === id}
+                  onselect={() => (selected = selected?.courseId === id ? null : { courseId: id, level: "section" })}
+                  onsection={(name) => switchSection(id, name)}
+                  onchild={(name) => schedules.setChild(target(), id, name)}
+                  oncolor={(c) => schedules.setColor(target(), id, c)}
+                  onpassfail={(p) => schedules.setPassFail(target(), id, p)}
+                  ontogglehidden={() => schedules.toggleHidden(target(), id)}
+                  onremove={() => schedules.removeCourse(target(), id)}
+                  onmove={(d) => schedules.moveEntry(target(), id, view.entries[i + (d === 1 ? 2 : -1)]?.course.id ?? null)}
+                  onpreview={(sections) => (preview = sections === null ? null : { courseId: id, sections })}
+                />
+              {/each}
+            </ul>
+          {:else}
+            <p class="text-body-2 text-muted">
+              Courses you add show up here, with their sections and any time conflicts.
+            </p>
+          {/if}
+        {:else}
+          <Skeleton variant="text" lines={3} />
+        {/if}
+      </div>
     </RailGroup>
 
     {#if view && term}
@@ -282,30 +316,7 @@
     {#if term && view}
       <h1 class="sr-only">Schedules: {active?.name ?? "Schedule 1"}, {term.meta.name}</h1>
       <ScheduleTabs {term} {activeId} onshare={() => (shareOpen = true)} ontarget={target} />
-      <PageToolbar class="mt-4" actionsLayout="inline">
-        {#snippet search()}
-          <AddCourseSearch
-            {term}
-            {view}
-            onadd={add}
-            onpreview={(id) => (preview = id === null ? null : { courseId: id, sections: null })}
-          />
-        {/snippet}
-        {#snippet chips()}
-          {#each view.entries as e (e.course.id)}
-            <Chip
-              label={e.course.code}
-              onremove={() => schedules.removeCourse(target(), e.course.id)}
-              removeLabel="Remove {e.course.code} from the schedule"
-              attrs={coursePreview(e.course.id, termId)}
-              class={e.entry.hidden ? "opacity-60" : ""}
-            >
-              <span class="inline-flex items-center gap-1.5" style={courseColorStyle(e.entry.color)}>
-                <span aria-hidden="true" class="course-swatch size-2 rounded-full"></span>{e.course.code}
-              </span>
-            </Chip>
-          {/each}
-        {/snippet}
+      <PageToolbar class="mt-1" actionsLayout="inline" chips={wideToolbar.current && showSessions ? sessions : undefined}>
         {#snippet actions()}
           <!-- Phones show these as icon buttons; the names stay for screen readers. -->
           <Button
@@ -336,7 +347,7 @@
           {/if}
           <DisplayMenu />
         {/snippet}
-        <WorkloadTotals {view} {term} />
+        <WorkloadTotals {view} {term} variant="compact" class="mt-3 lg:hidden" />
       </PageToolbar>
     {:else}
       <Skeleton variant="block" class="h-10 w-64" />
@@ -383,17 +394,8 @@
         </div>
       {/if}
 
-      {#if hasMinis && term.meta.minis.length > 0}
-        <SegmentedControl
-          label="Session"
-          value={mini === null ? "all" : String(mini)}
-          onchange={(value) => (miniChoice = value === "all" ? null : Number(value))}
-          options={[
-            { value: "all", label: "Full semester" },
-            ...term.meta.minis.map((m) => ({ value: String(m.number), label: m.name })),
-          ]}
-          class="self-start"
-        />
+      {#if showSessions && !wideToolbar.current}
+        {@render sessions()}
       {/if}
 
       {#if selected && selectedEntry}
@@ -420,8 +422,9 @@
               <div class="max-w-xs rounded-card border border-line bg-surface px-5 py-4 text-center shadow-popover">
                 <p class="text-heading-6 text-strong">Nothing scheduled yet</p>
                 <p class="mt-1 text-body-2 text-ink">
-                  Search for a course above to add it, or
-                  <a href={coursesPath(term.meta.id)} class="text-accent-ink underline">browse all courses</a>.
+                  <span class="max-lg:hidden">Add one with the search under Courses,</span>
+                  <span class="lg:hidden">Tap Add courses to search for one,</span>
+                  or <a href={coursesPath(term.meta.id)} class="text-accent-ink underline">browse all courses</a>.
                 </p>
               </div>
             {:else if unplaced > 0}

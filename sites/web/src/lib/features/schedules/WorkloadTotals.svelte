@@ -1,11 +1,12 @@
 <!--
-  The toolbar's "Total Workload" line (Figma; Courseweave's units footer): units, expected hours a week from FCEs,
-  the factorable and pass/fail split, how many courses and conflicts. Hours are member data; signed out the line
-  says so instead.
+  The schedule's totals (the Figma's "Total Workload"; Courseweave's units footer). `rail`: under the rail's Courses
+  heading, the units, expected hours a week from FCEs, conflicts, the factorable and pass/fail split and the
+  over-54-units warning. `compact`: one line of units, hours and conflicts for the page while the rail is a sheet.
+  Hours are member data; signed out they're left out (the rail asks the student to sign in).
 -->
 <script lang="ts">
-  import { Info, TriangleAlert } from "@lucide/svelte";
-  import { catalog, resource, session } from "$lib/data";
+  import { CircleCheck, Info, TriangleAlert } from "@lucide/svelte";
+  import { catalog, resource } from "$lib/data";
   import type { Term } from "$lib/core/data";
   import { FACTORABLE_HELP, plural } from "$lib/core/planner/format";
   import { formatHours } from "$lib/core/fce";
@@ -14,7 +15,12 @@
   import type { ScheduleView } from "$lib/core/state/schedule-view";
   import { conflictCount } from "./planner";
 
-  let { view, term }: { view: ScheduleView; term: Term } = $props();
+  let {
+    view,
+    term,
+    variant = "rail",
+    class: className = "",
+  }: { view: ScheduleView; term: Term; variant?: "rail" | "compact"; class?: string } = $props();
 
   const id = $props.id();
   const fce = resource(() => catalog.fceSummary());
@@ -25,36 +31,63 @@
   );
   const peak = $derived(load?.halves && load.peak !== null ? load.halves[load.peak] : null);
   const units = $derived(view.units);
+  const unitText = $derived(
+    units.hasVariable ? `${units.total} units plus variable` : plural(units.total, "unit"),
+  );
+  const heavy = $derived(units.factorable > HEAVY_UNITS);
   const conflicts = $derived(conflictCount(view));
   let help = $state(false);
 </script>
 
-<div class="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-  <div class="flex flex-col gap-0.5">
-    <p class="text-body-1 text-muted">Total Workload</p>
-    <p class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-body-1 text-ink">
-      <span class="tabular">
-        {units.total}
-        {units.hasVariable ? "Units plus variable" : units.total === 1 ? "Unit" : "Units"}
+{#snippet sep()}<span aria-hidden="true" class="text-faint">&middot;</span>{/snippet}
+
+{#snippet conflictText()}
+  {#if conflicts > 0}
+    <span class="inline-flex items-center gap-1 font-semibold text-danger">
+      <TriangleAlert aria-hidden="true" class="size-3.5" />{plural(conflicts, "conflict")}
+    </span>
+  {:else}
+    <span class="inline-flex items-center gap-1 text-ok">
+      <CircleCheck aria-hidden="true" class="size-3.5" />No conflicts
+    </span>
+  {/if}
+{/snippet}
+
+{#if view.entries.length > 0}
+  {#if variant === "compact"}
+    <p
+      class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-label-md font-normal text-muted {className}"
+      aria-live="polite"
+    >
+      <span class="tabular font-semibold {heavy ? 'text-warn' : 'text-ink'}">
+        {unitText}{#if heavy}<span class="sr-only">, over {HEAVY_UNITS} factorable</span>{/if}
       </span>
-      <span aria-hidden="true" class="h-5 w-px bg-line-strong"></span>
       {#if load !== null}
-        <span class="tabular" title="Expected hours a week from course evaluations (FCEs), including class time">
-          {formatHours(peak ? peak.load.hours : load.total)} hrs/week{peak ? " at peak" : ""}
-        </span>
-      {:else if fce.status === "signin"}
-        <button type="button" class="text-accent-ink underline-offset-2 hover:underline" onclick={() => session.signIn()}>
-          Sign in to see hrs/week
-        </button>
-      {:else if fce.status === "forbidden"}
-        <span class="text-muted">Hours need a CMU account</span>
-      {:else if fce.status === "error"}
-        <span class="text-muted">Hours unavailable</span>
-      {:else}
-        <span class="text-muted">&hellip; hrs/week</span>
+        {@render sep()}
+        <span class="tabular">{formatHours(peak ? peak.load.hours : load.total)} hrs/week</span>
       {/if}
+      {@render sep()}
+      {@render conflictText()}
     </p>
-    {#if view.entries.length > 0}
+  {:else}
+    <div class="flex flex-col gap-1 {className}">
+      <p class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-body-2 text-muted" aria-live="polite">
+        <span class="tabular font-semibold text-strong">{unitText}</span>
+        {#if load !== null}
+          {@render sep()}
+          <span class="tabular" title="Expected hours a week from course evaluations (FCEs), including class time">
+            {formatHours(peak ? peak.load.hours : load.total)} hrs/week{peak ? " at peak" : ""}
+          </span>
+        {:else if fce.status === "forbidden"}
+          {@render sep()}<span>Hours need a CMU account</span>
+        {:else if fce.status === "error"}
+          {@render sep()}<span>Hours unavailable</span>
+        {:else if fce.status === "loading"}
+          {@render sep()}<span>&hellip; hrs/week</span>
+        {/if}
+        {@render sep()}
+        {@render conflictText()}
+      </p>
       <p class="flex flex-wrap items-center text-label-md font-normal text-muted">
         <span><strong class="font-semibold text-ink">{units.factorable}</strong> factorable</span>
         {#if units.nonFactorable > 0}
@@ -72,27 +105,15 @@
           <Info aria-hidden="true" class="size-3.5" />
         </button>
       </p>
-    {/if}
-    {#if help}
-      <p {id} class="max-w-xl rounded-tag bg-surface-2 px-2.5 py-2 text-label-md font-normal text-ink">{FACTORABLE_HELP}</p>
-    {/if}
-    {#if units.factorable > HEAVY_UNITS}
-      <p class="flex items-start gap-1 text-label-md font-normal text-warn">
-        <TriangleAlert aria-hidden="true" class="mt-0.5 size-3.5 shrink-0" />
-        Over {HEAVY_UNITS} factorable units, which usually needs your college's approval. Guidance, not policy.
-      </p>
-    {/if}
-  </div>
-  {#if view.entries.length > 0}
-    <p class="text-right text-body-2" aria-live="polite">
-      <span class="text-muted">{plural(view.entries.length, "course")}</span>
-      {#if conflicts > 0}
-        <span class="flex items-center justify-end gap-1 font-semibold text-danger">
-          <TriangleAlert aria-hidden="true" class="size-3.5" />{plural(conflicts, "conflict")}
-        </span>
-      {:else}
-        <span class="block text-ok">No conflicts</span>
+      {#if help}
+        <p {id} class="rounded-tag bg-surface-2 px-2.5 py-2 text-label-md font-normal text-ink">{FACTORABLE_HELP}</p>
       {/if}
-    </p>
+      {#if heavy}
+        <p class="flex items-start gap-1 text-label-md font-normal text-warn">
+          <TriangleAlert aria-hidden="true" class="mt-0.5 size-3.5 shrink-0" />
+          Over {HEAVY_UNITS} factorable units, which usually needs your college's approval. Guidance, not policy.
+        </p>
+      {/if}
+    </div>
   {/if}
-</div>
+{/if}

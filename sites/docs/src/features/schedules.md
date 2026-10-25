@@ -1,7 +1,8 @@
 # Schedules and finals
 
 The schedule planner is Courseweave's (`src/features/planner`, `src/features/schedule-tools`), on the Figma's
-schedule page: the left rail, a toolbar band with the schedule's name and total workload, and the week calendar.
+schedule page: the left rail with the course search, the courses and their totals; a band with the schedule tabs and
+one toolbar row; and the week calendar.
 Personal data goes through the `schedules`, `preferences`, `record`, `plans` and `saved` stores (`$lib/state`); the
 pure logic is in `$lib/core` (`state/schedule-view.ts`, `planner/format.ts`, `generator.ts`, `ics.ts`, `share.ts`,
 `stellic-export.ts`).
@@ -29,23 +30,30 @@ hues in `routes/layout.css` (`--c0` to `--c9`, with dark values), applied with `
 
 ## The schedules page
 
-`/schedules?term=<id>` shows the semester's schedules as tabs (`ScheduleTabs.svelte`): switch, create (blank or from
-a degree plan semester, `core/planner/fromPlan.ts`), rename (the pencil, double-click or the menu), duplicate, share
-and delete. A semester without a schedule shows "Schedule 1", created on the first edit, so visiting creates nothing.
-`?schedule=<id>` shows a particular one (the profile links to it).
+`/schedules?term=<id>` shows the semester's schedules as tabs (`ScheduleTabs.svelte`), each with its units in a pill:
+switch, create (blank or from a degree plan semester, `core/planner/fromPlan.ts`), rename (the pencil, double-click or
+the menu), duplicate, share and delete. A semester without a schedule shows "Schedule 1", created on the first edit,
+so visiting creates nothing. `?schedule=<id>` shows a particular one (the profile links to it).
 
-- **Toolbar**: the course search (`AddCourseSearch.svelte`: arrowing or hovering previews a course's sections, Enter
-  adds it with sections that fit), removable course chips, Generate, Finals, Export and Show (the calendar display
-  menu), then the total units, expected hours a week from FCEs (signed in), the factorable and pass/fail split, the
-  over-54-units warning and the conflict count. On phones Generate, Finals, Export and Show are icon buttons beside
-  the "Courses" sheet button, and the chips get their own row (`PageToolbar`'s `actionsLayout`).
-- **Rail**: the semester, the courses (`CourseEntryRow.svelte`: color, lecture and recitation pickers with times,
-  rooms, instructors' FCEs and conflicts, pass/fail, hide, remove, move up or down), saved courses offered this
-  semester with quick add, the requisite check against the record (`ScheduleRequisiteSummary.svelte`, built on
-  `core/record/context.ts`), the FCE workload by course and by half of the semester, and a friend's schedule to
-  compare. At phone width the rail is the "Courses" sheet.
+- **Toolbar**: one row under the tabs with Generate, Finals, Export and the calendar display button (a settings icon,
+  `DisplayMenu.svelte`, whose popover chooses what blocks show besides the code). On screens 80rem and wider the
+  session switch (Full semester, Mini 1, Mini 2) sits at the row's start when a placed course runs in a mini;
+  narrower screens show it above the calendar. While the rail is a sheet, the row starts with the button that opens
+  it ("Courses (6)", or "Add courses" for an empty schedule), the other buttons are icons, and a line under the row
+  keeps the total units (in the warning color over 54 factorable), hours a week and conflicts in view
+  (`WorkloadTotals.svelte`, `compact`).
+- **Rail**: the semester; the courses, headed by their count and totals (`WorkloadTotals.svelte`: units, expected
+  hours a week from FCEs when signed in, conflicts, the factorable and pass/fail split with its explanation, and the
+  over-54-units warning), the course search that adds to them (`AddCourseSearch.svelte`: arrowing or hovering
+  previews a course's sections on the calendar, Enter adds it with sections that fit; the results float in the top
+  layer, as wide as the field, with the title on its own line so it stays readable in the narrow rail and the
+  sheet), then each course (`CourseEntryRow.svelte`: color, lecture and recitation pickers with times, rooms,
+  instructors' FCEs and conflicts, pass/fail, hide, remove, move up or down); saved courses offered this semester
+  with quick add; the requisite check against the record (`ScheduleRequisiteSummary.svelte`, built on
+  `core/record/context.ts`); the FCE workload by course and by half of the semester; and a friend's schedule to
+  compare. Below the desktop breakpoint the rail is the "Courses" sheet, search and totals included.
 - **Calendar**: clicking a course outlines its other lectures (or recitations); clicking an outline switches to it.
-  A session switch appears when a course runs in a mini. A friend's friends-visible schedule
+  The session switch (see Toolbar) shows one half of the semester when a course runs in a mini. A friend's friends-visible schedule
   (`GET /api/friends/{id}/schedules?term=`) shows as striped blocks with their name.
 - **Generator** (`ScheduleGenerator.svelte`): every conflict-free arrangement, ranked by start and end times, days
   off, gaps, lunch and days on campus, with courses left out or locked; apply it or save it as a new schedule.
@@ -58,8 +66,8 @@ and delete. A semester without a schedule shows "Schedule 1", created on the fir
   schedules"; `?import=<payload>` links open in `ImportLinkDialog.svelte`.
 
 Signed out, the page works on a draft kept in the tab, with a notice that it isn't saved; rooms, instructors and
-hours a week ask the student to sign in (section rows leave the room out rather than call it "Room TBA"). While the
-record is empty, the rail's requisite check asks for the courses taken instead of listing missing prerequisites.
+hours a week ask the student to sign in (one line under the courses' totals; section rows leave the room out rather
+than call it "Room TBA"). While the record is empty, the rail's requisite check asks for the courses taken instead of listing missing prerequisites.
 
 ## Final exams
 
