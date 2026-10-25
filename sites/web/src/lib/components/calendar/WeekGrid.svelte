@@ -301,17 +301,21 @@
     aria-label={showSwitch && view === "day" ? `${label}, ${DAY_LONG[activeDay]}` : label}
     class="relative flex min-w-0 flex-col"
   >
-    <div class="flex border-b border-line" aria-hidden="true">
+    <!-- The rule under the day names spans the days only, like the hour lines, so the first hour's label sits on its
+         line without a rule through it. -->
+    <div class="flex" aria-hidden="true">
       <div class="shrink-0 {small ? 'w-8' : 'w-12'}"></div>
-      {#each visibleDays as d (d)}
-        <div
-          class="min-w-0 flex-1 text-center font-semibold text-ink {small
-            ? 'py-1 text-[11px]'
-            : 'py-2 text-label-md'}"
-        >
-          {view === "day" ? DAY_LONG[d] : DAY_SHORT[d]}
-        </div>
-      {/each}
+      <div class="flex min-w-0 flex-1 border-b border-line">
+        {#each visibleDays as d (d)}
+          <div
+            class="min-w-0 flex-1 text-center font-semibold text-ink {small
+              ? 'py-1 text-[11px]'
+              : 'py-2 text-label-md'}"
+          >
+            {view === "day" ? DAY_LONG[d] : DAY_SHORT[d]}
+          </div>
+        {/each}
+      </div>
     </div>
 
     <div class="relative flex" style="height:{hours.length * rowHeight}px">
