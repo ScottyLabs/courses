@@ -21,8 +21,11 @@
 
   // Only signed in: a signed-out visitor, often arriving on a course page from a search, keeps a record only for the
   // tab, and the plan's record prompt still offers it.
+  // Not on the record page itself, nor over a friend's invite, which the student came to accept; it waits for the next
+  // page.
+  const waits = $derived(page.url.pathname === RECORD_PAGE || page.url.pathname.startsWith("/invite/"));
   $effect(() => {
-    if (personal.onboardingDue && session.status === "signed-in" && page.url.pathname !== RECORD_PAGE) open = true;
+    if (personal.onboardingDue && session.status === "signed-in" && !waits) open = true;
   });
 
   const firstName = $derived(session.user?.name.split(/\s+/u)[0]);
