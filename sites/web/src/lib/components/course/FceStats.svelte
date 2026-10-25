@@ -6,7 +6,7 @@
   import StatBox from "$lib/components/ui/StatBox.svelte";
   import { FCE_HOURS_HELP } from "$lib/core/fce";
   import type { FceAggregate } from "./fce-aggregate";
-  import { trimNumber } from "./fce-format";
+  import { hoursText, ratingText } from "./fce-format";
 
   let {
     stats,
@@ -42,7 +42,7 @@
           <span class="tabular text-[20px] leading-7" aria-label="No responses">&ndash;</span>
         {:else}
           <span class="flex flex-wrap items-baseline gap-x-1">
-            <span class="tabular text-[20px] leading-7">{trimNumber(stats.hours)}</span>
+            <span class="tabular text-[20px] leading-7">{hoursText(stats.hours)}</span>
             <span class="text-body-2 sm:text-body-1">hrs/wk</span>
           </span>
         {/if}
@@ -56,7 +56,7 @@
           <span class="hidden sm:inline-flex"><StarRating value={box.value} label={box.label} /></span>
           <span class="inline-flex items-center gap-1 sm:hidden">
             <Star aria-hidden="true" class="size-4 fill-current" strokeWidth={0} />
-            <span class="tabular text-[20px] leading-7">{trimNumber(box.value)}</span>
+            <span class="tabular text-[20px] leading-7">{ratingText(box.value)}</span>
             <span class="sr-only">out of 5</span>
           </span>
         {/if}

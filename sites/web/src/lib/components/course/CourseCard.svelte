@@ -115,8 +115,16 @@
       {:else if hours === null}
         <span class="text-body-2 text-muted">No FCE hours</span>
       {:else}
-        <span class="whitespace-nowrap text-muted @2xl:text-ink"
-          ><span class="tabular">{hours.toFixed(1)}</span> hrs/week</span
+        {@const recent = fce.value?.courses.get(course.id)?.terms ?? 0}
+        <!-- The course's recent average, which can differ from the aggregate below over the semesters chosen. -->
+        <span
+          class="whitespace-nowrap text-muted @2xl:text-ink"
+          title="Hours a week students reported over its last {recent} {recent === 1
+            ? 'semester'
+            : 'semesters'} with evaluations"
+          ><span class="tabular">{hours.toFixed(1)}</span> hrs/week<span class="sr-only">
+            over its last {recent} {recent === 1 ? "semester" : "semesters"} with evaluations</span
+          ></span
         >
       {/if}
     </div>
@@ -211,7 +219,7 @@
       class="-ml-2 inline-flex h-10 items-center gap-2 rounded-full px-2 text-body-1 text-muted hover:bg-hover hover:text-ink"
     >
       <ChevronDown aria-hidden="true" class="size-5 transition-transform {expanded ? 'rotate-180' : ''}" />
-      {expanded ? "Show less" : "Expand All"}
+      {expanded ? "Show less" : "Expand all"}
     </button>
     {#if expanded}
       <a href={pageHref} data-course-preview="off" class="text-body-2 text-accent-ink underline-offset-4 hover:underline">
