@@ -48,8 +48,6 @@
     searchRef?: HTMLInputElement;
     allSemesters?: boolean;
   } = $props();
-
-  const sortLabel = $derived(sortOptions.find((o) => o.value === sortValue)?.label ?? "");
 </script>
 
 <PageToolbar title="Search" hideTitle="desktop" {count} {onreset} actionsLayout="row">
@@ -85,22 +83,25 @@
       bind:value={() => sortValue, onsort}
       class="w-[11.5rem] max-sm:hidden"
     />
-    <!-- Phones: an icon over the native list of sorts, so long names aren't cut off. -->
-    <label
-      title="Sort by: {sortLabel}"
-      class="relative grid size-10 shrink-0 place-items-center rounded-full border border-line-strong text-ink transition-colors focus-ring-within hover:bg-hover sm:hidden"
+    <!-- Phones: an icon that opens the list of sorts, so long names aren't cut off. -->
+    <Select
+      label="Sort by"
+      options={sortOptions}
+      bind:value={() => sortValue, onsort}
+      placement="bottom-end"
+      class="shrink-0 sm:hidden"
     >
-      <ArrowDownUp aria-hidden="true" class="size-5" />
-      <select
-        aria-label="Sort by"
-        bind:value={() => sortValue, onsort}
-        class="absolute inset-0 cursor-pointer appearance-none rounded-full opacity-0"
-      >
-        {#each sortOptions as option (option.value)}
-          <option value={option.value} disabled={option.disabled}>{option.label}</option>
-        {/each}
-      </select>
-    </label>
+      {#snippet trigger(props, current)}
+        <button
+          {...props}
+          title="Sort by: {current}"
+          class="grid size-10 place-items-center rounded-full border border-line-strong text-ink transition-colors hover:bg-hover aria-expanded:bg-hover"
+        >
+          <ArrowDownUp aria-hidden="true" class="size-5" />
+          <span class="sr-only">{current}</span>
+        </button>
+      {/snippet}
+    </Select>
     {#if fceAvailable}
       <IconButton
         label={chart ? "Show courses as cards or a list" : "Chart FCE hours against units"}

@@ -221,7 +221,7 @@
               value={prefs.earliestStart === null ? "" : String(prefs.earliestStart)}
               options={timeOptions(START_OPTIONS)}
               onchange={(event) => {
-                const v = (event.currentTarget as HTMLSelectElement).value;
+                const v = event.currentTarget.value;
                 prefs = { ...prefs, earliestStart: v === "" ? null : Number(v) };
               }}
             />
@@ -231,7 +231,7 @@
               value={prefs.latestEnd === null ? "" : String(prefs.latestEnd)}
               options={timeOptions(END_OPTIONS)}
               onchange={(event) => {
-                const v = (event.currentTarget as HTMLSelectElement).value;
+                const v = event.currentTarget.value;
                 prefs = { ...prefs, latestEnd: v === "" ? null : Number(v) };
               }}
             />

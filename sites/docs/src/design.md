@@ -45,7 +45,7 @@ Type is Inter, with utilities named after the Figma text styles:
 | `text-label-md` | 12/16 medium | Chips, small buttons, counts |
 | `text-label-sm` | 10/14 | Phone tags |
 
-Radii are `rounded-tag` (4px: chips, compact selects, stat boxes), `rounded-field` (10px: fields, and rows that fill
+Radii are `rounded-tag` (4px: chips, stat boxes), `rounded-field` (10px: fields and selects, and rows that fill
 on hover inside a card) and `rounded-card` (10px); buttons and pills are `rounded-full`. Give each element the radius
 of its role, and separate things inside a card with spacing, a fill (`bg-surface-2` wells, `bg-paper` soft buttons) or
 a hairline `border-line` between rows of data rather than another outlined box. Shadows are `shadow-header`,
@@ -84,7 +84,7 @@ the ring:
 | --- | --- |
 | Fields: `TextInput`, `Select`, `Combobox`, `MultiSelect`, the boxed `SearchInput`, inline inputs | `focus-field`: the border eases to accent and thickens to 2px (inside, so nothing shifts or gets clipped); red while invalid. Shown for clicks too, since you type into the field |
 | The underline `SearchInput` | A 2px accent rule grows from the center over its line |
-| A transparent native select over an icon or a label | `focus-ring-within` on the wrapper |
+| A `Select` drawn as an icon or inline text (its `trigger` snippet) | The ring around that button |
 | Full-width rows and list items (profile sections, pick lists), segments of a `SegmentedControl` | The ring drawn inside (`focus-visible:-outline-offset-2`), where a screen edge, a scroll box or the group's border can't cover it |
 | `Tabs` | The ring around the tab's label, centered on the text rather than the tall tab |
 | Slider thumbs | A ring around the thumb, not the track |
@@ -107,7 +107,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `IconButton` | `label` (required), `icon`, `size`, `variant` ghost, outline, solid; `pressed`, `href` | |
 | `TextInput` | `bind:value`, `label`, `hideLabel`, `hint`, `error`, `icon`, `size` md, sm | |
 | `SearchInput` | `bind:value`, `label`, `placeholder`, `variant` underline (page search), field; `onsubmit` | Escape clears; has a clear button |
-| `Select` | `bind:value`, `options`, `placeholder`, `label`, `variant` field (rail), compact (toolbar) | Styled native select |
+| `Select` | `bind:value`, `options`, `placeholder`, `label`, `variant` field (rail), compact (toolbar); `onchange`, `placement`, `trigger` | A select-only combobox ([decision 30](decisions/0030-build-ui-primitives-on-native-elements.md#amendment-custom-selects)): the field opens a list in a popover with a check on the chosen option. Compact is 36px, 40px on phones. `trigger` draws it as an icon or inline text |
 | `Combobox` | `bind:value` (string or null), `options`, `label`, `placeholder`, `clearable` | Type to filter; for departments |
 | `MultiSelect` | `bind:value` (string array), `options`, `label`, `placeholder` | Searchable checklist; for requirements |
 | `Checkbox` | `bind:checked`, `indeterminate`, `label`, `description` | |

@@ -19,6 +19,6 @@ export const fieldBox =
 /** Floating panel surface for popovers, menus and dropdown lists. */
 export const panelSurface = "rounded-[8px] border border-line bg-surface text-ink shadow-popover";
 
-/** One row in a dropdown list or menu. */
+/** One row in a dropdown list: 40px tall for touch below lg. */
 export const listRow =
-  "flex w-full cursor-pointer items-center gap-3 px-3.5 py-1.5 text-left text-body-2 text-ink outline-none data-[active=true]:bg-paper aria-disabled:cursor-not-allowed aria-disabled:text-faint";
+  "flex w-full cursor-pointer items-center gap-3 px-3.5 py-1.5 max-lg:min-h-10 text-left text-body-2 text-ink outline-none data-[active=true]:bg-paper aria-disabled:cursor-not-allowed aria-disabled:text-faint";
