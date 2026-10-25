@@ -47,7 +47,7 @@
         onmouseenter={() => onpreview(course.id)}
         onmouseleave={() => onpreview(null)}
       >
-        <a href={coursePath(course.code, term.meta.id)} class="tabular w-16 shrink-0 text-label-lg text-strong hover:underline"
+        <a href={coursePath(course.code, term.meta.id)} class="tabular code-column text-label-lg text-strong hover:underline"
           >{course.code}</a
         >
         <span class="min-w-0 flex-1 truncate text-body-2 text-ink" title={course.title}>{course.title}</span>

@@ -48,7 +48,7 @@
       {#each matches as match (match.id)}
         {@const next = nearestTerm([...match.terms], termId)}
         <li class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-4 py-2.5 last:border-b-0">
-          <span class="tabular w-16 shrink-0 text-heading-6 text-muted">{codeOf(match.id)}</span>
+          <span class="tabular code-column text-heading-6 text-muted">{codeOf(match.id)}</span>
           <div class="min-w-0 flex-1">
             <a href={coursePath(match.id, next ?? null)} class="block truncate text-body-1 text-ink hover:underline"
               >{match.title}</a

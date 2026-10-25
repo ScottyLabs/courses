@@ -102,7 +102,7 @@
             onkeydown={() => {}}
             class="{listRow} min-h-11"
           >
-            <span class="tabular w-14 shrink-0 font-semibold text-strong">{course.code}</span>
+            <span class="tabular code-column font-semibold text-strong">{course.code}</span>
             <span class="min-w-0 flex-1 truncate">{course.title}</span>
             {#if term && !term.courseById.has(course.id)}
               <span class="shrink-0 text-label-md text-muted">Not in {term.meta.name}</span>

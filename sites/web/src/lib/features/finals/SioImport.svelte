@@ -106,7 +106,7 @@
       <ul class="divide-y divide-line">
         {#each imported.map(fromSio) as exam (exam.courseId)}
           <li class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-3 py-2 text-body-2">
-            <a href={coursePath(exam.code, termId)} class="tabular w-16 font-semibold text-strong hover:underline"
+            <a href={coursePath(exam.code, termId)} class="tabular code-column font-semibold text-strong hover:underline"
               >{exam.code}</a
             >
             <span class="min-w-0 flex-1 text-ink">{examDay(exam.date)}, {formatTimeRange(exam.start, exam.end)}</span>

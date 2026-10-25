@@ -81,7 +81,7 @@
       {#each sorted as f (f.courseId)}
         <li class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-3 py-2.5" style={courseColorStyle(f.color)}>
           <span aria-hidden="true" class="course-swatch h-4 w-1 shrink-0 rounded-full"></span>
-          <a href={coursePath(f.code, termId)} class="tabular w-16 shrink-0 text-label-lg text-strong hover:underline"
+          <a href={coursePath(f.code, termId)} class="tabular code-column text-label-lg text-strong hover:underline"
             >{f.code}</a
           >
           {#if f.exam}

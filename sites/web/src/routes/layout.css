@@ -328,6 +328,14 @@
   border: 1px solid color-mix(in oklab, var(--course) 45%, transparent);
 }
 
+/* The course-number column in a list of courses: wide enough for "15-122" at any font size (it's about 3.9em), never
+   broken across lines, and wider for a longer label rather than overflowing. */
+@utility code-column {
+  min-width: 4em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 @utility course-swatch {
   background: var(--course);
 }

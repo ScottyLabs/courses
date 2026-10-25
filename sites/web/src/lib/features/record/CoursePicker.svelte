@@ -150,7 +150,7 @@
                 ? 'bg-paper'
                 : ''}"
             >
-              <span class="tabular w-[52px] shrink-0 text-label-lg text-strong">{course.code}</span>
+              <span class="tabular code-column text-label-lg text-strong">{course.code}</span>
               <span class="min-w-0 flex-1 truncate text-body-2">{course.title}</span>
               {#if course.units !== null}
                 <span class="shrink-0 text-label-md text-muted">{course.units} units</span>

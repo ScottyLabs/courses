@@ -139,7 +139,7 @@
               onchange={(event) => toggle(item.key, event.currentTarget.checked)}
             />
             <label for={inputId} class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1 sm:gap-3">
-              <span class="tabular w-[56px] shrink-0 text-label-lg whitespace-nowrap text-strong">
+              <span class="tabular code-column text-label-lg text-strong">
                 {codeOf(item.row.courseId)}
               </span>
               <span class="min-w-0 flex-1">

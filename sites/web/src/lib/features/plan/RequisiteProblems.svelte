@@ -31,7 +31,7 @@
           onclick={() => onjump(p.planCourseId, p.term)}
           class="flex min-h-11 w-full items-start gap-3 rounded-field px-2 py-1.5 text-left hover:bg-paper focus-visible:-outline-offset-2"
         >
-          <span class="tabular w-14 shrink-0 text-label-lg text-strong">{codeOf(p.courseId)}</span>
+          <span class="tabular code-column text-label-lg text-strong">{codeOf(p.courseId)}</span>
           <span class="min-w-0 flex-1 text-body-2">
             <span class="block text-danger">{p.check.issues.find((i) => i.severity === "error")?.message}</span>
             <span class="text-label-md font-normal text-muted">{termLabel(p.term)}</span>

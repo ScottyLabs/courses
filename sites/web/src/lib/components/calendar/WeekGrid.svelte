@@ -400,7 +400,7 @@
         {#each tba as item (item.key)}
           <li class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-3 py-2" style={courseColorStyle(item.color)}>
             <span aria-hidden="true" class="course-swatch size-2.5 shrink-0 rounded-full"></span>
-            <span class="tabular w-16 shrink-0 text-label-lg text-strong">{item.label}</span>
+            <span class="tabular code-column text-label-lg text-strong">{item.label}</span>
             {#if item.title}
               {#if item.href}
                 <a href={item.href} class="min-w-0 flex-1 basis-40 truncate text-body-2 text-ink hover:underline"

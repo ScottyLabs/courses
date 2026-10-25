@@ -32,7 +32,8 @@ color: every token has a dark value.
 | `hover` / `active` | ink at 7% / 12% | ink at 9% / 15% | Hover and pressed fills that work on any surface |
 | `selected` | accent at 9% over surface | accent at 16% over surface | The row a list or panel is showing (the course or instructor open beside the list) |
 
-Copy doesn't explain what a page is for or restate what students know (that FCE hours include class time, that
+A list's course-number column uses `code-column` (at least 4em, never wrapped), not a pixel width, so "15-122" fits at
+any font size. Copy doesn't explain what a page is for or restate what students know (that FCE hours include class time, that
 pass/fail units don't count toward QPA); how-to hints go behind a `HelpTip`. Selection, emphasis and warnings are
 fills, icons and text color, never a colored stripe down one side of a card,
 row or block: a calendar block is a firmer tint of its course's color with a hairline edge (`course-block`), a selected
