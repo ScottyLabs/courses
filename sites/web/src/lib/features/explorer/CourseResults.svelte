@@ -77,7 +77,7 @@
 <!-- Opening a course keeps the list where it is. -->
 <div data-sveltekit-noscroll data-sveltekit-keepfocus>
   {#if chart && fce}
-    <HoursScatter courses={results} {fce} {highlight} {hrefFor} />
+    <HoursScatter courses={results} {fce} {highlight} {hrefFor} fill />
   {:else if view === "cards"}
     <ol class="flex flex-col gap-6" aria-label="Courses">
       {#each shown as course, index (course.id)}

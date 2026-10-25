@@ -35,6 +35,7 @@
     fce,
     highlight = new Set<string>(),
     hrefFor,
+    fill = false,
     class: className = "",
   }: {
     courses: readonly Course[];
@@ -42,6 +43,8 @@
     /** Courses to mark and label, such as the ones in the student's schedule. */
     highlight?: ReadonlySet<string>;
     hrefFor: (course: Course) => string;
+    /** Draw on the page instead of a card, as tall as the rest of the window (the Courses page's chart view). */
+    fill?: boolean;
     class?: string;
   } = $props();
 
@@ -84,9 +87,24 @@
     return { list, variable, missing };
   });
 
-  const height = 420;
+  let plot = $state<HTMLElement>();
+  let viewportHeight = $state(0);
+  /** The plot's distance from the top of the document, so a filling chart reaches the bottom of the first screen. */
+  let plotTop = $state(0);
+  $effect(() => {
+    if (!fill || plot === undefined) return;
+    const element = plot;
+    const measure = (): void => {
+      viewportHeight = window.innerHeight;
+      plotTop = element.getBoundingClientRect().top + window.scrollY;
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  });
+  const height = $derived(fill && viewportHeight > 0 ? Math.max(380, Math.round(viewportHeight - plotTop - 24)) : 420);
   const innerW = $derived(Math.max(0, width - M.left - M.right));
-  const innerH = height - M.top - M.bottom;
+  const innerH = $derived(height - M.top - M.bottom);
   const maxUnits = $derived(data.list.reduce((m, d) => Math.max(m, d.unitEq), 0));
   const miniCount = $derived(data.list.filter((d) => d.mini).length);
   const xMax = $derived(niceCeil(Math.min(Math.max(maxUnits, 12), 24), 3));
@@ -119,6 +137,46 @@
       .toSorted((a, b) => a.x - b.x || a.y - b.y);
   });
   const marked = $derived(points.filter((p) => p.highlighted));
+
+  /**
+   * Where each marked course's code goes: right of its point unless that overlaps a label already placed or leaves
+   * the plot, then left, above or below. Codes are 11.5px tabular, about 7px a character.
+   */
+  const labels = $derived.by(() => {
+    // Labels keep clear of every marked point as well as of each other.
+    const placed: { x0: number; y0: number; x1: number; y1: number }[] = marked.map((m) => ({
+      x0: m.x - 6,
+      y0: m.y - 6,
+      x1: m.x + 6,
+      y1: m.y + 6,
+    }));
+    const out = new Map<string, { x: number; y: number; anchor: "start" | "end" }>();
+    const left = M.left;
+    const right = M.left + innerW;
+    for (const p of [...marked].sort((a, b) => a.y - b.y || a.x - b.x)) {
+      const w = p.course.code.length * 7;
+      const h = 14;
+      const candidates: { x: number; y: number; anchor: "start" | "end" }[] = [
+        { x: p.x + 8, y: p.y, anchor: "start" },
+        { x: p.x - 8, y: p.y, anchor: "end" },
+        { x: p.x + 6, y: p.y - 13, anchor: "start" },
+        { x: p.x + 6, y: p.y + 13, anchor: "start" },
+        { x: p.x - 6, y: p.y - 13, anchor: "end" },
+        { x: p.x - 6, y: p.y + 13, anchor: "end" },
+      ];
+      const box = (c: { x: number; y: number; anchor: "start" | "end" }) => {
+        const x0 = c.anchor === "start" ? c.x : c.x - w;
+        return { x0, y0: c.y - h / 2, x1: x0 + w, y1: c.y + h / 2 };
+      };
+      const fits = (b: { x0: number; y0: number; x1: number; y1: number }) =>
+        b.x0 >= left && b.x1 <= right + M.right &&
+        placed.every((o) => b.x1 <= o.x0 || b.x0 >= o.x1 || b.y1 <= o.y0 || b.y0 >= o.y1);
+      const choice = candidates.find((c) => fits(box(c))) ?? candidates[0];
+      placed.push(box(choice));
+      out.set(p.course.id, choice);
+    }
+    return out;
+  });
   const activePoint = $derived(pinned ?? hover ?? (focusIndex === null ? null : (points[focusIndex] ?? null)));
 
   const xTicks = $derived(Array.from({ length: xMax / 3 + 1 }, (_, i) => i * 3));
@@ -186,7 +244,9 @@
   });
 </script>
 
-<div class="flex flex-col gap-2 rounded-card border border-pressed bg-surface px-3 pt-3 pb-4 sm:px-4 {className}">
+<div
+  class="flex flex-col gap-2 {fill ? '' : 'rounded-card border border-pressed bg-surface px-3 pt-3 pb-4 sm:px-4'} {className}"
+>
   <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-label-md text-ink">
     <span class="flex items-center gap-1.5">
       <svg aria-hidden="true" width="10" height="10"><circle cx="5" cy="5" r="4" class="fill-accent" opacity="0.6" /></svg>
@@ -215,7 +275,7 @@
     </span>
   </div>
 
-  <div class="relative" bind:clientWidth={width} style="height:{height}px">
+  <div class="relative" bind:this={plot} bind:clientWidth={width} style="height:{height}px">
     {#if width > 0}
       <!-- A chart the keyboard can step through: arrows move between courses, Enter opens one. -->
       <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
@@ -285,9 +345,13 @@
             {:else}
               <circle cx={p.x} cy={p.y} r="5" class="fill-strong stroke-surface" stroke-width="2" />
             {/if}
+          {/each}
+          {#each marked as p (p.course.id)}
+            {@const label = labels.get(p.course.id) ?? { x: p.x + 8, y: p.y, anchor: "start" }}
             <text
-              x={p.x + 8}
-              y={p.y}
+              x={label.x}
+              y={label.y}
+              text-anchor={label.anchor}
               dy="0.32em"
               class="tabular fill-strong stroke-surface text-[11.5px] font-semibold"
               paint-order="stroke"
