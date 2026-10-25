@@ -36,14 +36,16 @@ share. Each component needs only a course (or its id) and a semester:
   compact rows; from 34rem wide their hours column is Courseweave's workload cell: the FCE hours, "mini" before a
   mini's, over a `WorkloadMeter` bar, with the workload described in its title and to screen readers) and `CourseCardSmall` (the Figma's small card, for saved courses and the record's Courses Taken and
   Currently Taking, with `deptLabel`, `children` and `footer` slots).
-- `RequisiteStatus` (the requisite line with its details and waivers, on the course page, the panel and the schedule
-  rail's checks), `RequisiteLevelIcon`, `RequisiteExpression`, `RequisiteSummary`, `RequisiteTreeNode`,
-  `RequiresAndUnlocks`, `UnlocksList`, `CourseChipList`.
+- `RequisiteStatus` (the requisite line with a Details toggle right after its last word, opening the details and
+  waivers under it; in the course page's and the panel's actions card), `RequisiteLevelIcon`, `RequisiteExpression`,
+  `RequisiteSummary`, `RequisiteTreeNode`, `RequiresAndUnlocks`, `UnlocksList`, `CourseChipList`.
 - `FceAggregate`, `FceStats` (the Figma's stat boxes), `FceTable` (with optional course and instructor columns,
   `showCourse`, `showInstructor`), `FceAggregateSettings` (the rails' "Aggregate FCEs" group: one setting,
   `cmucourses:fce-aggregate`, shared by the Courses and Instructors rails), `CourseFcePanel`, `FceHistory`,
   `LineChart`, `HoursScatter`, `WorkloadMeter`, `InstructorFceBadge`; `fce-aggregate.ts` and `fce-format.ts`.
-- `SaveButton`, `FriendsTaking` (from `GET /api/friends/courses?term=`), `MemberSignIn`.
+- `SaveButton`, `FriendsTaking` (from `GET /api/friends/courses?term=`), `MemberSignIn`; `text-action.ts`, the
+  compact accent text action that follows a status (Remove and Open schedule after "In Schedule 1", Details after the
+  requisite line), 32px tall and 40px on phones.
 - `course-search.ts` (catalog search for the plan's "Add a course", the record's course picker and the requisite
   explorer) and `links.ts` (`setCourseHref()`, so the Courses page's panel opens course links in place).
 
@@ -78,6 +80,14 @@ Which semester it shows:
 - No `term`: the last semester visited (`resolveTerm`); when that doesn't offer the course, the nearest semester that
   does; when none does, the all-semesters view. This is the canonical address search engines and shared links use.
 
+The header is one unit: the big course number with its save star beside it, the title, the department and semester,
+then the facts. What the student does with the course sits in one card (`CourseActions.svelte`): the semester select,
+the schedule action (a full-width "Add to Schedule 1", or an "In Schedule 1" chip with Remove and Open schedule right
+after it; both one 40px row, so the card doesn't jump), the requisite line with its Details, and friends taking it.
+From 1024px the card sits beside the title at the top, in the calendar's column; narrower, it comes between the title
+and the facts. Where the course isn't shown (not offered that semester, a semester that didn't load) the semester
+select stays beside the back link instead.
+
 The page shows the course facts ("Also listed as" for cross-listings with the same title, "Meets with" otherwise),
 adding it to the semester's active schedule with any section or recitation (`CourseSchedule` in
 `course-schedule.svelte.ts`, over the `schedules` store, with conflicts against the rest of the schedule), the
@@ -100,7 +110,11 @@ the canonical `/course/<code>` link; the web API renders the same tags on the se
 ([decision 25](../decisions/0025-render-course-head-tags-on-the-server.md)).
 
 `CourseDetailPanel.svelte` stacks the same sections into a side panel for the Courses page (`?course=` there), with
-the calendar before the sections. Course
+the calendar before the sections. Its header matches the page's narrow layout: the number with its star, the title,
+the same actions card (without the semester select, which the Courses toolbar has), then the facts. The panel's top
+bar holds Expand and Close ("All courses" on phones); the small code and the star come up in it once the big ones
+have scrolled under it. The bar sticks to the panel's top where the panel scrolls on its own, and under the site
+header where it scrolls with the page; the panel clips its content to its rounded corners. Course
 links inside a view go through `setCourseHref()` (`links.ts`), so the panel can open them in place.
 
 ## Requisite explorer

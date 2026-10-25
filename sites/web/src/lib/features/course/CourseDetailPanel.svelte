@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { ArrowLeft, ArrowRight, Maximize2, X } from "@lucide/svelte";
+  import { ArrowLeft, Maximize2, X } from "@lucide/svelte";
   import CourseFcePanel from "$lib/components/course/CourseFcePanel.svelte";
   import { catalogIndex, offerings, termData } from "$lib/components/course/data.svelte";
-  import FriendsTaking from "$lib/components/course/FriendsTaking.svelte";
   import SaveButton from "$lib/components/course/SaveButton.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import IconButton from "$lib/components/ui/IconButton.svelte";
@@ -11,11 +10,11 @@
   import { catalogTitle } from "$lib/core/explorer/unoffered";
   import { nearestTerm } from "$lib/core/offerings";
   import { codeOf } from "$lib/core/requisite-format";
-  import { termLabel } from "$lib/core/requisites";
   import { coursePath } from "$lib/core/routes";
   import { catalog, resource } from "$lib/data";
   import CatalogFacts from "./CatalogFacts.svelte";
   import CountsToward from "./CountsToward.svelte";
+  import CourseActions from "./CourseActions.svelte";
   import CourseAbout from "./CourseAbout.svelte";
   import CourseFacts from "./CourseFacts.svelte";
   import CourseSections from "./CourseSections.svelte";
@@ -23,8 +22,6 @@
   import { CourseSchedule } from "./course-schedule.svelte";
   import { defaultCourseHref, setCourseHref, type CourseHref } from "$lib/components/course/links";
   import NotOfferedHere from "./NotOfferedHere.svelte";
-  import RequisiteStatus from "$lib/components/course/RequisiteStatus.svelte";
-  import ScheduleActions from "./ScheduleActions.svelte";
   import ScheduleCalendar from "./ScheduleCalendar.svelte";
 
   let {
@@ -75,11 +72,57 @@
 
   const sched = new CourseSchedule(() => (course && term?.value ? { course, term: term.value } : null));
   const fullHref = $derived(coursePath(display, termId ?? "all"));
+  const isId = $derived(/^\d{5}$/u.test(courseId));
+
+  // The bar sticks to the top of the panel where the panel scrolls on its own (beside the list), and under the site
+  // header where it scrolls with the page (in place of the list). It shows the code and star once the big ones have
+  // scrolled under it; scroll events don't bubble, but they can be caught on the way down from any scroller.
+  let article = $state<HTMLElement>();
+  let bar = $state<HTMLElement>();
+  let head = $state<HTMLElement | null>(null);
+  let ownScroll = $state(true);
+  let condensed = $state(false);
+  // Where there's no big code and star (not offered here, an error), the bar keeps the star.
+  const barStar = $derived(condensed || (!loading && head === null));
+  $effect(() => {
+    const parent = article?.parentElement;
+    const barEl = bar;
+    const headEl = head;
+    if (!parent || !barEl) return;
+    let frame = 0;
+    const check = (): void => {
+      frame = 0;
+      ownScroll = /auto|scroll/u.test(getComputedStyle(parent).overflowY);
+      condensed = headEl !== null && headEl.getBoundingClientRect().bottom <= barEl.getBoundingClientRect().bottom;
+    };
+    const schedule = (): void => {
+      if (frame === 0) frame = requestAnimationFrame(check);
+    };
+    check();
+    // The panel moves between beside and in place of the list with the window and the rail.
+    const resize = new ResizeObserver(schedule);
+    resize.observe(parent);
+    addEventListener("scroll", schedule, { capture: true, passive: true });
+    return () => {
+      resize.disconnect();
+      removeEventListener("scroll", schedule, { capture: true });
+      cancelAnimationFrame(frame);
+    };
+  });
 </script>
 
-<article class="flex min-h-full flex-col bg-surface" aria-label="{display} details">
+<!--
+  Rounded and clipped to the panel's inner corners, so neither its background nor the sticky bar paints over the
+  panel's rounded border (clip, not hidden, so the bar still sticks while the page scrolls).
+-->
+<article
+  bind:this={article}
+  class="flex min-h-full flex-col overflow-clip rounded-[calc(var(--radius-card)-1px)] bg-surface"
+  aria-label="{display} details"
+>
   <div
-    class="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface/95 px-4 backdrop-blur"
+    bind:this={bar}
+    class="sticky z-20 flex h-14 {ownScroll ? 'top-0' : 'top-[var(--header-h)]'} shrink-0 items-center gap-2 border-b border-line bg-surface/95 px-4 backdrop-blur"
   >
     <a
       href={closeHref}
@@ -87,12 +130,22 @@
     >
       <ArrowLeft aria-hidden="true" class="size-5" />All courses
     </a>
-    <span class="hidden text-label-lg text-muted md:inline">{display}</span>
+    <!-- The code and star come up here once the big ones have scrolled under the bar. -->
+    <span
+      aria-hidden="true"
+      class="hidden text-label-lg text-strong tabular transition-opacity duration-150 motion-reduce:transition-none md:inline {condensed
+        ? 'opacity-100'
+        : 'opacity-0'}">{display}</span
+    >
     <div class="ml-auto flex items-center gap-1">
+      {#if isId}
+        <span class="contents {barStar ? '' : '[&>*]:invisible'}">
+          <SaveButton {courseId} size="sm" />
+        </span>
+      {/if}
       <Button size="sm" variant="ghost" icon={Maximize2} href={fullHref} title="Open the full course page">
         Expand
       </Button>
-      {#if /^\d{5}$/u.test(courseId)}<SaveButton {courseId} size="sm" />{/if}
       <span class="hidden md:contents">
         <IconButton href={closeHref} label="Close course details" icon={X} size="sm" />
       </span>
@@ -100,7 +153,7 @@
   </div>
 
   <div class="flex flex-col gap-8 px-4 pt-5 pb-10 sm:px-5">
-    {#if !/^\d{5}$/u.test(courseId)}
+    {#if !isId}
       <p class="text-body-2 text-ink">"{code}" isn't a course number. Course numbers look like 15-122.</p>
     {:else if loading}
       <div class="flex flex-col gap-3" aria-busy="true">
@@ -129,26 +182,21 @@
         </p>
       </div>
     {:else}
+      <!-- As on the full page: the code with its star, the title, the actions card, then the facts. -->
       <header class="flex flex-col gap-4">
         <div>
-          <p class="text-[40px] tabular leading-none font-semibold tracking-tight text-strong">{display}</p>
+          <div bind:this={head} class="flex items-center gap-1.5">
+            <p class="min-w-0 text-[40px] tabular leading-none font-semibold tracking-tight text-strong">{display}</p>
+            <SaveButton {courseId} />
+          </div>
           <h2 class="mt-1.5 text-heading-4 text-strong">{title}</h2>
         </div>
+        <CourseActions {sched} {courseId} checkTermId={termId ?? contextTermId} nextTerm={course ? undefined : next} />
         {#if course && term?.value}
           <CourseFacts {course} term={term.value} layout="list" />
-          <ScheduleActions {sched} />
-          <FriendsTaking {courseId} termId={term.value.meta.id} />
         {:else}
           <CatalogFacts {courseId} terms={terms.value ?? []} layout="list" />
-          {#if next}
-            <div>
-              <Button variant="primary" trailingIcon={ArrowRight} href={(courseHref ?? defaultCourseHref)(courseId, next)}>
-                Sections in {termLabel(next)}
-              </Button>
-            </div>
-          {/if}
         {/if}
-        <RequisiteStatus {courseId} termId={termId ?? contextTermId} />
       </header>
 
       <CourseAbout {courseId} termId={termId ?? contextTermId} />
