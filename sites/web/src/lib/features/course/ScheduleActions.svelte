@@ -1,5 +1,9 @@
 <script lang="ts">
+  // The course against the semester's active schedule: a full-width "Add to Schedule 1", or once it's in, a status
+  // chip with Remove and Open schedule right beside it. Both take one 40px row, so adding or removing doesn't move
+  // what comes after.
   import { Check, Plus } from "@lucide/svelte";
+  import { textAction } from "$lib/components/course/text-action";
   import Button from "$lib/components/ui/Button.svelte";
   import { schedulesPath } from "$lib/core/routes";
   import type { CourseSchedule } from "./course-schedule.svelte";
@@ -10,19 +14,28 @@
   const name = $derived(sched.scheduleName ?? "your schedule");
 </script>
 
-<div class="flex flex-col gap-1 {className}">
-  <div class="flex flex-wrap items-center gap-2" aria-live="polite">
+<div class="flex min-w-0 flex-col gap-2 {className}">
+  <div class="flex min-h-10 flex-wrap items-center gap-x-1 gap-y-1" aria-live="polite">
     {#if entry}
-      <span class="inline-flex min-h-10 items-center gap-1.5 text-label-lg text-ok">
-        <Check aria-hidden="true" class="size-5 shrink-0" />
-        In {name}
-        {#if entry.entry.hidden}<span class="font-normal text-muted">(hidden)</span>{/if}
-        {#if entry.entry.passFail && sched.course?.passFail !== true}<span class="font-normal text-muted">(pass/fail)</span>{/if}
+      <span
+        class="inline-flex h-8 max-w-full min-w-0 items-center gap-1.5 rounded-full bg-ok-bg px-3 text-label-lg text-ok"
+      >
+        <Check aria-hidden="true" class="size-4 shrink-0" />
+        <span class="truncate">
+          In {name}{#if entry.entry.hidden}<span class="font-normal">, hidden</span>{/if}{#if entry.entry.passFail && sched.course?.passFail !== true}<span
+              class="font-normal">, pass/fail</span
+            >{/if}
+        </span>
       </span>
-      <Button variant="ghost" size="sm" onclick={() => sched.remove()}>Remove</Button>
-      <Button variant="ghost" size="sm" href={schedulesPath(sched.termId, sched.scheduleId)}>Open schedule</Button>
+      <!-- The actions wrap under the chip together when the row is too narrow for all three. -->
+      <span class="flex items-center gap-0.5">
+        <button type="button" class={textAction} aria-label="Remove from {name}" onclick={() => sched.remove()}>
+          Remove
+        </button>
+        <a class={textAction} href={schedulesPath(sched.termId, sched.scheduleId)}>Open schedule</a>
+      </span>
     {:else}
-      <Button variant="primary" icon={Plus} onclick={() => sched.addDefault()}>
+      <Button variant="primary" icon={Plus} full onclick={() => sched.addDefault()}>
         Add to {sched.scheduleName ?? "schedule"}
       </Button>
     {/if}

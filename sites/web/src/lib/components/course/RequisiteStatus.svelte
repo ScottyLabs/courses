@@ -16,6 +16,7 @@
   import { termRequisites } from "./requisite-context.svelte";
   import RequisiteExpression from "./RequisiteExpression.svelte";
   import RequisiteLevelIcon from "./RequisiteLevelIcon.svelte";
+  import { textAction } from "./text-action";
 
   let {
     courseId,
@@ -78,49 +79,61 @@
   {/if}
 {/snippet}
 
+<!--
+  The status text's last word with Details right after it, kept on one line so Details never starts a line on its own;
+  its negative margins keep the line 20px tall.
+-->
+{#snippet withToggle(text: string)}
+  {@const cut = text.lastIndexOf(" ") + 1}
+  {#if expandable}{text.slice(0, cut)}<span class="whitespace-nowrap"
+      >{text.slice(cut)}&nbsp;<button
+        type="button"
+        aria-expanded={open}
+        aria-controls={detailsId}
+        class="{textAction} -my-1.5 ml-0.5 align-baseline max-md:-my-2.5"
+        onclick={() => (open = !open)}
+      >
+        {open ? "Hide details" : "Details"}<ChevronDown
+          aria-hidden="true"
+          class="size-4 transition-transform {open ? 'rotate-180' : ''}"
+        />
+      </button></span
+    >{:else}{text}{/if}
+{/snippet}
+
 <div class="min-w-0 {className}">
-  <!-- The status line is announced as it changes; the details opened under it aren't. -->
+  <!--
+    The status line, announced as it changes; Details follows its last word, so it stays with the status however the
+    line wraps. The details opened under it aren't announced.
+  -->
   <div aria-live="polite">
     {#if index.status === "error"}
       <p class="text-body-2 text-muted">Requisites didn't load: {index.error}</p>
     {:else if !summary || !check}
-      <p class="min-h-6 text-body-2 text-muted">Checking requisites&hellip;</p>
+      <p class="text-body-2 text-muted">Checking requisites&hellip;</p>
     {:else if index.status === "ready" && !entry}
       <p class="text-body-2 text-muted">No requisite information in the catalog.</p>
     {:else}
-      <div class="flex min-h-10 items-start gap-2">
+      <div class="flex items-start gap-2">
         {#if unchecked && summary.level !== "none"}
           <Info aria-hidden="true" class="mt-[3px] size-4 shrink-0 text-muted" />
           <p class="min-w-0 flex-1 text-body-2 text-ink">
             {plainText}.
             <a href={profilePath("taken")} class="text-accent-ink underline underline-offset-2"
               >Add the courses you've taken</a
-            > to check them.
+            >{@render withToggle(" to check them.")}
           </p>
         {:else}
           <RequisiteLevelIcon level={summary.level} class="mt-[3px] size-4" />
           <p class="min-w-0 flex-1 text-body-2 {summary.level === 'problem' ? 'text-danger' : 'text-ink'}">
-            {summary.text}
+            {@render withToggle(summary.text)}
           </p>
-        {/if}
-        {#if expandable}
-          <Button
-            size="sm"
-            variant="ghost"
-            trailingIcon={ChevronDown}
-            aria-expanded={open}
-            aria-controls={detailsId}
-            class="-my-1 shrink-0 max-md:h-10 [&_svg:last-child]:transition-transform {open ? '[&_svg:last-child]:rotate-180' : ''}"
-            onclick={() => (open = !open)}
-          >
-            {open ? "Hide" : "Details"}
-          </Button>
         {/if}
       </div>
     {/if}
   </div>
   {#if open && entry && ctx && check}
-    <div id={detailsId} class="mt-2 flex flex-col gap-3 rounded-card border border-line bg-surface-2 p-3 text-left">
+    <div id={detailsId} class="mt-3 flex flex-col gap-3 rounded-card border border-line bg-surface-2 p-3 text-left">
       {#if entry.prereqs}
         <section class="flex flex-col gap-1.5">
           <div class="flex min-h-8 flex-wrap items-center justify-between gap-x-3 gap-y-1">

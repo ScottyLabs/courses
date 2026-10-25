@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { ArrowRight, ChevronLeft } from "@lucide/svelte";
+  import { ChevronLeft } from "@lucide/svelte";
   import { MediaQuery } from "svelte/reactivity";
   import { goto } from "$app/navigation";
   import CourseFcePanel from "$lib/components/course/CourseFcePanel.svelte";
   import { catalogIndex, courseDetails, offerings, termData } from "$lib/components/course/data.svelte";
-  import FriendsTaking from "$lib/components/course/FriendsTaking.svelte";
   import RequiresAndUnlocks from "$lib/components/course/RequiresAndUnlocks.svelte";
   import SaveButton from "$lib/components/course/SaveButton.svelte";
   import PageContainer from "$lib/components/layout/PageContainer.svelte";
@@ -23,6 +22,7 @@
   import { device, isAllSemesters, originBack, resolveTerm } from "$lib/state";
   import CatalogFacts from "./CatalogFacts.svelte";
   import CountsToward from "./CountsToward.svelte";
+  import CourseActions from "./CourseActions.svelte";
   import CourseAbout from "./CourseAbout.svelte";
   import CourseFacts from "./CourseFacts.svelte";
   import CourseHead from "./CourseHead.svelte";
@@ -33,8 +33,6 @@
   import NotOfferedHere from "./NotOfferedHere.svelte";
   import OfferingHistory from "./OfferingHistory.svelte";
   import { requisitesPath } from "./paths";
-  import RequisiteStatus from "$lib/components/course/RequisiteStatus.svelte";
-  import ScheduleActions from "./ScheduleActions.svelte";
   import ScheduleCalendar from "./ScheduleCalendar.svelte";
 
   let {
@@ -112,6 +110,23 @@
   ]);
   const nextTerm = $derived(resolved === null ? undefined : nearestTerm(offered, resolved));
 
+  const hasTermSelect = $derived(courseId !== "" && (offered.length > 0 || termId !== null));
+  /** Which of the page's states shows. */
+  const stage = $derived.by((): "invalid" | "loading" | "error" | "not-offered" | "missing" | "ready" => {
+    if (courseId === "") return "invalid";
+    if (
+      view.kind === "loading" ||
+      term?.status === "loading" ||
+      checkLoad?.status === "loading" ||
+      (view.kind === "all" && (index.status === "loading" || offeringsData.status === "loading"))
+    )
+      return "loading";
+    if (term?.status === "error") return "error";
+    if (view.kind === "term" && !course) return "not-offered";
+    if (view.kind === "all" && !title) return "missing";
+    return "ready";
+  });
+
   /** A white section card on the page background. */
   const card = "min-w-0 rounded-card border border-pressed bg-surface p-5 sm:p-6";
 
@@ -120,6 +135,20 @@
     tree?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 </script>
+
+{#snippet termSelect(variant: "field" | "compact", className = "")}
+  <Select
+    {variant}
+    label="Semester"
+    class={className}
+    options={termOptions}
+    value={view.kind === "all" ? "all" : (termId ?? "")}
+    onchange={(event) => {
+      const next = event.currentTarget.value;
+      void goto(coursePath(courseId, next), { noScroll: true });
+    }}
+  />
+{/snippet}
 
 <CourseHead code={code || "Course"} {title} description={details.value?.description} />
 
@@ -131,42 +160,33 @@
     >
       <ChevronLeft aria-hidden="true" class="size-5" />{back.label}
     </a>
-    {#if courseId !== "" && (offered.length > 0 || termId !== null)}
-      <Select
-        variant="compact"
-        label="Semester"
-        class="ml-auto w-44"
-        options={termOptions}
-        value={view.kind === "all" ? "all" : (termId ?? "")}
-        onchange={(event) => {
-          const next = event.currentTarget.value;
-          void goto(coursePath(courseId, next), { noScroll: true });
-        }}
-      />
+    <!-- With the course shown, the select heads its actions card instead. -->
+    {#if hasTermSelect && (stage === "not-offered" || stage === "error")}
+      {@render termSelect("compact", "ml-auto w-44")}
     {/if}
   </div>
 
-  {#if courseId === ""}
+  {#if stage === "invalid"}
     <EmptyState
       title="That isn't a course number"
       description="Course numbers look like 15-122. Search for the course on the courses page."
     >
       <Button variant="primary" href={coursesPath(resolved)}>Search courses</Button>
     </EmptyState>
-  {:else if view.kind === "loading" || (term !== null && term.status === "loading") || checkLoad?.status === "loading" || (view.kind === "all" && (index.status === "loading" || offeringsData.status === "loading"))}
+  {:else if stage === "loading"}
     <div class="flex flex-col gap-4" aria-busy="true" aria-live="polite">
       <span class="sr-only">Loading {code}</span>
       <Skeleton class="h-14 w-40" />
       <Skeleton class="h-8 w-2/3" />
       <Skeleton variant="text" lines={4} />
     </div>
-  {:else if term !== null && term.status === "error"}
+  {:else if stage === "error"}
     <EmptyState title="This semester didn't load" description="Check your connection, then reload the page.">
       <Button onclick={() => location.reload()}>Reload</Button>
     </EmptyState>
-  {:else if view.kind === "term" && termId !== null && !course}
+  {:else if stage === "not-offered" && termId !== null}
     <NotOfferedHere {courseId} {termId} terms={terms.value ?? []} showBack={false} />
-  {:else if view.kind === "all" && !title}
+  {:else if stage === "missing"}
     <EmptyState
       title="No course {code}"
       description="It isn't in the course catalog or any semester this site has. Check the number and try again."
@@ -175,37 +195,42 @@
     </EmptyState>
   {:else}
     <article class="flex flex-col gap-8">
-      <!-- Actions sit level with the bottom of the title; requisite details open below them. -->
-      <header class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,26rem)] lg:gap-x-12">
-        <div class="min-w-0 lg:self-end">
-          <div class="flex items-start gap-3">
-            <div class="min-w-0 flex-1">
-              <p class="text-[44px] tabular leading-none font-semibold tracking-tight text-strong sm:text-[64px]">{code}</p>
-              <h1 class="mt-2 max-w-[32ch] text-heading-3 text-strong sm:text-[32px] sm:leading-10">{title}</h1>
-            </div>
+      <!--
+        Wide screens: the title and its facts on the left, the actions card beside them at the top, in the same column
+        as the calendar below. Narrower: the card comes between the title and the facts. The facts row is the
+        flexible one, so opening the requisite details grows it rather than pushing the facts off the title.
+      -->
+      <header
+        class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:grid-rows-[auto_1fr] lg:gap-x-8"
+      >
+        <div class="min-w-0 lg:col-start-1 lg:row-start-1">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <p class="min-w-0 text-[44px] tabular leading-none font-semibold tracking-tight text-strong sm:text-[64px]">
+              {code}
+            </p>
             <SaveButton {courseId} />
           </div>
-          {#if course && term?.value}
-            <p class="mt-1 text-body-1 text-muted">{departmentName(course.dept)} &middot; {term.value.meta.name}</p>
-            <div class="mt-6"><CourseFacts {course} term={term.value} /></div>
-          {:else}
-            <p class="mt-1 text-body-1 text-muted">All semesters</p>
-            <div class="mt-6"><CatalogFacts {courseId} terms={terms.value ?? []} /></div>
-          {/if}
+          <h1 class="mt-2 max-w-[32ch] text-heading-3 text-strong sm:text-[32px] sm:leading-10">{title}</h1>
+          <p class="mt-1 text-body-1 text-muted">
+            {#if course && term?.value}{departmentName(course.dept)} &middot; {term.value.meta.name}{:else}All semesters{/if}
+          </p>
         </div>
-        <div class="flex min-w-0 flex-col gap-3 lg:self-end">
-          {#if course && termId !== null}
-            <ScheduleActions {sched} />
-            <FriendsTaking {courseId} {termId} />
-          {:else if nextTerm}
-            <div>
-              <Button variant="primary" trailingIcon={ArrowRight} href={coursePath(courseId, nextTerm)}>
-                Sections in {termLabel(nextTerm)}
-              </Button>
-            </div>
-          {/if}
-          {#if checkTerm !== null}
-            <RequisiteStatus {courseId} termId={checkTerm} />
+        <CourseActions
+          {sched}
+          {courseId}
+          checkTermId={checkTerm}
+          nextTerm={course ? undefined : nextTerm}
+          class="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start"
+        >
+          {#snippet select()}
+            {#if hasTermSelect}{@render termSelect("field")}{/if}
+          {/snippet}
+        </CourseActions>
+        <div class="min-w-0 lg:col-start-1 lg:row-start-2 lg:self-start">
+          {#if course && term?.value}
+            <CourseFacts {course} term={term.value} />
+          {:else}
+            <CatalogFacts {courseId} terms={terms.value ?? []} />
           {/if}
         </div>
       </header>
