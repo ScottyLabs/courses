@@ -8,6 +8,7 @@
   import { readLocal, writeLocal } from "../ui/storage";
   import { provideProfileBand } from "./profile-band.svelte";
   import { RAIL_WIDTH } from "./rail-context";
+  import { STABLE_GUTTER, stableGutter } from "./scrollbar-gutter";
   import { PROFILE_SECTIONS, profileHref, type ProfileSectionId } from "./profile-sections";
 
   let {
@@ -79,7 +80,8 @@
       class="shrink-0 border-r border-line bg-surface {collapsed ? 'w-16' : RAIL_WIDTH}"
     >
       <div
-        class="scrollbar-thin sticky top-(--header-h) max-h-[calc(100dvh-var(--header-h))] overflow-y-auto"
+        {@attach stableGutter}
+        class="scrollbar-thin sticky top-(--header-h) max-h-[calc(100dvh-var(--header-h))] overflow-y-auto {STABLE_GUTTER}"
       >
         {#if collapsed}
           <div class="flex flex-col items-center gap-1 pt-5">

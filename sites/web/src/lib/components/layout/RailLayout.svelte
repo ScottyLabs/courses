@@ -8,6 +8,7 @@
   import { readLocal, writeLocal } from "../ui/storage";
   import type { IconComponent } from "../ui/types";
   import { RAIL_WIDTH, setRail } from "./rail-context";
+  import { STABLE_GUTTER, stableGutter } from "./scrollbar-gutter";
 
   let {
     title = "Filter by",
@@ -144,7 +145,8 @@
       class="shrink-0 border-r border-line bg-surface {shownCollapsed ? 'w-16' : RAIL_WIDTH}"
     >
       <div
-        class="scrollbar-thin sticky top-(--header-h) flex h-[calc(100dvh-var(--header-h))] flex-col overflow-y-auto overscroll-contain"
+        {@attach stableGutter}
+        class="scrollbar-thin sticky top-(--header-h) flex h-[calc(100dvh-var(--header-h))] flex-col overflow-y-auto overscroll-contain {STABLE_GUTTER}"
       >
         {#if shownCollapsed}
           <div class="flex flex-col items-center gap-2 pt-5">

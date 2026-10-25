@@ -141,8 +141,10 @@ The root layout renders the header, `<main>` and the footer around every page. P
 
 **Rail layout** (courses, instructors, schedules, plan). A white rail on the left with a title and a Hide
 button, and the page on the right: a white toolbar band, then content on the page background. The rail is 340, 380 and
-418px wide up to 1440px, then grows with the window to 560px at 2560px (`RAIL_WIDTH`, shared with the profile's
-rail). Below 1024px the rail is a sheet opened from the toolbar's Filter button (`FilterButton`), which shows the
+418px wide up to 1440px, then grows with the window to 480px at 1920px and faster beyond, to 672px at 2560px and at
+most 760px (`RAIL_WIDTH`, shared with the profile's rail). The rail always keeps room for its scrollbar and its
+content reaches under that room (`scrollbar-gutter.ts`), so a rail that scrolls lines up with one that doesn't; the
+scrollbar sits over the content's right padding. Below 1024px the rail is a sheet opened from the toolbar's Filter button (`FilterButton`), which shows the
 active filter count; `sheetDone` adds a button at the sheet's foot that closes it, such as "Show 85 courses", and
 `getRail().close()` closes it from inside, as the plan's requisite list does before jumping to a course.
 
