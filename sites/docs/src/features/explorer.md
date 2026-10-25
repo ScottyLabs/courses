@@ -81,7 +81,8 @@ The page shows the course facts ("Also listed as" for cross-listings with the sa
 adding it to the semester's active schedule with any section or recitation (`CourseSchedule` in
 `course-schedule.svelte.ts`, over the `schedules` store, with conflicts against the rest of the schedule), the
 requisite status checked against the student's record, plan and schedules (with waivers through
-`record.setOverride`), the catalog description and requisites, which of the active degree plan's requirements it
+`record.setOverride`; while the record is empty, a missing prerequisite asks for the courses taken instead of
+showing an error, and status chips leave "missing" uncolored), the catalog description and requisites, which of the active degree plan's requirements it
 counts toward, the semesters offering it, FCE summary, trend charts and history tables, past syllabi (PDF preview in a
 dialog, downloads), and the prerequisite tree beside what it unlocks. Beside the sections (from 1024px; before them on
 narrower screens) the semester's active schedule shows as a week calendar (`ScheduleCalendar.svelte`, on the shared

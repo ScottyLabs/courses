@@ -24,7 +24,9 @@ The layout keeps the list's state while the student opens instructors. In the li
 or more, an open instructor shows beside Courseweave's rows, which stay in their own scrolling column; in the cards
 view and on narrower screens the instructor page is on its own, with "All instructors" going back to the list.
 
-The list keeps its filters in the URL (`q`, `dept`, `saved=1`, `sort=sections`), so Back from an instructor, a
+The rail and toolbar match the Courses page: departments are a searchable multi-select and the sort a toolbar select
+(on phones, beside the semester); signed out, neither offers filters. The list keeps its filters in the URL (`q`,
+`dept=CS,MSC`, `saved=1`, `sort=sections`), so Back from an instructor, a
 reload or a shared link shows the same list. Search is Courseweave's: names first, then course numbers (`15-122`,
 `15-1`) and course titles; `/` focuses the field, the arrow keys move through the rows and Enter opens one. Saved is
 a filter, matching instructors who teach one of the student's saved courses. The cards/list switch is remembered per
@@ -74,6 +76,8 @@ Friends are new in CMU Courses; the Figma's "Profile Page (Friends)" sets the lo
 | `lib/features/friends/FriendSchedule.svelte` | A friend's friends-visible schedule for a semester |
 | `lib/features/friends/InvitePage.svelte` | The invite page |
 
+- **Friends taking a course** show on course cards and the course panel as avatars on a button that lists their names
+  (for touch and keyboard users as well as hover).
 - **Friend cards** show the friend's name and Andrew ID, "Schedule" when they share schedules, and the courses they're
   taking in the chosen semester (from `GET /api/friends/courses`), with the ones the student is also taking (their
   schedule for the semester and courses in progress on their record) first and marked. The semester defaults to the
