@@ -16,6 +16,7 @@
     value = $bindable(),
     label,
     size = "md",
+    full = false,
     onchange,
     class: className = "",
   }: {
@@ -25,6 +26,8 @@
     label: string;
     /** sm 28px, md 32px tall. */
     size?: "sm" | "md";
+    /** Fill the container's width, the segments sharing it equally (filters in a rail). */
+    full?: boolean;
     onchange?: (value: string) => void;
     class?: string;
   } = $props();
@@ -55,7 +58,9 @@
   aria-label={label}
   tabindex="-1"
   {onkeydown}
-  class="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-line-strong bg-surface p-0.5 {className}"
+  class="{full
+    ? 'flex w-full'
+    : 'inline-flex shrink-0'} items-center gap-0.5 rounded-full border border-line-strong bg-surface p-0.5 {className}"
 >
   {#each options as option, index (option.value)}
     {@const isSelected = option.value === selected}
@@ -68,7 +73,9 @@
       title={option.iconOnly === true ? option.label : undefined}
       tabindex={isSelected ? 0 : -1}
       onclick={() => choose(index)}
-      class="inline-flex items-center justify-center gap-1.5 rounded-full transition-colors focus-visible:-outline-offset-2 {size === 'sm'
+      class="inline-flex items-center justify-center gap-1.5 rounded-full transition-colors focus-visible:-outline-offset-2 {full
+        ? 'flex-1 whitespace-nowrap'
+        : ''} {size === 'sm'
         ? 'h-10 min-w-10 px-2.5 text-label-md lg:h-7 lg:min-w-0 [&_svg]:size-4'
         : 'h-10 px-3 text-label-md lg:h-8 [&_svg]:size-4'} {isSelected
         ? 'bg-line text-strong'

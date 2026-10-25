@@ -121,7 +121,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `Tooltip` | `text`, `trigger` snippet | Hover and focus |
 | `toast()` | `toast(message, { kind, action, duration })` | Rendered by the root layout's `Toaster` |
 | `Tabs` | `tabs`, `bind:value`, `label`, `panel` snippet | |
-| `SegmentedControl` | `options` (label, icon, iconOnly), `bind:value`, `label` | Radio group |
+| `SegmentedControl` | `options` (label, icon, iconOnly), `bind:value`, `label`, `size`, `full` | Radio group; `full` fills the width with equal segments, as rail filters do |
 | `ViewToggle` | `pageKey`, `bind:value` cards or list | Remembers the choice per page |
 | `Avatar` | `name`, `src`, `size` xs, sm, md, lg; `tone` | Initials, or a silhouette without a name |
 | `AvatarGroup` | `people`, `max`, `size`, `label` | "+N" after `max` |
