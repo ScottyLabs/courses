@@ -44,7 +44,9 @@
   aria-label={hideLabel ? label : undefined}
   {disabled}
   onclick={toggle}
-  class="group inline-flex items-center gap-3 rounded-full text-label-lg text-ink disabled:opacity-50 {className}"
+  class="group inline-flex items-center gap-3 rounded-full text-label-lg text-ink disabled:opacity-50 {hideLabel
+    ? ''
+    : '-mx-1.5 px-1.5'} {className}"
   {...rest}
 >
   {#if !hideLabel && labelPosition === "start"}<span>{label}</span>{/if}

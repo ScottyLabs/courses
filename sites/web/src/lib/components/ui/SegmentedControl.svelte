@@ -68,8 +68,8 @@
       tabindex={isSelected ? 0 : -1}
       onclick={() => choose(index)}
       class="inline-flex items-center justify-center gap-1.5 rounded-full transition-colors {size === 'sm'
-        ? 'h-7 px-2.5 text-label-md [&_svg]:size-4'
-        : 'h-8 px-3 text-label-md [&_svg]:size-4'} {isSelected
+        ? 'h-10 min-w-10 px-2.5 text-label-md lg:h-7 lg:min-w-0 [&_svg]:size-4'
+        : 'h-10 px-3 text-label-md lg:h-8 [&_svg]:size-4'} {isSelected
         ? 'bg-line text-strong'
         : 'text-muted hover:bg-hover hover:text-ink'}"
     >

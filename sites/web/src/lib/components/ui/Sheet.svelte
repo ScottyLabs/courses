@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ChevronLeft, X } from "@lucide/svelte";
   import type { Snippet } from "svelte";
-  import { focusableWithin, restoreFocus, trapTab } from "./focus";
+  import { restoreFocus, trapTab } from "./focus";
   import IconButton from "./IconButton.svelte";
 
   let {
@@ -46,8 +46,10 @@
     if (open && !element.open) {
       previous = document.activeElement;
       element.showModal();
+      // Focus goes to the sheet's content rather than its first control, so opening it with a tap doesn't ring a
+      // switch or field nobody chose; Tab then moves to the first control.
       const body = element.querySelector<HTMLElement>("[data-sheet-body]");
-      (focusableWithin(body ?? element).at(0) ?? element).focus({ preventScroll: true });
+      (body ?? element).focus({ preventScroll: true });
     } else if (!open && element.open) {
       element.close();
     }
@@ -98,7 +100,7 @@
       <IconButton label="Close" icon={X} size="sm" class="-mr-2" onclick={() => (open = false)} />
     </header>
   {/if}
-  <div data-sheet-body class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+  <div data-sheet-body tabindex="-1" class="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none">
     {@render children()}
   </div>
   {#if footer}
