@@ -107,6 +107,17 @@
   {/if}
 {/snippet}
 
+{#snippet sortPicker(width: string, variant: "field" | "compact")}
+  <Select
+    {variant}
+    label="Sort by"
+    options={SORTS}
+    value={scope.sort}
+    onchange={(event) => scope.setParams({ sort: event.currentTarget.value === "sections" ? "sections" : null })}
+    class={width}
+  />
+{/snippet}
+
 {#snippet toolbar()}
   <PageToolbar
     title="Instructors"
@@ -115,8 +126,11 @@
     onreset={scope.filterCount > 0 || scope.query !== "" ? () => scope.reset() : undefined}
   >
     {#snippet intro()}
-      <!-- Phones: the semester gets its own row; wider screens have it beside the view switch. -->
-      <div class="mb-2 lg:hidden">{@render semesterPicker("w-full", "field")}</div>
+      <!-- Phones: the semester and the sort get their own row; wider screens have them beside the view switch. -->
+      <div class="mb-2 grid grid-cols-2 gap-2 lg:hidden">
+        {@render semesterPicker("min-w-0", "field")}
+        {@render sortPicker("min-w-0", "field")}
+      </div>
     {/snippet}
     {#snippet search()}
       <SearchInput
@@ -149,14 +163,7 @@
     {#snippet actions()}
       <div class="hidden lg:block">{@render semesterPicker("w-44", "compact")}</div>
       <!-- Sort lives in the toolbar, as on the Courses page. -->
-      <Select
-        variant="compact"
-        label="Sort by"
-        options={SORTS}
-        value={scope.sort}
-        onchange={(event) => scope.setParams({ sort: event.currentTarget.value === "sections" ? "sections" : null })}
-        class="w-[10.5rem]"
-      />
+      <div class="hidden lg:block">{@render sortPicker("w-[10.5rem]", "compact")}</div>
       <ViewToggle pageKey="instructors" bind:value={scope.view} />
     {/snippet}
   </PageToolbar>
