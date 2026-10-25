@@ -1,12 +1,11 @@
 <script lang="ts">
   // The plan's semesters in academic-year rows, with incoming credit above them and buttons to add a summer, a
   // removed semester or the next one. Courseweave's features/degree/SemesterGrid.tsx.
-  import { LayoutGrid, Plus, Table2 } from "@lucide/svelte";
-  import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
+  import { Plus } from "@lucide/svelte";
   import { academicYearLabel } from "$lib/core/plan";
   import { requirementsByCourse } from "$lib/core/plan-table";
   import { termLabel } from "$lib/core/requisites";
-  import { plans, preferences } from "$lib/state";
+  import { plans } from "$lib/state";
   import { planPage } from "./context";
   import { gridRows } from "./grid";
   import IncomingCredit from "./IncomingCredit.svelte";
@@ -21,18 +20,6 @@
 </script>
 
 <div class="@container flex flex-col gap-6">
-  <div class="-mb-2 flex justify-end">
-    <SegmentedControl
-      label="Semester layout"
-      size="sm"
-      value={page.layout}
-      onchange={(v) => preferences.setPlanLayout(v === "table" ? "table" : "cards")}
-      options={[
-        { value: "cards", label: "Cards", icon: LayoutGrid },
-        { value: "table", label: "Detailed", icon: Table2 },
-      ]}
-    />
-  </div>
   <IncomingCredit />
   {#each rows.years as year (year.key)}
     {@const units = year.slots.reduce((n, s) => n + (s.column?.totals.units ?? 0), 0)}

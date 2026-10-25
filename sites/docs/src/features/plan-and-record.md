@@ -18,9 +18,10 @@ The page is a rail page like Courses, Schedules and Profile
 [decision 36](../decisions/0036-lay-out-the-degree-plan-beside-its-requirements.md)), with Courseweave's semesters
 beside its requirements:
 
-- **Band** (`PlanHeader.svelte`): the plan's name as the page title (click it to rename in place; Enter saves, Escape
-  cancels), a chevron beside it that lists the student's plans and "New plan" (same programs and start), and the
-  plan's options: rename, duplicate, send to Stellic (a script for the student's own Stellic tab, `core/stellic-export.ts`),
+- **Title row** (`PlanHeader.svelte`, at the top of the semesters column, level with the requirements heading; no band
+  above the page): the plan's name as the page title (click it to rename in place; Enter saves, Escape cancels), a
+  chevron beside it that lists the student's plans and "New plan" (same programs and start), and on the right the
+  Cards/Detailed switch (icons only below 1280px) and the plan's options: rename, duplicate, send to Stellic (a script for the student's own Stellic tab, `core/stellic-export.ts`),
   import from Stellic, delete. On phones, the button that opens the rail's sheet ("Programs and progress") and the
   progress bar in one line.
 - **Rail** (`PlanRail.svelte`, a sheet on phones): the programs (`audit/ProgramPicker.svelte`: each with its

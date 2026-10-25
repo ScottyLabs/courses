@@ -4,18 +4,20 @@
   // and import from Stellic, delete). On phones, where the rail with the
   // programs and numbers is a sheet, the button that opens it and the plan's progress in a line.
   // Courseweave's features/degree/PlanHeader.tsx.
-  import { Check, ChevronDown, Copy, FileUp, Pencil, Plus, Send, Trash2 } from "@lucide/svelte";
+  import { Check, ChevronDown, Copy, FileUp, LayoutGrid, Pencil, Plus, Send, Table2, Trash2 } from "@lucide/svelte";
+  import { MediaQuery } from "svelte/reactivity";
   import { tick } from "svelte";
   import { goto } from "$app/navigation";
   import FilterButton from "$lib/components/layout/FilterButton.svelte";
   import { getRail } from "$lib/components/layout/rail-context";
   import SendToStellicDialog from "$lib/components/stellic/SendToStellicDialog.svelte";
   import Button from "$lib/components/ui/Button.svelte";
+  import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
   import { planPath } from "$lib/core/routes";
   import SioImportButton from "$lib/features/record/SioImportButton.svelte";
-  import { plans } from "$lib/state";
+  import { plans, preferences } from "$lib/state";
   import { planPage } from "./context";
   import DegreeProgressBar from "./DegreeProgressBar.svelte";
   import MenuItem from "./MenuItem.svelte";
@@ -23,6 +25,8 @@
   import OptionsMenu from "./OptionsMenu.svelte";
 
   const page = planPage();
+  /** The layout switch shows only its icons below wide desktops. */
+  const roomy = new MediaQuery("(min-width: 1280px)");
   const rail = getRail();
   const plan = $derived(page.plan);
   const progress = $derived(rail?.asSheet === true ? planNumbers(page).progress : null);
@@ -60,7 +64,7 @@
   }
 </script>
 
-<!-- Like the profile's band: the plan's name as the title, its switcher, and the plan's options on the right. -->
+<!-- The plan's name as the title and its switcher, with the semester layout and the plan's options on the right. -->
 <div class="flex items-center justify-between gap-3">
   <div class="flex min-w-0 flex-1 items-center gap-1">
     {#if renaming}
@@ -86,13 +90,9 @@
           title="Rename plan"
           aria-label="{plan.name}, rename"
           onclick={startRename}
-          class="group flex max-w-full min-w-0 items-center gap-2 rounded-field px-2 py-0.5 text-left hover:bg-hover"
+          class="flex max-w-full min-w-0 items-center rounded-field px-2 py-0.5 text-left hover:bg-hover"
         >
           <span class="truncate text-heading-4 text-strong">{plan.name}</span>
-          <Pencil
-            aria-hidden="true"
-            class="size-4 shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-          />
         </button>
       </h1>
     {/if}
@@ -118,6 +118,17 @@
       {/snippet}
     </OptionsMenu>
   </div>
+  <div class="flex shrink-0 items-center gap-2">
+  <SegmentedControl
+    label="Semester layout"
+    size="sm"
+    value={page.layout}
+    onchange={(v) => preferences.setPlanLayout(v === "table" ? "table" : "cards")}
+    options={[
+      { value: "cards", label: "Cards", icon: LayoutGrid, iconOnly: !roomy.current },
+      { value: "table", label: "Detailed", icon: Table2, iconOnly: !roomy.current },
+    ]}
+  />
   <OptionsMenu label="Plan options" variant="outline" size="md">
     {#snippet children(close)}
       <MenuItem icon={Pencil} onclick={() => { close(); startRename(); }}>Rename</MenuItem>
@@ -128,6 +139,7 @@
       <MenuItem icon={Trash2} danger onclick={() => { close(); confirmDelete = true; }}>Delete plan</MenuItem>
     {/snippet}
   </OptionsMenu>
+  </div>
 </div>
 {#if rail?.asSheet}
   <div class="mt-3 flex flex-col gap-3">

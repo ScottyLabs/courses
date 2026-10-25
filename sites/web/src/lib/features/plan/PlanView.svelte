@@ -243,9 +243,6 @@
   {#snippet rail()}
     <PlanRail />
   {/snippet}
-  {#snippet header()}
-    <PlanHeader />
-  {/snippet}
 
   <!-- The semesters sit beside the requirements when this column has room for both, whatever the rail does. -->
   <div bind:clientWidth={mainWidth} class="flex flex-col gap-5">
@@ -283,6 +280,7 @@
       >
         <!-- The note sits under the semesters so the grid runs to the page's end and the sticky column stays put. -->
         <div class="flex min-w-0 flex-col gap-5">
+          <PlanHeader />
           <SemesterGrid />
           {@render note()}
         </div>
@@ -305,6 +303,7 @@
         </aside>
       </div>
     {:else}
+      <PlanHeader />
       <Tabs
         label="Plan views"
         bind:value={tab}
