@@ -498,3 +498,64 @@
     text-decoration: underline;
   }
 }
+
+/*
+ * In a table the cells paint their own backgrounds (the plan table's sticky course number is opaque), so a flashed row
+ * flashes its cells instead: the tint is an inset shadow, which paints over a cell's own background and under its
+ * text, and the first cell carries the danger edge.
+ */
+@layer utilities {
+  tr.animate-flash-danger {
+    animation: none;
+  }
+
+  tr.animate-flash-danger > td {
+    animation: flash-danger-cell 1.6s ease-out;
+  }
+
+  tr.animate-flash-danger > td:first-child {
+    animation-name: flash-danger-first-cell;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    tr.animate-flash-danger {
+      background-color: transparent;
+      box-shadow: none;
+    }
+
+    tr.animate-flash-danger > td {
+      animation: none !important;
+      box-shadow: inset 0 0 0 100vmax var(--color-danger-bg);
+    }
+
+    tr.animate-flash-danger > td:first-child {
+      box-shadow:
+        inset 3px 0 0 var(--color-danger),
+        inset 0 0 0 100vmax var(--color-danger-bg);
+    }
+  }
+}
+
+@keyframes flash-danger-cell {
+  0%,
+  35% {
+    box-shadow: inset 0 0 0 100vmax var(--color-danger-bg);
+  }
+  100% {
+    box-shadow: inset 0 0 0 100vmax transparent;
+  }
+}
+
+@keyframes flash-danger-first-cell {
+  0%,
+  35% {
+    box-shadow:
+      inset 3px 0 0 var(--color-danger),
+      inset 0 0 0 100vmax var(--color-danger-bg);
+  }
+  100% {
+    box-shadow:
+      inset 3px 0 0 transparent,
+      inset 0 0 0 100vmax transparent;
+  }
+}
