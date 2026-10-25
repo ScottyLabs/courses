@@ -27,11 +27,14 @@ from 1440 pixels up, leaving wide screens' extra room to the content alone.
   the progress bar in one line.
 - The main column has the record prompt, the semesters and the requirements. The requirements get their own sticky
   column when the main column is at least 900 pixels wide (measured, so hiding the rail can make room), and are a tab
-  otherwise. The column is a third of the main column, 320 to 440 pixels (300 to 400 beside the detailed table).
+  otherwise. The column is a third of the main column, 320 to 440 pixels (300 to 400 beside the detailed table); amended
+  below to 600 (560).
 - Requirement rows lay out by the panel's width (a container query): narrower than 32rem, a course's number and its
   Add or status share the first line and its title takes the second; wider, as in the Expand dialog, all sit on one.
 - The rail, here and on every rail page, keeps its widths up to 1440 pixels (340, 380, 418) and then grows with the
-  window to 560 pixels at 2560 (`RAIL_WIDTH` in `components/layout/rail-context.ts`).
+  window (`RAIL_WIDTH` in `components/layout/rail-context.ts`). Amended: 480 pixels at 1920, then 30% of each extra
+  pixel, to 672 at 2560 and at most 760; and the requirements column grows to 600 pixels (560 beside the detailed
+  table), where its rows fit on one line.
 
 ## Consequences
 

@@ -53,7 +53,7 @@ beside its requirements:
   requirements in a dialog.
 
 When the main column is at least 1120px wide (with the rail open, from about 1700px; hiding the rail makes room
-sooner) the requirements are a sticky column beside the semesters, a third of the column wide. Below that they're the
+sooner) the requirements are a sticky column beside the semesters, a third of the column wide (320 to 600px; 300 to 560px beside the detailed table). Below that they're the
 rail's last group (its sheet on phones, "Programs and requirements"), without cards (`AuditPanel`'s `flat`).
 Requirement rows lay out by the panel's width: in the column, the rail and other narrow panels a course's
 number and its Add share a line with its title under them, and in the wider Expand dialog all three share one. Drag and drop

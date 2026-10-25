@@ -286,8 +286,8 @@
     {#if wide}
       <div
         class="grid items-start gap-6 {preferences.planLayout === 'table'
-          ? 'grid-cols-[minmax(0,1fr)_clamp(300px,30%,400px)]'
-          : 'grid-cols-[minmax(0,1fr)_clamp(320px,34%,440px)]'}"
+          ? 'grid-cols-[minmax(0,1fr)_clamp(300px,30%,560px)]'
+          : 'grid-cols-[minmax(0,1fr)_clamp(320px,34%,600px)]'}"
       >
         <!-- The note sits under the semesters so the grid runs to the page's end and the sticky column stays put. -->
         <div class="flex min-w-0 flex-col gap-5">

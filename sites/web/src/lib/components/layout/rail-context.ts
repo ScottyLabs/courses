@@ -20,11 +20,11 @@ export interface RailControls {
 }
 
 /**
- * The open rail's width, shared by RailLayout and ProfileLayout: 340, 380 and 418 pixels up to 1440 wide, then
- * growing with the window to 560 pixels at 2560.
+ * The open rail's width, shared by RailLayout and ProfileLayout: 340, 380 and 418 pixels up to 1440 wide, growing
+ * with the window to 480 at 1920, then faster (30% of each extra pixel) to 672 at 2560 and at most 760.
  */
 export const RAIL_WIDTH =
-  "w-[340px] xl:w-[380px] min-[90rem]:w-[clamp(418px,calc(235px+12.7vw),560px)]";
+  "w-[340px] xl:w-[380px] min-[90rem]:w-[clamp(418px,calc(235px+12.7vw),480px)] min-[120rem]:w-[clamp(480px,calc(30vw-96px),760px)]";
 
 const RAIL = Symbol("rail");
 
