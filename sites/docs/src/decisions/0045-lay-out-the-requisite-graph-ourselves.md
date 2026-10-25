@@ -9,7 +9,7 @@ Accepted
 ## Context
 
 The requisite explorer gets a graph view: the course in the middle, its prerequisite expression to the left drawn as
-brackets labelled AND, OR and "2 OF" (nested groups as nested brackets, corequisites dashed), what it unlocks to the
+brackets labelled "all of", "one of" and "2 of" (nested groups as nested brackets, corequisites dashed), what it unlocks to the
 right, and the student's standing on every course and bracket. Courses can be expanded into their own requisites,
 graphs with dozens of courses need panning and zooming, and phones need a layout that reads at 393px. Every course
 on it must stay an ordinary link or button: focusable, previewed by the site's course preview layer

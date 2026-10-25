@@ -53,7 +53,7 @@
 <div
   role="listitem"
   class="course-row group relative grid items-start gap-x-3 border-b border-line px-3 py-2.5 transition-colors sm:px-4 {selected
-    ? 'bg-paper shadow-[inset_3px_0_0_var(--color-accent)]'
+    ? 'bg-selected'
     : active
       ? 'bg-hover'
       : 'hover:bg-hover'} {className}"

@@ -44,7 +44,7 @@ export function cap(
   return [...items.slice(0, limit), moreNode(key, hidden, false, relation, noun)];
 }
 
-const LABELS = { all: "AND", any: "OR" } as const;
+const LABELS = { all: "all of", any: "one of" } as const;
 const TITLES = { all: "All of", any: "One of" } as const;
 
 interface Place {
@@ -82,7 +82,7 @@ function fromRequisite(
     kind: "group",
     key: at.key,
     op: req.type,
-    label: req.type === "atLeast" ? `${req.n} OF` : LABELS[req.type],
+    label: req.type === "atLeast" ? `${req.n} of` : LABELS[req.type],
     title: req.type === "atLeast" ? `At least ${req.n} of` : TITLES[req.type],
     state,
     link: state,
@@ -167,7 +167,7 @@ function coreqsOf(
     kind: "group",
     key: `${key}>c`,
     op: "with",
-    label: "WITH",
+    label: "with",
     title:
       coreqs.type === "any"
         ? "One of these, before or in the same semester"

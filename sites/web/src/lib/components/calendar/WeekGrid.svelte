@@ -159,7 +159,7 @@
   }
 
   const variants = {
-    solid: "course-tint border-l-[3px] border-(--course)",
+    solid: "course-block",
     preview: "hatch z-10 border border-dashed border-(--course) bg-surface/85 text-strong",
     ghost:
       "border border-dashed border-line-strong bg-surface/75 text-muted hover:course-tint hover:border-(--course) hover:text-ink focus-visible:course-tint",

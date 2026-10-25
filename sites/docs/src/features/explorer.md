@@ -131,14 +131,14 @@ opens the graph, as the course page's "Prerequisite tree and what it unlocks" li
 - **List**: the prerequisite tree (expandable, with cycles marked) with the student's status on each course, and the
   unlocks grouped by department (`RequiresAndUnlocks`).
 - **Graph** (`lib/features/course/graph/`, [decision 45](../decisions/0045-lay-out-the-requisite-graph-ourselves.md)):
-  the course in the middle, its requisite expression to the left as brackets labelled AND, OR or "2 OF" (nested
-  groups as nested brackets; corequisites dashed, labelled WITH), what it unlocks to the right. On phones (under
+  the course in the middle, its requisite expression to the left as brackets labelled "all of", "one of" or "2 of"
+  (nested groups as nested brackets; corequisites dashed, labelled "with"), what it unlocks to the right. On phones (under
   640px) it reads top to bottom instead: the course, "Requires", then "Unlocks", each item indented under its group.
 
 The graph's courses show the student's standing as a fill and an icon: met (check), in progress this semester
 (clock), planned in a schedule or the degree plan (arrow), not met (x), waived or placed out (badge), minimum grade
 not reached (warning, the grade badge red); each shows its minimum grade. Each bracket and its label take its group's
-state (an OR is met when any option is, an AND when all are): green when met, yellow when met by planned courses,
+state ("one of" is met when any option is, "all of" when all are): green when met, yellow when met by planned courses,
 gray otherwise, and satisfied lines are heavier, so the path to the middle course stands out. The middle course shows
 whether the student has it and the verdict in brief ("Prerequisites met", "1 missing", "Met once 21-127 is done"),
 and the line above the graph words it as the course pages do. All of it comes from `evaluateRequisite()`,

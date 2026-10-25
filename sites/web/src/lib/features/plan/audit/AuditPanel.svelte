@@ -40,7 +40,7 @@
   const CARD = "rounded-card border border-pressed bg-surface p-4";
   const SECTION = "flex flex-col gap-4 border-line not-first:border-t not-first:pt-5";
   const card = $derived(flat ? "" : CARD);
-  const attached = $derived(flat ? "border-l-2 border-line pl-3" : CARD);
+  const attached = $derived(flat ? "border-l border-line pl-3" : CARD);
 </script>
 
 {#if input.programs.length === 0 || data === null}

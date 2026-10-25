@@ -22,15 +22,15 @@ import {
 describe("buildGraph: structure", () => {
   it("mirrors the requisite expression, flattening groups of one", () => {
     const top = group(buildGraph(options()).requires);
-    expect(top.label).toBe("AND");
+    expect(top.label).toBe("all of");
     expect(top.items.map((i) => i.kind)).toEqual(["course", "course", "group"]);
-    expect(group(top.items[2]).label).toBe("OR");
+    expect(group(top.items[2]).label).toBe("one of");
     expect(find(buildGraph(options()), "15210").minGrade).toBe("C");
     // 15-122's "one of 15-112" is just 15-112, beside its corequisite.
     const fork = group(buildGraph(options({ rootId: "15122", unlocks: [] })).requires);
     expect(fork.op).toBe("fork");
     expect(fork.items[0]?.kind).toBe("course");
-    expect(group(fork.items[1])).toMatchObject({ label: "WITH", relation: "coreq" });
+    expect(group(fork.items[1])).toMatchObject({ label: "with", relation: "coreq" });
   });
 
   it("expands a course's own requisites only when asked, and stops at cycles", () => {

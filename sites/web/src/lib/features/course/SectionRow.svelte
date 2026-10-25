@@ -102,7 +102,7 @@
       ? 'bg-hover'
       : ''}"
 >
-  <div class={isChild ? "@3xl:border-l-2 @3xl:border-line @3xl:pl-2" : ""}>
+  <div class={isChild ? "@3xl:border-l @3xl:border-line @3xl:pl-2" : ""}>
     <span class="tabular block leading-tight text-strong {isChild ? 'text-body-1' : 'text-heading-6'}">{section.name}</span>
     <span class="block text-label-md text-muted">{kind}</span>
   </div>

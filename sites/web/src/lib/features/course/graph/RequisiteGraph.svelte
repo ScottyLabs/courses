@@ -1,6 +1,6 @@
 <!--
-  The requisite explorer's graph view: the course in the middle, what it requires to its left (brackets labelled AND,
-  OR, "2 OF" and, dashed, WITH for corequisites) and what it unlocks to its right, by department when there are many;
+  The requisite explorer's graph view: the course in the middle, what it requires to its left (brackets labelled "all
+  of", "one of", "2 of" and, dashed, "with" for corequisites) and what it unlocks to its right, by department when there are many;
   on phones, top to bottom. Courses and brackets show the student's standing from the course pages' own checks.
   Clicking a course expands its requisites, previews it, opens it or centers the graph on it ("On click").
   ./model.ts builds it, ./layout.ts places it, ./pan-zoom.svelte.ts pans and zooms it.

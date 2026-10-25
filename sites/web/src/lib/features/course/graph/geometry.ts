@@ -30,7 +30,7 @@ export interface Metrics {
   measure: (text: string) => number;
 }
 
-/** Approximate width of uppercase 12px semibold text. */
+/** Approximate width of 12px semibold text. */
 export const approximateMeasure = (text: string): number => Math.ceil(text.length * 7.6);
 
 export const DESKTOP_METRICS: Metrics = {

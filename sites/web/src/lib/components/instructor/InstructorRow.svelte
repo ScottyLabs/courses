@@ -41,12 +41,11 @@
   aria-selected={selected}
   aria-current={selected ? "page" : undefined}
   class="group relative flex min-h-14 items-center gap-3 px-4 py-2 transition-colors focus-visible:-outline-offset-2 sm:px-5 {selected
-    ? 'bg-line'
+    ? 'bg-selected'
     : active
       ? 'bg-hover'
       : 'hover:bg-hover'} {active ? 'outline-2 -outline-offset-2 outline-line-strong' : ''}"
 >
-  {#if selected}<span aria-hidden="true" class="absolute inset-y-0 left-0 w-[3px] bg-accent"></span>{/if}
   <span class="min-w-0 flex-1">
     <span class="block truncate text-body-1 font-medium text-ink group-hover:text-accent-ink">{name}</span>
     <span class="flex min-w-0 gap-2 text-label-md font-normal text-muted">

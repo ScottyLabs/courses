@@ -122,7 +122,7 @@
 >
   <div
     bind:this={bar}
-    class="sticky z-20 flex h-14 {ownScroll ? 'top-0' : 'top-[var(--header-h)]'} shrink-0 items-center gap-2 border-b border-line bg-surface/95 px-4 backdrop-blur"
+    class="sticky z-20 flex h-14 {ownScroll ? 'top-0' : 'top-[var(--header-h)]'} shrink-0 items-center gap-2 border-b border-line bg-surface px-4"
   >
     <a
       href={closeHref}
@@ -175,8 +175,7 @@
       />
     {:else if termId === null && !title}
       <div>
-        <p class="text-[40px] tabular leading-none font-semibold tracking-tight text-muted">{display}</p>
-        <h2 class="mt-2 text-heading-4 text-strong">No course {display}</h2>
+        <h2 class="text-heading-4 text-strong">No course {display}</h2>
         <p class="mt-2 text-body-2 text-ink">
           It isn't in the course catalog or any semester this site has. Check the number and try again.
         </p>

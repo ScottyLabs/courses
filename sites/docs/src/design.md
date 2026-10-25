@@ -30,6 +30,11 @@ color: every token has a dark value.
 | `warn-bg` / `warn` | `#fef7e6` / `#8a5b00` | `#3a2f12` / `#eec35f` | Planned or in-progress requisites |
 | `danger-bg` / `danger` | `#fdecee` / `#c4314b` | `#3c1c22` / `#ff8d9c` | Errors and destructive actions |
 | `hover` / `active` | ink at 7% / 12% | ink at 9% / 15% | Hover and pressed fills that work on any surface |
+| `selected` | accent at 9% over surface | accent at 16% over surface | The row a list or panel is showing (the course or instructor open beside the list) |
+
+Selection, emphasis and warnings are fills, icons and text color, never a colored stripe down one side of a card,
+row or block: a calendar block is a firmer tint of its course's color with a hairline edge (`course-block`), a selected
+row takes `selected`, and a number past its guidance turns `warn` with a warning icon and says why on hover.
 
 Type is Inter, with utilities named after the Figma text styles:
 

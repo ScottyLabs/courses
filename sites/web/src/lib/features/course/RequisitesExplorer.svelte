@@ -138,9 +138,8 @@
       </div>
     {:else}
       <div class="flex min-w-0 flex-col gap-5">
-        <section
-          class="flex flex-col gap-4 rounded-card border border-pressed bg-surface p-5 md:flex-row md:items-end md:justify-between"
-        >
+        <!-- The course's heading on the page itself, with the List/Graph switch at its end. -->
+        <section class="flex flex-wrap items-end justify-between gap-4">
           <div class="min-w-0">
             <p class="text-[40px] tabular leading-none font-semibold tracking-tight text-strong">{codeOf(courseId)}</p>
             <h2 class="mt-1 text-heading-4 text-strong">{title}</h2>
@@ -149,6 +148,16 @@
                 ? ", pass/fail only"
                 : ""}
             </p>
+            <dl class="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-body-2">
+              <div class="flex gap-1.5" title="Courses in the shortest chain of prerequisites below this one">
+                <dt class="text-muted">Prerequisite chain</dt>
+                <dd class="text-ink">{depth === 0 ? "none" : `${depth} deep`}</dd>
+              </div>
+              <div class="flex gap-1.5">
+                <dt class="text-muted">Unlocks</dt>
+                <dd class="tabular text-ink">{unlocks.length === 1 ? "1 course" : `${unlocks.length} courses`}</dd>
+              </div>
+            </dl>
             <p class="mt-2 text-body-2">
               {#if offered && termValue}
                 <a
@@ -166,24 +175,12 @@
               {/if}
             </p>
           </div>
-          <dl class="flex shrink-0 gap-8 md:text-right">
-            <div title="Courses in the shortest chain of prerequisites below this one">
-              <dt class="text-label-md text-muted">Prerequisite chain</dt>
-              <dd class="text-heading-3 text-strong">{depth === 0 ? "None" : `${depth} deep`}</dd>
-            </div>
-            <div>
-              <dt class="text-label-md text-muted">Unlocks</dt>
-              <dd class="tabular text-heading-3 text-strong">{unlocks.length}</dd>
-            </div>
-          </dl>
-        </section>
-        <div class="flex items-center justify-end">
           <SegmentedControl
             options={VIEW_OPTIONS}
             label="Show requisites as"
             bind:value={() => view, chooseView}
           />
-        </div>
+        </section>
         {#if view === "graph"}
           {#key courseId}
             <RequisiteGraph

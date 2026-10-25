@@ -1,5 +1,5 @@
 <script lang="ts">
-  // A bracket's label on the requisite graph: AND, OR, "2 OF", WITH, REQUIRES or UNLOCKS in the group's state (an
+  // A bracket's label on the requisite graph: "all of", "one of", "2 of", "with", "requires" or "unlocks" in the group's state (an
   // icon and a color), or a department's name and count. Drawn only: each course's accessible name says its group.
   import type { Placed } from "./geometry";
   import { stateLook } from "./looks";
@@ -23,7 +23,7 @@
 {:else}
   <span
     aria-hidden="true"
-    class="absolute flex items-center justify-center gap-1 rounded-full border bg-surface text-label-md font-semibold whitespace-nowrap uppercase {look.label}"
+    class="absolute flex items-center justify-center gap-1 rounded-full border bg-surface text-label-md font-semibold whitespace-nowrap {look.label}"
     style="left:{item.x}px;top:{item.y}px;width:{item.w}px;height:{item.h}px"
     {title}
   >

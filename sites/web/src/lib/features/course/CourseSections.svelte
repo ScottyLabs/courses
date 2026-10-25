@@ -84,7 +84,7 @@
               {#if open}
                 <ul
                   aria-label="Recitations of {partLabel(top)}"
-                  class="ml-3 border-l-2 border-line pl-1 @md:ml-6 @3xl:ml-0 @3xl:border-l-0 @3xl:pl-0"
+                  class="ml-3 border-l border-line pl-1 @md:ml-6 @3xl:ml-0 @3xl:border-l-0 @3xl:pl-0"
                 >
                   {#each children as child (child.name)}
                     <li class="border-t border-line first:border-t-0 @3xl:first:border-t">

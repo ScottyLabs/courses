@@ -95,8 +95,8 @@
   {:else}
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
-        <p class="text-label-md font-normal text-muted">Shared schedule &middot; read only</p>
         <h1 class="text-heading-3 text-strong">{shared.name}</h1>
+        <p class="mt-1 text-body-2 text-muted">A shared schedule. Copy it to your schedules to change it.</p>
       </div>
       <Button variant="primary" icon={Copy} onclick={copy} disabled={personal.mode === "loading"}>
         Copy to my schedules
