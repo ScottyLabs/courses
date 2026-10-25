@@ -188,8 +188,9 @@ hands its own actions and filters to the band with `profileBand(() => ({ actions
 the sections become an accordion with the open one's content under it.
 
 The degree plan (`/plan`, [decision 44](decisions/0044-put-the-degree-plans-programs-and-progress-in-a-rail.md)) is
-a rail page: the programs, progress and requisite problems in the rail, the plan picker in the band, and in the main
-column the semester grid beside a sticky requirements column once the column is 900px wide, with tabs below that.
+a rail page: the programs, progress and requisite problems in the rail, and in the main column the plan's title row
+(its name, switcher, layout switch and options) over the semester grid. The requirements are a sticky column beside
+the semesters once the main column is 1120px wide, and the rail's last group below that.
 
 **Page container** (course page, shared schedule, invite, errors). A centered column, `narrow`, `default` or `wide`.
 

@@ -52,9 +52,10 @@ beside its requirements:
   semester `suggestTerm()` picks (offered, with room, prerequisites met by then) and jumps to it. "Expand" opens the
   requirements in a dialog.
 
-When the main column is at least 900px wide (with the rail open, from 1440px; hiding the rail makes room sooner) the
-requirements are a sticky column beside the semesters, a third of the column wide; below that the two are tabs.
-Requirement rows lay out by the panel's width: in the column, a tab on a phone and other narrow panels a course's
+When the main column is at least 1120px wide (with the rail open, from about 1700px; hiding the rail makes room
+sooner) the requirements are a sticky column beside the semesters, a third of the column wide. Below that they're the
+rail's last group (its sheet on phones, "Programs and requirements"), without cards (`AuditPanel`'s `flat`).
+Requirement rows lay out by the panel's width: in the column, the rail and other narrow panels a course's
 number and its Add share a line with its title under them, and in the wider Expand dialog all three share one. Drag and drop
 (HTML drag events, `DRAG_TYPE` and `DRAG_NEW_COURSE`) moves courses between and within semesters and adds courses
 from the requirements; it's on with a fine pointer from 768px. The course menus and "Add" do the same from the

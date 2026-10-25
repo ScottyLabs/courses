@@ -41,3 +41,22 @@ from 1440 pixels up, leaving wide screens' extra room to the content alone.
   beside the semesters
 - Phones open the programs and numbers in a sheet, as Schedules opens its courses; the band keeps the overall progress
   in view
+
+## Amendment: the plan's name as its title, and requirements in the rail
+
+The band above the page held a "Degree plan" title, a plan select and "New plan", and left most of its width empty;
+the rail repeated "Plan" above Programs, though the navigation bar already marks the page. And with the rail open, a
+1280-pixel screen put the requirements in a tab beside the semesters, so a student couldn't see both, while a
+1512-pixel screen squeezed the detailed semester table to fit the requirements column.
+
+- The band is gone. The plan's name is the page title, at the top of the semesters column (level with the
+  requirements heading when they have a column): click it to rename in place. A chevron beside it lists the
+  student's plans and "New plan", and the Cards/Detailed switch (icons only below 1280 pixels) and the plan's options
+  sit at the row's end. The rail's title stays for screen readers only (`RailLayout`'s `showTitle`).
+- The requirements get a column of their own only when the main column is at least 1120 pixels wide (with the rail
+  open, from about 1700 pixels; hiding the rail makes room sooner). Below that they're the last group of the rail,
+  with Expand in its heading and drag and drop onto the semesters, drawn without cards: programs are divided by rules
+  like the rail's groups, and what's checked with a program is set in by a rule on its left (`AuditPanel`'s `flat`).
+  On phones they're in the rail's sheet, "Programs and requirements". The tabs are gone.
+- Consequences: the semesters keep the whole main column below wide screens, and the requirements sit beside them
+  on every screen size, in the rail or in their own column.

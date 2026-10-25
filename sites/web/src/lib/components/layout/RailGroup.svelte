@@ -5,6 +5,7 @@
     title,
     count,
     summary,
+    action,
     children,
     class: className = "",
   }: {
@@ -14,6 +15,8 @@
     count?: number;
     /** Short lines under the heading, such as the schedule's totals. */
     summary?: Snippet;
+    /** A small control at the end of the heading row, such as Expand. */
+    action?: Snippet;
     children: Snippet;
     class?: string;
   } = $props();
@@ -28,6 +31,7 @@
       {#if count !== undefined}
         <span class="tabular rounded-full bg-line px-1.5 text-label-md text-ink">{count}</span>
       {/if}
+      {#if action}<span class="ml-auto text-body-2">{@render action()}</span>{/if}
     </h2>
   {/if}
   {#if summary}

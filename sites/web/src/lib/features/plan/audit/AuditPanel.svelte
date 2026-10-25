@@ -15,12 +15,16 @@
     input,
     data,
     base,
+    flat = false,
   }: {
     input: AuditInput;
     /** Null only while no program is chosen. */
     data: AuditData | null;
     /** Lookups and actions for the tree (without the requirement lookup, which each program adds). */
     base: Omit<TreeContext, "node" | "catalog" | "inPlan">;
+    /** In the rail: no cards; programs are divided by rules like the rail's groups, and what's checked with a program
+     *  is set in by a rule on its left. */
+    flat?: boolean;
   } = $props();
 
   const result = $derived(data?.result ?? { programs: [], unassigned: [] });
@@ -33,7 +37,10 @@
       .reduce((n, c) => n + c.units, 0),
   );
   const courseOf = (id: string) => input.courses.find((c) => c.courseId === id);
-  const CARD = "rounded-card border border-pressed bg-surface";
+  const CARD = "rounded-card border border-pressed bg-surface p-4";
+  const SECTION = "flex flex-col gap-4 border-line not-first:border-t not-first:pt-5";
+  const card = $derived(flat ? "" : CARD);
+  const attached = $derived(flat ? "border-l-2 border-line pl-3" : CARD);
 </script>
 
 {#if input.programs.length === 0 || data === null}
@@ -47,14 +54,14 @@
 {:else}
   <!-- Each program is a card, like the semesters; what's checked with it (gen eds, concentrations) follows in
        cards of its own. -->
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col {flat ? 'gap-5' : 'gap-4'}">
     {#each selected as p (p.auditId)}
-      <section aria-label={p.programName ?? p.name} class="flex flex-col gap-4">
-        <div class="{CARD} p-4">
+      <section aria-label={p.programName ?? p.name} class={flat ? SECTION : "flex flex-col gap-4"}>
+        <div class={card}>
           <ProgramAudit program={p} version={data.versions.get(p.auditId)} base={shared} />
         </div>
         {#each result.programs.filter((a) => a.attachedTo === p.catalogId) as a (a.auditId)}
-          <div class="{CARD} p-4">
+          <div class={attached}>
             <p class="mb-1.5 text-label-md font-normal text-muted">Required with {p.programName ?? p.name}</p>
             <ProgramAudit program={a} version={data.versions.get(a.auditId)} base={shared} nested />
           </div>
@@ -63,7 +70,7 @@
     {/each}
 
     {#if result.unassigned.length > 0}
-      <section aria-labelledby="audit-free" class="{CARD} p-4">
+      <section aria-labelledby="audit-free" class={flat ? "border-t border-line pt-5" : CARD}>
         <h3 id="audit-free" class="text-label-lg text-strong">Free electives</h3>
         <p class="mt-0.5 text-label-md font-normal text-muted">
           {fmt(freeUnits)} units that don't count toward a specific requirement. They still count toward your degree's

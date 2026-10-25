@@ -382,6 +382,9 @@
    * to scroll wide tables horizontally (the Figma's thick rounded scrollbar).
    */
   .data-table-scroll {
+    /* Positioned so absolutely positioned descendants (screen reader text) scroll with the table instead of
+       widening the page. */
+    position: relative;
     overflow-x: auto;
   }
 

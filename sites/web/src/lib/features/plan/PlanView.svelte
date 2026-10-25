@@ -1,15 +1,15 @@
 <script lang="ts">
   // A degree plan in the rail layout (decision 44): the rail with the programs, numbers and requisite problems; the
-  // band with the plan picker; then the record prompt and the semester grid with, beside it when the main column
-  // has room (a tab otherwise), the requirements. Loads what the plan needs and provides it to every part of the
+  // record prompt, the plan's title row and the semester grid; and the requirements beside the semesters when the
+  // main column has room, or at the end of the rail (its sheet on phones) when it doesn't. Loads what the plan needs and provides it to every part of the
   // page. Courseweave's PlanView in features/degree/PlanPage.tsx.
   import { GraduationCap, Info, LogIn, Maximize2, RotateCw } from "@lucide/svelte";
   import { untrack } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
+  import RailGroup from "$lib/components/layout/RailGroup.svelte";
   import RailLayout from "$lib/components/layout/RailLayout.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
-  import Tabs from "$lib/components/ui/Tabs.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
   import type { Term } from "$lib/core/data";
   import {
@@ -48,13 +48,14 @@
     terms: TermIndexEntry[];
   } = $props();
 
-  /** The main column's width (without its padding) from which the requirements get a column of their own. */
-  const WIDE_MIN = 900;
+  /** The main column's width (without its padding) from which the requirements get a column of their own beside the
+   *  semesters; below it they sit at the end of the rail, so the semesters keep the whole column. */
+  const WIDE_MIN = 1120;
   const current = currentTerm();
   const compactQuery = new MediaQuery("(max-width: 767px)");
   const dragQuery = new MediaQuery("(pointer: fine) and (min-width: 768px)");
   // Before the main column is measured, guess from the window: wide enough beside an open rail.
-  const wideQuery = new MediaQuery("(min-width: 1440px)");
+  const wideQuery = new MediaQuery("(min-width: 1680px)");
   let mainWidth = $state(0);
   /** The semesters and the requirements fit side by side in the main column. */
   const wide = $derived(mainWidth > 0 ? mainWidth >= WIDE_MIN : wideQuery.current);
@@ -119,7 +120,6 @@
   let openTerms = $state<Record<string, boolean>>({});
   let dragging = $state<DragItem | null>(null);
   let expanded = $state(false);
-  let tab = $state("semesters");
 
   function isOpen(term: string): boolean {
     const col = view?.columns.find((c) => c.term === term);
@@ -130,7 +130,6 @@
 
   function jumpTo(planCourseId: string, term: string): void {
     openTerms = { ...openTerms, [term]: true };
-    tab = "semesters";
     const fromDialog = expanded;
     expanded = false;
     // After the semesters render, and after the dialog has closed and handed focus back.
@@ -235,13 +234,25 @@
   showTitle={false}
   name="plan panel"
   sheetLabel="Programs"
-  sheetButtonLabel="Programs and progress"
+  sheetButtonLabel={wide ? "Programs and progress" : "Programs and requirements"}
   sheetIcon={GraduationCap}
   backLabel="Plan"
   storageKey="plan"
 >
   {#snippet rail()}
     <PlanRail />
+    <!-- Below the wide layout the requirements live in the rail (and in its sheet on phones). -->
+    {#if !wide}
+      <RailGroup title="Requirements">
+        {#snippet action()}
+          <Button size="sm" variant="ghost" icon={Maximize2} onclick={() => (expanded = true)}>Expand</Button>
+        {/snippet}
+        {#if dragQuery.current && plan.programs.length > 0}
+          <p class="-mt-4 text-label-md font-normal text-muted">Drag a course onto a semester, or use Add.</p>
+        {/if}
+        <RequirementsPanel {data} status={versions.status} error={auditError} drag={dragQuery.current} flat />
+      </RailGroup>
+    {/if}
   {/snippet}
 
   <!-- The semesters sit beside the requirements when this column has room for both, whatever the rail does. -->
@@ -304,22 +315,7 @@
       </div>
     {:else}
       <PlanHeader />
-      <Tabs
-        label="Plan views"
-        bind:value={tab}
-        tabs={[
-          { id: "semesters", label: "Semesters" },
-          { id: "requirements", label: "Requirements" },
-        ]}
-      >
-        {#snippet panel(id)}
-          {#if id === "requirements"}
-            <RequirementsPanel {data} status={versions.status} error={auditError} />
-          {:else}
-            <SemesterGrid />
-          {/if}
-        {/snippet}
-      </Tabs>
+      <SemesterGrid />
       {@render note()}
     {/if}
   </div>

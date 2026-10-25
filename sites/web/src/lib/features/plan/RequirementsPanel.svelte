@@ -15,6 +15,7 @@
     status,
     error,
     drag = false,
+    flat = false,
   }: {
     /** The audit, once every selected program's requirements are loaded. */
     data: AuditData | null;
@@ -23,6 +24,8 @@
     error: string | null;
     /** Beside the semesters: unplanned courses can be dragged onto one. */
     drag?: boolean;
+    /** In the rail: the programs without cards (AuditPanel's `flat`). */
+    flat?: boolean;
   } = $props();
 
   const page = planPage();
@@ -51,7 +54,7 @@
   {:else}
     <div aria-live="polite" aria-busy={data === null && status !== "error"}>
       {#if data}
-        <AuditPanel input={page.derived.auditInput} {data} {base} />
+        <AuditPanel input={page.derived.auditInput} {data} {base} {flat} />
       {:else if status === "error"}
         <p role="alert" class="rounded-card border border-danger/35 bg-surface px-4 py-3 text-body-2 text-danger">
           Couldn't load the requirements. {error ?? ""} Reload the page to try again.
