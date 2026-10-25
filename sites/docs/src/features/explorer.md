@@ -120,7 +120,48 @@ links inside a view go through `setCourseHref()` (`links.ts`), so the panel can 
 
 ## Requisite explorer
 
-`/requisites/[code]?term=` ports Courseweave's `RequisitesPage.tsx`: a course's prerequisite tree (expandable, with
-cycles marked) and the courses it unlocks, grouped by department, with the length of its shortest prerequisite chain.
-Every course link re-centers the explorer. Without a course it lists the gateway courses, the ones the most other
-courses require. The search box ranks the semester's courses first, then the rest of the catalog.
+`/requisites/[code]?term=&view=` ports Courseweave's `RequisitesPage.tsx`: a course's requisites and the courses it
+unlocks, with the length of its shortest prerequisite chain. Every course link re-centers the explorer, in the same
+view. Without a course it lists the gateway courses, the ones the most other courses require. The search box ranks
+the semester's courses first, then the rest of the catalog.
+
+A `SegmentedControl` switches between two views, remembered on the device (`cmucourses:view:requisites`); `?view=graph`
+opens the graph, as the course page's "Prerequisite tree and what it unlocks" link does:
+
+- **List**: the prerequisite tree (expandable, with cycles marked) with the student's status on each course, and the
+  unlocks grouped by department (`RequiresAndUnlocks`).
+- **Graph** (`lib/features/course/graph/`, [decision 45](../decisions/0045-lay-out-the-requisite-graph-ourselves.md)):
+  the course in the middle, its requisite expression to the left as brackets labelled AND, OR or "2 OF" (nested
+  groups as nested brackets; corequisites dashed, labelled WITH), what it unlocks to the right. On phones (under
+  640px) it reads top to bottom instead: the course, "Requires", then "Unlocks", each item indented under its group.
+
+The graph's courses show the student's standing as a fill and an icon: met (check), in progress this semester
+(clock), planned in a schedule or the degree plan (arrow), not met (x), waived or placed out (badge), minimum grade
+not reached (warning, the grade badge red); each shows its minimum grade. Each bracket and its label take its group's
+state (an OR is met when any option is, an AND when all are): green when met, yellow when met by planned courses,
+gray otherwise, and satisfied lines are heavier, so the path to the middle course stands out. The middle course shows
+whether the student has it and the verdict in brief ("Prerequisites met", "1 missing", "Met once 21-127 is done"),
+and the line above the graph words it as the course pages do. All of it comes from `evaluateRequisite()`,
+`checkCourse()` and `summarizeCheck()` over the semester's requisite context (`termRequisites`), so the graph never
+disagrees with the course pages; with nothing on record, missing stays plain and the line asks for the courses
+taken (signed out: to sign in). Unlocked courses the student could take next (every other requisite met, counting
+the middle course as done) are marked. A legend explains it all.
+
+- **On click** (remembered on the device): "Expand its prerequisites" (default; an unlocked course re-centers the
+  graph, a course with nothing to expand shows its preview), "Show course preview" (the site's preview card pinned
+  open, with Show its prerequisites, Center here and Open course), "Open course page", "Center the graph on it".
+  The + button beside a course always expands it. "Expand all" opens three levels, each course once (later
+  appearances keep their +); expanding keeps the clicked course where it was on screen.
+- **Unlocks**: a switch shows or hides them (remembered); over 12 are grouped by department, biggest first, four
+  courses and six departments before "+N more"; from 13 there are filters (requires it outright, offered this
+  semester, could take next, one department). Requirement groups show eight options before "+N more".
+- **Pan and zoom**: the graph scrolls in its box (wheel, swipe, scrollbars, dragging the background); ctrl and the
+  wheel, a trackpad or two-finger pinch, the zoom buttons and + / - zoom around the pointer; Fit shows it all and
+  the percentage resets to 100%. It opens with its width fitted (not below 70%, 55% on phones) and the middle course
+  centered. On phones the box is as tall as the graph, so the page scrolls it.
+- **Keyboard**: one tab stop; the arrow keys move between courses and buttons by where they're drawn, Home goes to
+  the middle course, Enter does what a click does, + / - zoom and 0 fits. Hovering or focusing a course shows the
+  course preview; each course's accessible name says its status, minimum grade and group ("one of 3, met").
+
+`model.ts` (with `status.ts`, `unlocks.ts`) builds the graph, `layout.ts` and `outline.ts` place it,
+`navigation.ts` moves the keyboard, `viewport.ts` and `pan-zoom.svelte.ts` pan and zoom; they're unit tested.
