@@ -233,9 +233,11 @@
         <SemesterGrid />
         {@render note()}
       </div>
+      <!-- The column scrolls, so it reaches 12px left and 4px up into the gap, padded back, to keep the focus rings
+           of the rows' chevrons and the Expand button inside its scroll box. -->
       <aside
         aria-labelledby="requirements-heading"
-        class="scrollbar-thin sticky top-[calc(var(--header-h)+1rem)] flex max-h-[calc(100dvh-var(--header-h)-2.5rem)] flex-col gap-3 overflow-y-auto overscroll-contain pr-1"
+        class="scrollbar-thin sticky top-[calc(var(--header-h)+0.75rem)] -mt-1 -ml-3 flex max-h-[calc(100dvh-var(--header-h)-2.25rem)] flex-col gap-3 overflow-y-auto overscroll-contain pt-1 pr-1 pb-1 pl-3"
       >
         <div class="flex items-center gap-2">
           <h2 id="requirements-heading" class="text-heading-4 text-strong">Requirements</h2>

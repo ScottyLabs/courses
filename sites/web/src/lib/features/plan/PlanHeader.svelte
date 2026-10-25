@@ -138,7 +138,7 @@
         <!-- The semester's name with a chevron right after it, over a transparent native select, so the chevron
              stays beside the value in every browser. -->
         <span
-          class="relative -my-1 inline-flex min-h-10 items-center gap-0.5 rounded-tag pl-1 text-label-md text-ink has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-accent md:min-h-7"
+          class="relative -my-1 inline-flex min-h-10 items-center gap-0.5 rounded-tag px-1 text-label-md text-ink focus-ring-within md:min-h-7"
         >
           <span class="underline decoration-line-strong underline-offset-2"
             >{startOptions.find((o) => o.value === plan.startTerm)?.label ?? termLabel(plan.startTerm)}</span

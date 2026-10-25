@@ -80,6 +80,7 @@
     background: var(--color-accent);
     border: 2px solid var(--color-surface);
     box-shadow: 0 0 0 1px var(--color-accent);
+    transition: box-shadow 0.15s ease-out;
   }
 
   .slider::-moz-range-thumb {
@@ -88,5 +89,24 @@
     border-radius: 999px;
     background: var(--color-accent);
     border: 2px solid var(--color-surface);
+    transition: box-shadow 0.15s ease-out;
+  }
+
+  /* Keyboard focus rings the thumb, as on RangeSlider, rather than the whole track. */
+  .slider:focus-visible {
+    outline: none;
+  }
+
+  .slider:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+      0 0 0 1px var(--color-accent),
+      0 0 0 3px var(--color-surface),
+      0 0 0 5px var(--color-accent);
+  }
+
+  .slider:focus-visible::-moz-range-thumb {
+    box-shadow:
+      0 0 0 2px var(--color-surface),
+      0 0 0 4px var(--color-accent);
   }
 </style>

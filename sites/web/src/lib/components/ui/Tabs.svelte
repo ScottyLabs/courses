@@ -56,36 +56,44 @@
 </script>
 
 <div class={className}>
-  <div
-    bind:this={list}
-    role="tablist"
-    aria-label={label}
-    tabindex="-1"
-    {onkeydown}
-    class="scrollbar-thin flex gap-6 overflow-x-auto border-b border-line"
-  >
-    {#each tabs as tab (tab.id)}
-      {@const isSelected = tab.id === selected}
-      <button
-        type="button"
-        role="tab"
-        id="{baseId}-tab-{tab.id}"
-        aria-selected={isSelected}
-        aria-controls="{baseId}-panel"
-        tabindex={isSelected ? 0 : -1}
-        disabled={tab.disabled}
-        onclick={() => (value = tab.id)}
-        class="relative -mb-px inline-flex shrink-0 items-center gap-2 border-b-2 pt-1 pb-3 text-heading-6 transition-colors disabled:opacity-50 {isSelected
-          ? 'border-accent text-accent-ink'
-          : 'border-transparent text-muted hover:text-ink'}"
-      >
-        {#if tab.icon}<tab.icon aria-hidden="true" class="size-5" />{/if}
-        {tab.label}
-        {#if tab.count !== undefined}
-          <span class="tabular rounded-full bg-line px-1.5 text-label-md text-ink">{tab.count}</span>
-        {/if}
-      </button>
-    {/each}
+  <!-- The rule is on this wrapper so the scrolling strip can reach past it: the strip's padding leaves room for the
+       focus ring, which goes around a tab's label (centered on the text, not the tall tab). -->
+  <div class="border-b border-line">
+    <div
+      bind:this={list}
+      role="tablist"
+      aria-label={label}
+      tabindex="-1"
+      {onkeydown}
+      class="scrollbar-thin -mx-2 -mb-px flex gap-6 overflow-x-auto px-2"
+    >
+      {#each tabs as tab (tab.id)}
+        {@const isSelected = tab.id === selected}
+        <button
+          type="button"
+          role="tab"
+          id="{baseId}-tab-{tab.id}"
+          aria-selected={isSelected}
+          aria-controls="{baseId}-panel"
+          tabindex={isSelected ? 0 : -1}
+          disabled={tab.disabled}
+          onclick={() => (value = tab.id)}
+          class="group relative inline-flex shrink-0 items-center border-b-2 pt-1 pb-3 text-heading-6 transition-colors outline-none disabled:opacity-50 {isSelected
+            ? 'border-accent text-accent-ink'
+            : 'border-transparent text-muted hover:text-ink'}"
+        >
+          <span
+            class="-mx-1 inline-flex items-center gap-2 rounded-tag px-1 group-focus-visible:animate-focus-ring group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent"
+          >
+            {#if tab.icon}<tab.icon aria-hidden="true" class="size-5" />{/if}
+            {tab.label}
+            {#if tab.count !== undefined}
+              <span class="tabular rounded-full bg-line px-1.5 text-label-md text-ink">{tab.count}</span>
+            {/if}
+          </span>
+        </button>
+      {/each}
+    </div>
   </div>
   {#if panel}
     <div role="tabpanel" id="{baseId}-panel" aria-labelledby="{baseId}-tab-{selected}" class="pt-4">

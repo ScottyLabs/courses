@@ -39,7 +39,7 @@
       <button
         type="button"
         onclick={() => jump(section.id)}
-        class="min-h-10 font-medium text-accent-ink underline-offset-2 hover:underline"
+        class="-mx-1 min-h-10 rounded-tag px-1 font-medium text-accent-ink underline-offset-2 hover:underline"
       >
         {section.label}
       </button>

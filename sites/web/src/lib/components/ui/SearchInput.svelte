@@ -39,11 +39,13 @@
   }
 </script>
 
+<!-- Focus shows on the field itself: the underline variant grows a 2px accent rule from the center over its line,
+     the boxed one takes the field style (focus-field). -->
 <div
   role="search"
-  class="group focus-ring-within relative flex items-center {variant === 'underline'
-    ? 'h-12 border-b border-line-strong px-3 focus-within:border-accent lg:h-[50px] lg:px-4'
-    : 'h-10 rounded-full border border-line-strong bg-surface px-3 focus-within:border-accent'} {className}"
+  class="group relative flex items-center {variant === 'underline'
+    ? 'h-12 border-b border-line-strong px-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:scale-x-0 after:bg-accent after:transition-transform after:duration-200 after:ease-out focus-within:after:scale-x-100 lg:h-[50px] lg:px-4'
+    : 'focus-field h-10 rounded-full border border-line-strong bg-surface px-3'} {className}"
 >
   <Search
     aria-hidden="true"

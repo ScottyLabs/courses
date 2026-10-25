@@ -74,6 +74,9 @@
   --shadow-dialog: 0 16px 48px -8px rgb(0 0 0 / 0.3);
 
   --animate-skeleton: skeleton 1.6s ease-in-out infinite;
+  /* The focus ring eases out from the element's edge instead of popping in. Rings drawn on a pseudo-element or a
+     child (`focus-visible:after:outline-*`, a tab's label) add `animate-focus-ring` to match. */
+  --animate-focus-ring: focus-ring 150ms ease-out;
 
   @keyframes skeleton {
     0%,
@@ -82,6 +85,13 @@
     }
     50% {
       opacity: 0.45;
+    }
+  }
+
+  @keyframes focus-ring {
+    from {
+      outline-color: transparent;
+      outline-offset: 0;
     }
   }
 }
@@ -180,9 +190,13 @@
     background-color: color-mix(in oklab, var(--color-accent) 28%, transparent);
   }
 
+  /* Keyboard focus: a 2px accent ring 2px outside the element that eases in. Scrolling a focused control into view
+     leaves room for the ring, so a scroll container's edge doesn't cut it off. Fields use `focus-field` instead. */
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+    animation: var(--animate-focus-ring);
+    scroll-margin: 8px;
   }
 
   button:not(:disabled),
@@ -299,12 +313,37 @@
   scrollbar-color: var(--color-pressed) transparent;
 }
 
-/* The focus ring for a field drawn by its wrapper (search boxes, inline inputs): shown while the input inside has
-   keyboard-visible focus, as the global :focus-visible ring would be on the input itself. */
+/* The focus ring drawn by a wrapper for the control inside it, such as a transparent native select laid over an
+   icon or a label: shown while that control has keyboard-visible focus, as the global :focus-visible ring would be
+   on the control itself. */
 @utility focus-ring-within {
-  &:has(> input:focus-visible, > textarea:focus-visible) {
+  &:has(> input:focus-visible, > textarea:focus-visible, > select:focus-visible) {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+    animation: var(--animate-focus-ring);
+  }
+}
+
+/* Fields (text inputs, selects, comboboxes, the boxed search) show focus on their own border instead of the ring
+   around other controls: it eases to the accent color and thickens to 2px, drawn inside so nothing shifts or gets
+   clipped. Put it on the element with the border, the input itself or the wrapper drawn around one; an invalid
+   field (`aria-invalid`) stays red. Focus wins over hover:border-* classes. It sets its own transition, so leave
+   out transition-* classes. */
+@utility focus-field {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+
+  /* :not(:disabled) also lifts the specificity above hover:border-*, which comes later in the stylesheet. */
+  &:focus-within:not(:disabled) {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: inset 0 0 0 1px var(--color-accent);
+  }
+
+  &:focus-within:is([aria-invalid="true"], :has([aria-invalid="true"])) {
+    border-color: var(--color-danger);
+    box-shadow: inset 0 0 0 1px var(--color-danger);
   }
 }
 

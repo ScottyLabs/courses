@@ -76,7 +76,7 @@
 
 <div bind:this={root} class="relative" {onfocusout}>
   <label
-    class="focus-ring-within flex min-h-10 cursor-text items-center gap-2 rounded-tag px-2 text-ink focus-within:bg-paper hover:bg-paper md:min-h-8"
+    class="focus-field flex min-h-10 cursor-text items-center gap-2 rounded-tag border border-transparent px-2 text-ink focus-within:bg-paper hover:bg-paper md:min-h-8"
   >
     <Plus aria-hidden="true" class="size-4 shrink-0" />
     <span class="sr-only">Add a course to {termLabel(term)}</span>

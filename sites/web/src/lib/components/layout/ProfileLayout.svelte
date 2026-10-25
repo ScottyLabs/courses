@@ -129,6 +129,7 @@
               {#if detail}<p class="truncate text-body-2 text-strong">{detail}</p>{/if}
             </div>
           </div>
+          <!-- Full-width rows draw the focus ring inside, where the rail's scroll box can't cut it off. -->
           <nav aria-label="Profile sections" class="border-t border-line">
             <ul>
               {#each PROFILE_SECTIONS as section (section.id)}
@@ -137,7 +138,7 @@
                   <a
                     href={profileHref(section.id)}
                     aria-current={isActive ? "page" : undefined}
-                    class="flex items-center gap-3 px-6 py-4 text-body-1 text-ink transition-colors {isActive
+                    class="flex items-center gap-3 px-6 py-4 text-body-1 text-ink transition-colors focus-visible:-outline-offset-2 {isActive
                       ? 'bg-line'
                       : 'hover:bg-paper'}"
                   >
@@ -183,7 +184,7 @@
             <a
               href={profileHref(section.id)}
               aria-current={isActive ? "page" : undefined}
-              class="flex items-center gap-3 px-6 py-[22px] text-body-1 text-ink {isActive
+              class="flex items-center gap-3 px-6 py-[22px] text-body-1 text-ink focus-visible:-outline-offset-2 {isActive
                 ? 'bg-paper'
                 : 'hover:bg-paper'}"
             >

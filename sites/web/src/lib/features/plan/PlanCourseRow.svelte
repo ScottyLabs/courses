@@ -75,7 +75,7 @@
   draggable={page.dragEnabled ? "true" : undefined}
   ondragstart={page.dragEnabled ? ondragstart : undefined}
   ondragend={page.dragEnabled ? () => page.endDrag() : undefined}
-  class="group relative rounded-tag px-1 outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent {page.dragEnabled
+  class="group relative rounded-tag px-1 hover:bg-paper focus-visible:outline-offset-0 {page.dragEnabled
     ? 'cursor-grab active:cursor-grabbing'
     : ''}"
 >
