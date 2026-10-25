@@ -1,9 +1,10 @@
 <script lang="ts">
-  // A semester's footer: factorable and pass/fail units, FCE hours a week (at the busier half when minis run), and
-  // load guidance.
-  import type { TermTotals } from "$lib/core/plan";
+  // A semester's footer: factorable and pass/fail units and FCE hours a week (at the busier half when minis run). A
+  // number past its guidance turns the warning color with an icon, and says why on hover.
+  import { TriangleAlert } from "@lucide/svelte";
+  import { HEAVY_UNITS, type LoadFlags, type TermTotals } from "$lib/core/plan";
 
-  let { totals, warnings }: { totals: TermTotals; warnings: string[] } = $props();
+  let { totals, flags }: { totals: TermTotals; flags: LoadFlags } = $props();
 
   const fceTitle = $derived(
     (totals.peakHalf
@@ -13,27 +14,32 @@
         ? ` ${totals.missingFce} course${totals.missingFce === 1 ? " has" : "s have"} no FCEs.`
         : ""),
   );
+  const overTitle = `Exceeds ${HEAVY_UNITS} factorable units`;
 </script>
 
-<footer class="flex flex-col gap-1 border-t border-line px-4 py-2 text-label-md font-normal">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-ink">
-    <span title="Factorable units count toward your QPA">
-      <span class="tabular font-semibold text-strong">{totals.factorable}</span> factorable
+<footer class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-t border-line px-4 py-2 text-label-md font-normal text-ink">
+  <span
+    class={flags.overUnits ? "inline-flex items-center gap-1 self-center text-warn" : ""}
+    title={flags.overUnits ? overTitle : "Factorable units count toward your QPA"}
+  >
+    {#if flags.overUnits}<TriangleAlert aria-hidden="true" class="size-3.5 shrink-0" />{/if}
+    <span class="tabular font-semibold {flags.overUnits ? '' : 'text-strong'}">{totals.factorable}</span> factorable
+    {#if flags.overUnits}<span class="sr-only">, {overTitle.toLowerCase()}</span>{/if}
+  </span>
+  {#if totals.nonFactorable > 0}
+    <span title="Pass/fail units count toward graduation but not your QPA">
+      <span class="tabular font-semibold text-strong">{totals.nonFactorable}</span> pass/fail
     </span>
-    {#if totals.nonFactorable > 0}
-      <span title="Pass/fail units count toward graduation but not your QPA">
-        <span class="tabular font-semibold text-strong">{totals.nonFactorable}</span> pass/fail
-      </span>
-    {/if}
-    {#if totals.fceUnits > 0}
-      <span class="ml-auto" title={fceTitle}>
-        <span class="tabular font-semibold text-strong">{Math.round(totals.peakHours)}</span>
-        FCE hrs/wk{totals.peakHalf ? " at peak" : ""}
-        <span class="sr-only">. {fceTitle}</span>
-      </span>
-    {/if}
-  </div>
-  {#each warnings as w (w)}
-    <p class="text-warn">{w}. <span class="text-muted">Guidance, not policy.</span></p>
-  {/each}
+  {/if}
+  {#if totals.fceUnits > 0}
+    <span
+      class="ml-auto {flags.heavyHours ? 'inline-flex items-center gap-1 self-center text-warn' : ''}"
+      title={flags.heavyHours ? `${flags.heavyHours}. ${fceTitle}` : fceTitle}
+    >
+      {#if flags.heavyHours}<TriangleAlert aria-hidden="true" class="size-3.5 shrink-0" />{/if}
+      <span class="tabular font-semibold {flags.heavyHours ? '' : 'text-strong'}">{Math.round(totals.peakHours)}</span>
+      FCE hrs/wk{totals.peakHalf ? " at peak" : ""}
+      <span class="sr-only">. {flags.heavyHours ? `${flags.heavyHours}. ` : ""}{fceTitle}</span>
+    </span>
+  {/if}
 </footer>

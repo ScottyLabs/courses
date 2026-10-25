@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { expect } from "../testing.ts";
 import type { CatalogEntry, CatalogIndex } from "./catalog-types.ts";
 import type { FceMiniInfo } from "./fce-minis.ts";
-import { HEAVY_UNITS, loadWarnings, suggestTerm, termTotals, type Plan } from "./plan.ts";
+import { loadFlags, suggestTerm, termTotals, type Plan } from "./plan.ts";
 
 const fullTime = (): FceMiniInfo | null => null;
 
@@ -65,11 +65,13 @@ describe("termTotals with minis", () => {
       { courseId: "m2", units: 6, passFail: false, half: "first" as const },
     ];
     const even = termTotals(items, (id) => (id.startsWith("m") ? 12 : 12), fullTime);
-    expect(loadWarnings(even)).toEqual([]);
+    expect(loadFlags(even)).toEqual({ overUnits: false, heavyHours: null });
     const heavy = termTotals(items, (id) => (id.startsWith("m") ? 20 : 18), fullTime);
-    expect(loadWarnings(heavy)).toEqual([
-      expect.stringContaining("peak at 76/week in the first half"),
-    ]);
+    expect(heavy.peakHours).toBe(76);
+    expect(loadFlags(heavy)).toEqual({
+      overUnits: false,
+      heavyHours: expect.stringContaining("in the first half"),
+    });
   });
 
   it("counts only factorable units toward the overload warning", () => {
@@ -80,15 +82,13 @@ describe("termTotals with minis", () => {
     const t = termTotals(items, () => null, fullTime);
     expect(t.units).toBe(57);
     expect(t.factorable).toBe(48);
-    expect(loadWarnings(t)).toEqual([]);
+    expect(loadFlags(t).overUnits).toBe(false);
     const over = termTotals(
       [...items, { courseId: "x", units: 9, passFail: false }],
       () => null,
       fullTime,
     );
-    expect(loadWarnings(over)).toEqual([
-      `Over ${HEAVY_UNITS} factorable units, which usually needs your college's approval`,
-    ]);
+    expect(loadFlags(over).overUnits).toBe(true);
   });
 });
 

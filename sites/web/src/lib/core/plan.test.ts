@@ -15,7 +15,7 @@ import {
   currentTermCode,
   defaultTerms,
   incomingCredit,
-  loadWarnings,
+  loadFlags,
   missingSemesters,
   nextTerm,
   offering,
@@ -219,14 +219,14 @@ describe("termTotals", () => {
       fceUnits: 24,
       missingFce: 1,
     });
-    expect(loadWarnings(t)).toEqual([]);
+    expect(loadFlags(t)).toEqual({ overUnits: false, heavyHours: null });
   });
   it("warns about heavy loads", () => {
     const t = termTotals(
       Array.from({ length: 5 }, (_, i) => ({ courseId: `c${i}`, units: 12, passFail: false })),
       () => 16,
     );
-    expect(loadWarnings(t)).toHaveLength(2);
+    expect(loadFlags(t)).toEqual({ overUnits: true, heavyHours: expect.any(String) });
   });
 });
 

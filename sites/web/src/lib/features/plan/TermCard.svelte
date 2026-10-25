@@ -19,7 +19,7 @@
   import { DRAG_NEW_COURSE, DRAG_TYPE } from "$lib/core/degree/hooks";
   import {
     coursesMissingFrom,
-    loadWarnings,
+    loadFlags,
     planRequisiteContext,
     termPhase,
     type PlanCourse,
@@ -82,7 +82,7 @@
       : undefined,
   );
   const moveTargets = $derived(plan.terms.map((t) => t.term).filter((t) => t !== term));
-  const warnings = $derived(loadWarnings(column.totals));
+  const flags = $derived(loadFlags(column.totals));
   const problems = $derived(
     column.planned.filter((c) => page.derived.checks.get(c.id)?.check.level === "problem").length,
   );
@@ -451,7 +451,7 @@
   {/if}
 
   {#if column.totals.count > 0}
-    <TermTotals totals={column.totals} {warnings} />
+    <TermTotals totals={column.totals} {flags} />
   {/if}
 </section>
 

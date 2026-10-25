@@ -54,9 +54,22 @@
   {/if}
 {/snippet}
 
+<!-- Over the guidance, the count turns the warning color with an icon and says so on hover. -->
+{#snippet factorableCount()}
+  {#if heavy}
+    <span class="inline-flex items-center gap-1 text-warn" title="Exceeds {HEAVY_UNITS} factorable units">
+      <TriangleAlert aria-hidden="true" class="size-3.5 shrink-0" /><strong class="font-semibold"
+        >{units.factorable}</strong
+      >&nbsp;factorable<span class="sr-only">, exceeds {HEAVY_UNITS} factorable units</span>
+    </span>
+  {:else}
+    <span><strong class="font-semibold text-ink">{units.factorable}</strong> factorable</span>
+  {/if}
+{/snippet}
+
 {#snippet factorableLine()}
   <p class="flex flex-wrap items-center text-label-md font-normal text-muted">
-    <span><strong class="font-semibold text-ink">{units.factorable}</strong> factorable</span>
+    {@render factorableCount()}
     {#if units.nonFactorable > 0}
       <span>,&nbsp;<strong class="font-semibold text-ink">{units.nonFactorable}</strong> pass/fail</span>
     {/if}
@@ -91,24 +104,19 @@
         </p>
       </div>
       {@render factorableLine()}
-      {#if heavy}
-        <p
-          class="flex items-center gap-1 text-label-md font-normal text-warn"
-          title="Over {HEAVY_UNITS} factorable units usually needs your college's approval. Guidance, not policy."
-        >
-          <TriangleAlert aria-hidden="true" class="size-3.5 shrink-0" />Exceeds {HEAVY_UNITS} units<span class="sr-only"
-            >: over {HEAVY_UNITS} factorable units usually needs your college's approval</span
-          >
-        </p>
-      {/if}
     </div>
   {:else if variant === "compact"}
     <p
       class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-label-md font-normal text-muted {className}"
       aria-live="polite"
     >
-      <span class="tabular font-semibold {heavy ? 'text-warn' : 'text-ink'}">
-        {unitText}{#if heavy}<span class="sr-only">, over {HEAVY_UNITS} factorable</span>{/if}
+      <span
+        class="tabular inline-flex items-center gap-1 font-semibold {heavy ? 'text-warn' : 'text-ink'}"
+        title={heavy ? `Exceeds ${HEAVY_UNITS} factorable units` : undefined}
+      >
+        {#if heavy}<TriangleAlert aria-hidden="true" class="size-3.5 shrink-0" />{/if}{unitText}{#if heavy}<span
+            class="sr-only">, exceeds {HEAVY_UNITS} factorable units</span
+          >{/if}
       </span>
       {#if load !== null}
         {@render sep()}
@@ -137,7 +145,7 @@
         {@render conflictText()}
       </p>
       <p class="flex flex-wrap items-center text-label-md font-normal text-muted">
-        <span><strong class="font-semibold text-ink">{units.factorable}</strong> factorable</span>
+        {@render factorableCount()}
         {#if units.nonFactorable > 0}
           <span>,&nbsp;<strong class="font-semibold text-ink">{units.nonFactorable}</strong> pass/fail</span>
         {/if}
@@ -155,12 +163,6 @@
       </p>
       {#if help}
         <p {id} class="rounded-tag bg-surface-2 px-2.5 py-2 text-label-md font-normal text-ink">{FACTORABLE_HELP}</p>
-      {/if}
-      {#if heavy}
-        <p class="flex items-start gap-1 text-label-md font-normal text-warn">
-          <TriangleAlert aria-hidden="true" class="mt-0.5 size-3.5 shrink-0" />
-          Over {HEAVY_UNITS} factorable units, which usually needs your college's approval. Guidance, not policy.
-        </p>
       {/if}
     </div>
   {/if}

@@ -602,19 +602,25 @@ export function termTotals(
  */
 export const HEAVY_UNITS = 54;
 
-export function loadWarnings(t: TermTotals): string[] {
-  const out: string[] = [];
-  if (t.factorable > HEAVY_UNITS)
-    out.push(`Over ${HEAVY_UNITS} factorable units, which usually needs your college's approval`);
+export interface LoadFlags {
+  /** More than HEAVY_UNITS factorable units. */
+  overUnits: boolean;
+  /** FCE hours well above what the units suggest, as a short note for the hours' tooltip; null when they aren't. */
+  heavyHours: string | null;
+}
+
+export function loadFlags(t: TermTotals): LoadFlags {
   // Only compare hours when most of the load has FCE data. Minis count double per week in their half.
-  if (t.fceUnits >= 24 && t.fceUnits >= t.units * 0.6 && t.peakHours > t.peakExpected * 1.2) {
-    out.push(
-      t.peakHalf
-        ? `FCE hours peak at ${Math.round(t.peakHours)}/week in the ${t.peakHalf} half, well above the ${Math.round(t.peakExpected)} its units suggest`
-        : `FCE hours (${Math.round(t.peakHours)}/week) run well above the ${t.fceUnits} units they cover`,
-    );
-  }
-  return out;
+  const heavy =
+    t.fceUnits >= 24 && t.fceUnits >= t.units * 0.6 && t.peakHours > t.peakExpected * 1.2;
+  return {
+    overUnits: t.factorable > HEAVY_UNITS,
+    heavyHours: !heavy
+      ? null
+      : t.peakHalf
+        ? `Above the ${Math.round(t.peakExpected)} hrs/wk its units suggest in the ${t.peakHalf} half`
+        : `Above the ${t.fceUnits} hrs/wk its units suggest`,
+  };
 }
 
 // ---------------------------------------------------------------------------
