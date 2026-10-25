@@ -3,9 +3,9 @@
   import type { Snippet } from "svelte";
   import { afterNavigate, goto } from "$app/navigation";
   import { updated } from "$app/state";
-  import CoursePreviewLayer from "$lib/components/course/CoursePreviewLayer.svelte";
   import AppFooter from "$lib/components/shell/AppFooter.svelte";
   import AppHeader from "$lib/components/shell/AppHeader.svelte";
+  import PreviewLayer from "$lib/components/preview/PreviewLayer.svelte";
   import { setSession } from "$lib/components/shell/session";
   import { installUpdateReload, session } from "$lib/data";
   import { device, isAllSemesters, personal, trackOrigin } from "$lib/state";
@@ -73,4 +73,4 @@
 <Toaster />
 <HeldDraftsDialog />
 <RecordOnboarding />
-<CoursePreviewLayer />
+<PreviewLayer />

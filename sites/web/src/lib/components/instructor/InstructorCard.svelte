@@ -69,7 +69,7 @@
   <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-10">
     <div class="min-w-0 xl:w-[200px] xl:shrink-0">
       <svelte:element this={`h${headingLevel}`} id={headingId} class="text-heading-4 text-ink">
-        <a {href} class="hover:text-accent-ink hover:underline">{name}</a>
+        <a {href} data-instructor-preview="off" class="hover:text-accent-ink hover:underline">{name}</a>
       </svelte:element>
       {#if depts.length > 0}
         <p class="mt-1 text-body-1 text-muted">{depts.map((code) => departmentName(code)).join(", ")}</p>

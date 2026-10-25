@@ -61,9 +61,11 @@ subtree can show the other theme.
 - Focus: see [Focus](#focus) below. Every control shows one visible focus indicator; don't remove outlines without
   a visible replacement.
 - Source files are ASCII: write symbols as icons or HTML entities.
-- Course links preview their course on hover, focus or a long press (`CoursePreviewLayer`, decision 41). Mark a code
-  that isn't a link with `coursePreview(id)` from `$lib/components/course/preview`, and a course's own card or row
-  link with `data-course-preview="off"`.
+- Course and instructor links preview what they open on hover, focus or a long press (`PreviewLayer` in
+  `$lib/components/preview`, decision 41). Mark a code that isn't a link with `coursePreview(id)` from
+  `$lib/components/course/preview` and a name with `instructorPreview(name, term)` from
+  `$lib/components/instructor/preview`; mark a course's own card or row link `data-course-preview="off"` and an
+  instructor's `data-instructor-preview="off"`. Instructor previews show only while someone is signed in.
 - Device conveniences (theme, cards or list, a hidden rail) go through `readLocal`/`writeLocal` in
   `lib/components/ui/storage.ts`, which survive blocked storage. Personal data never goes to localStorage
   ([decision 17](decisions/0017-store-personal-data-on-the-server.md)).

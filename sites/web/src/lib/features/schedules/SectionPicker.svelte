@@ -15,6 +15,7 @@
     timesAndRoom,
   } from "$lib/core/planner/format";
   import type { Section } from "$lib/core/types";
+  import { instructorPreview } from "$lib/components/instructor/preview";
   import { session } from "$lib/data";
   import InstructorLine from "./InstructorLine.svelte";
 
@@ -28,6 +29,7 @@
     onpreview,
     placeholder,
     fceCourseId,
+    termId,
   }: {
     /** "lecture", "recitation" or "section", for labels. */
     noun: string;
@@ -44,6 +46,8 @@
     placeholder?: string;
     /** Show each option's instructors' FCEs for this course. */
     fceCourseId?: string;
+    /** The semester the sections are in, for instructor previews. */
+    termId?: string | null;
   } = $props();
 
   const id = $props.id();
@@ -191,9 +195,13 @@
           </span>
           {#if s.instructors.length > 0}
             {#if fceCourseId}
-              <span class="block text-muted"><InstructorLine courseId={fceCourseId} instructors={s.instructors} /></span>
+              <span class="block text-muted"><InstructorLine courseId={fceCourseId} instructors={s.instructors} {termId} /></span>
             {:else}
-              <span class="block text-label-md font-normal text-muted">{s.instructors.join(", ")}</span>
+              <span class="block text-label-md font-normal text-muted"
+                >{#each s.instructors as name, n (name)}{n > 0 ? ", " : ""}<span {...instructorPreview(name, termId)}
+                    >{name}</span
+                  >{/each}</span
+              >
             {/if}
           {/if}
         </li>

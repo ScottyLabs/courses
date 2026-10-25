@@ -1,7 +1,8 @@
 // Course previews (Courseweave's CoursePreview): hovering or focusing a course link, or pressing and holding one on
 // a touch screen, shows a card about the course. Every link to a course page, the requisite explorer or the Courses
 // page's detail panel gets one; other elements opt in with `coursePreview(id)`, and `data-course-preview="off"` on
-// an element turns previews off inside it. CoursePreviewLayer, mounted once in the root layout, does the rest.
+// an element turns previews off inside it. PreviewLayer (components/preview), mounted once in the root layout, does
+// the rest; instructor links get the same treatment from ../instructor/preview.ts.
 
 /** Marks an element (or, set to "off", a region) for course previews. */
 export const PREVIEW_ATTR = "data-course-preview";

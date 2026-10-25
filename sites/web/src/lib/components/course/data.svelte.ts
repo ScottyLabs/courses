@@ -58,7 +58,8 @@ class SharedLoad<T> implements Shared<T> {
 const cache = new Map<string, SharedLoad<unknown>>();
 let cachedGeneration = -1;
 
-function shared<T>(key: string, load: () => Promise<T>): Shared<T> {
+/** A load shared by every caller asking under `key`, for this session (instructor previews use it too). */
+export function shared<T>(key: string, load: () => Promise<T>): Shared<T> {
   // Reading the generation makes every caller load again after the session changes.
   const generation = catalog.generation;
   if (generation !== cachedGeneration) {

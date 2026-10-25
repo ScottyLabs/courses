@@ -30,7 +30,7 @@
   } = $props();
 
   const target = $derived(link ? (href ?? `/course/${encodeURIComponent(code)}`) : undefined);
-  // Links preview their course by themselves (CoursePreviewLayer); a plain chip is marked for one.
+  // Links preview their course by themselves (PreviewLayer); a plain chip is marked for one.
   const attrs = $derived(link ? {} : coursePreview(code));
 </script>
 
