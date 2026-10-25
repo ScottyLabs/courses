@@ -109,7 +109,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `Checkbox` | `bind:checked`, `indeterminate`, `label`, `description` | |
 | `Switch` | `bind:checked`, `label`, `hideLabel`, `icon`, `tone` accent, neutral | |
 | `RangeSlider` | `bind:low`, `bind:high`, `min`, `max`, `step`, `label`, `presets` | Two thumbs; presets are the unit pills |
-| `ToggleChips` | `bind:value` (array), `options`, `multiple`, `label` | Pressable pills, such as days |
+| `ToggleChips` | `bind:value` (array), `options` (with `fullLabel` for a shortened label), `multiple`, `label`, `stretch` | Pressable pills that stay on one line, such as sessions |
 | `Chip` | `tone` outline, soft, neutral, ok, warn, accent, strong; `size` xs, sm, md; `icon`, `href`, `onremove`, `onclick`, `attrs` | `onremove` makes a removable filter chip; `attrs` adds attributes such as `coursePreview()` |
 | `StatusChip` | `status` satisfied, planned, in-progress, unsatisfied | Check, arrow or x on the status colors |
 | `CourseChip` | `code`, `title`, `status`, `tone`, `href`, `link` | Links to `/course/[code]`; shows the course preview |

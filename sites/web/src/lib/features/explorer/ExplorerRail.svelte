@@ -20,7 +20,7 @@
   import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
   import Select from "$lib/components/ui/Select.svelte";
   import Switch from "$lib/components/ui/Switch.svelte";
-  import ToggleChips from "$lib/components/ui/ToggleChips.svelte";
+  import ToggleChips, { type ToggleChip } from "$lib/components/ui/ToggleChips.svelte";
   import { toggleCircle } from "$lib/components/ui/styles";
   import type { Option } from "$lib/components/ui/types";
   import FceAggregateSettings from "$lib/components/course/FceAggregateSettings.svelte";
@@ -121,8 +121,9 @@
     set("days", days);
   }
 
-  const sessionOptions = $derived<Option[]>([
-    { value: "full", label: "Full semester" },
+  // "Full" keeps the chips on one line in the narrowest rail; it's announced as "Full semester".
+  const sessionOptions = $derived<ToggleChip[]>([
+    { value: "full", label: "Full", fullLabel: "Full semester" },
     ...minis.map((m) => ({ value: String(m.number), label: m.name })),
   ]);
 
