@@ -28,7 +28,8 @@
   });
 </script>
 
-{#if personal.status === "error" && personal.error !== null}
+<!-- With a plan open, PlanView shows this above the semesters. -->
+{#if personal.status === "error" && personal.error !== null && plan === null}
   <div role="alert" class="mx-auto mt-5 flex w-full max-w-[1600px] flex-wrap items-center gap-3 px-4 md:px-6">
     <p class="min-w-0 flex-1 rounded-card border border-danger/35 bg-danger-bg px-4 py-2.5 text-body-2 text-danger">
       {personal.error}

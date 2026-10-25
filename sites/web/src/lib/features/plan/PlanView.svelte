@@ -1,10 +1,12 @@
 <script lang="ts">
-  // A degree plan: the header with the plan's programs and numbers, the record prompt, requisite problems, the
-  // semester grid and, beside it on wide screens (a tab otherwise), the requirements. Loads what the plan needs and
-  // provides it to every part of the page. Courseweave's PlanView in features/degree/PlanPage.tsx.
-  import { Maximize2 } from "@lucide/svelte";
+  // A degree plan in the rail layout (decision 44): the rail with the programs, numbers and requisite problems; the
+  // band with the plan picker; then the record prompt and the semester grid with, beside it when the main column
+  // has room (a tab otherwise), the requirements. Loads what the plan needs and provides it to every part of the
+  // page. Courseweave's PlanView in features/degree/PlanPage.tsx.
+  import { GraduationCap, Info, LogIn, Maximize2, RotateCw } from "@lucide/svelte";
   import { untrack } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
+  import RailLayout from "$lib/components/layout/RailLayout.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
   import Tabs from "$lib/components/ui/Tabs.svelte";
@@ -25,13 +27,13 @@
   import { termLabel } from "$lib/core/requisites";
   import { coursePath, profilePath } from "$lib/core/routes";
   import type { TermIndexEntry } from "$lib/core/types";
-  import { catalog, resource } from "$lib/data";
+  import { catalog, resource, session } from "$lib/data";
   import RecordPrompt from "$lib/features/record/RecordPrompt.svelte";
-  import { links, preferences, record, schedules } from "$lib/state";
+  import { links, personal, preferences, record, schedules } from "$lib/state";
   import { setPlanPage, type DragItem } from "./context";
   import PlanHeader from "./PlanHeader.svelte";
+  import PlanRail from "./PlanRail.svelte";
   import RequirementsPanel from "./RequirementsPanel.svelte";
-  import RequisiteProblems from "./RequisiteProblems.svelte";
   import SemesterGrid from "./SemesterGrid.svelte";
 
   let {
@@ -46,10 +48,16 @@
     terms: TermIndexEntry[];
   } = $props();
 
+  /** The main column's width (without its padding) from which the requirements get a column of their own. */
+  const WIDE_MIN = 900;
   const current = currentTerm();
   const compactQuery = new MediaQuery("(max-width: 767px)");
   const dragQuery = new MediaQuery("(pointer: fine) and (min-width: 768px)");
-  const wideQuery = new MediaQuery("(min-width: 1180px)");
+  // Before the main column is measured, guess from the window: wide enough beside an open rail.
+  const wideQuery = new MediaQuery("(min-width: 1440px)");
+  let mainWidth = $state(0);
+  /** The semesters and the requirements fit side by side in the main column. */
+  const wide = $derived(mainWidth > 0 ? mainWidth >= WIDE_MIN : wideQuery.current);
 
   const index = resource(() => catalog.catalogIndex());
   const offerings = resource(() => catalog.offerings());
@@ -212,65 +220,100 @@
   });
 </script>
 
-<div class="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 py-5 md:px-6 md:py-6">
-  <PlanHeader />
-  {#if record.isEmpty}
-    <RecordPrompt>
-      Your record is empty, so this plan isn't counting past courses or AP, IB or transfer credit toward requirements
-      yet.
-    </RecordPrompt>
-  {/if}
-  <RequisiteProblems />
+<RailLayout
+  title="Plan"
+  name="plan panel"
+  sheetLabel="Programs"
+  sheetButtonLabel="Programs and progress"
+  sheetIcon={GraduationCap}
+  backLabel="Plan"
+  storageKey="plan"
+>
+  {#snippet rail()}
+    <PlanRail />
+  {/snippet}
+  {#snippet header()}
+    <PlanHeader />
+  {/snippet}
 
-  {#if wideQuery.current}
-    <div
-      class="grid items-start gap-6 {preferences.planLayout === 'table'
-        ? 'grid-cols-[minmax(0,1fr)_clamp(340px,26vw,420px)]'
-        : 'grid-cols-[minmax(0,1fr)_clamp(400px,31vw,500px)]'}"
-    >
-      <!-- The note sits under the semesters so the grid runs to the page's end and the sticky column stays put. -->
-      <div class="flex min-w-0 flex-col gap-5">
-        <SemesterGrid />
-        {@render note()}
+  <!-- The semesters sit beside the requirements when this column has room for both, whatever the rail does. -->
+  <div bind:clientWidth={mainWidth} class="flex flex-col gap-5">
+    {#if personal.mode === "draft" && session.status === "signed-out"}
+      <div class="flex flex-wrap items-center gap-3 rounded-card border border-line bg-warn-bg px-4 py-3" role="note">
+        <Info aria-hidden="true" class="size-5 shrink-0 text-warn" />
+        <p class="min-w-0 flex-1 text-body-2 text-ink">
+          <strong class="font-semibold">Not saved.</strong> You're signed out, so this plan is kept in this tab only.
+          Sign in to save it to your account and to check it against your degree requirements.
+        </p>
+        <Button size="sm" variant="primary" icon={LogIn} onclick={() => session.signIn()}>Sign in</Button>
       </div>
-      <!-- The column scrolls, so it reaches 12px left and 4px up into the gap, padded back, to keep the focus rings
-           of the rows' chevrons and the Expand button inside its scroll box. -->
-      <aside
-        aria-labelledby="requirements-heading"
-        class="scrollbar-thin sticky top-[calc(var(--header-h)+0.75rem)] -mt-1 -ml-3 flex max-h-[calc(100dvh-var(--header-h)-2.25rem)] flex-col gap-3 overflow-y-auto overscroll-contain pt-1 pr-1 pb-1 pl-3"
+    {:else if personal.status === "error" || personal.status === "offline"}
+      <div class="flex flex-wrap items-center gap-3 rounded-card border border-line bg-danger-bg px-4 py-3" role="alert">
+        <p class="min-w-0 flex-1 text-body-2 text-ink">
+          {personal.status === "offline"
+            ? "You're offline. Your changes are kept here and saved when you're back online."
+            : (personal.error ?? "Couldn't save your changes.")}
+        </p>
+        <Button size="sm" icon={RotateCw} onclick={() => personal.retry()}>Retry</Button>
+      </div>
+    {/if}
+    {#if record.isEmpty}
+      <RecordPrompt>
+        Your record is empty, so this plan isn't counting past courses or AP, IB or transfer credit toward requirements
+        yet.
+      </RecordPrompt>
+    {/if}
+
+    {#if wide}
+      <div
+        class="grid items-start gap-6 {preferences.planLayout === 'table'
+          ? 'grid-cols-[minmax(0,1fr)_clamp(300px,30%,400px)]'
+          : 'grid-cols-[minmax(0,1fr)_clamp(320px,34%,440px)]'}"
       >
-        <div class="flex items-center gap-2">
-          <h2 id="requirements-heading" class="text-heading-4 text-strong">Requirements</h2>
-          <Button size="sm" variant="ghost" icon={Maximize2} class="ml-auto" onclick={() => (expanded = true)}>
-            Expand
-          </Button>
-        </div>
-        {#if dragQuery.current && plan.programs.length > 0}
-          <p class="-mt-2 text-label-md font-normal text-muted">Drag a course onto a semester, or use Add.</p>
-        {/if}
-        <RequirementsPanel {data} status={versions.status} error={auditError} drag={dragQuery.current} />
-      </aside>
-    </div>
-  {:else}
-    <Tabs
-      label="Plan views"
-      bind:value={tab}
-      tabs={[
-        { id: "semesters", label: "Semesters" },
-        { id: "requirements", label: "Requirements" },
-      ]}
-    >
-      {#snippet panel(id)}
-        {#if id === "requirements"}
-          <RequirementsPanel {data} status={versions.status} error={auditError} />
-        {:else}
+        <!-- The note sits under the semesters so the grid runs to the page's end and the sticky column stays put. -->
+        <div class="flex min-w-0 flex-col gap-5">
           <SemesterGrid />
-        {/if}
-      {/snippet}
-    </Tabs>
-    {@render note()}
-  {/if}
-</div>
+          {@render note()}
+        </div>
+        <!-- The column scrolls, so it reaches 12px left and 4px up into the gap, padded back, to keep the focus rings
+             of the rows' chevrons and the Expand button inside its scroll box. -->
+        <aside
+          aria-labelledby="requirements-heading"
+          class="scrollbar-thin sticky top-[calc(var(--header-h)+0.75rem)] -mt-1 -ml-3 flex max-h-[calc(100dvh-var(--header-h)-2.25rem)] flex-col gap-3 overflow-y-auto overscroll-contain pt-1 pr-1 pb-1 pl-3"
+        >
+          <div class="flex items-center gap-2">
+            <h2 id="requirements-heading" class="text-heading-5 text-strong">Requirements</h2>
+            <Button size="sm" variant="ghost" icon={Maximize2} class="ml-auto" onclick={() => (expanded = true)}>
+              Expand
+            </Button>
+          </div>
+          {#if dragQuery.current && plan.programs.length > 0}
+            <p class="-mt-2 text-label-md font-normal text-muted">Drag a course onto a semester, or use Add.</p>
+          {/if}
+          <RequirementsPanel {data} status={versions.status} error={auditError} drag={dragQuery.current} />
+        </aside>
+      </div>
+    {:else}
+      <Tabs
+        label="Plan views"
+        bind:value={tab}
+        tabs={[
+          { id: "semesters", label: "Semesters" },
+          { id: "requirements", label: "Requirements" },
+        ]}
+      >
+        {#snippet panel(id)}
+          {#if id === "requirements"}
+            <RequirementsPanel {data} status={versions.status} error={auditError} />
+          {:else}
+            <SemesterGrid />
+          {/if}
+        {/snippet}
+      </Tabs>
+      {@render note()}
+    {/if}
+  </div>
+</RailLayout>
 
 {#snippet note()}
   <p class="text-label-md font-normal text-muted">

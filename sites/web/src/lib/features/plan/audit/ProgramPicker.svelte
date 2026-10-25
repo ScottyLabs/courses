@@ -115,7 +115,7 @@
         bind:ref={input}
         variant="field"
         label="Search degree programs"
-        placeholder={value.length > 0 ? "Add a minor, major or concentration" : "Search majors and minors"}
+        placeholder={value.length > 0 ? "Add another program" : "Search majors and minors"}
         aria-controls={panelId}
         oninput={() => (open = true)}
         onclick={() => (open = true)}

@@ -32,7 +32,11 @@
       {#each shown as id (id)}
         {@const drag = dragNew(id, ctx)}
         {@const units = ctx.units(id)}
-        <li class="flex min-h-11 items-center gap-2 md:min-h-8 {drag.draggable ? 'cursor-grab' : ''}" {...drag}>
+        <!-- Narrow, the title goes under the number, as in CourseLeafRow. -->
+        <li
+          class="flex min-h-11 flex-wrap items-center gap-x-2 md:min-h-8 {drag.draggable ? 'cursor-grab' : ''}"
+          {...drag}
+        >
           <a
             href={ctx.href(id)}
             draggable={drag.draggable ? "false" : undefined}
@@ -42,9 +46,14 @@
           >
             {codeOf(id)}
           </a>
-          <span class="min-w-0 flex-1 truncate text-body-2 text-ink" title={ctx.title(id)}>{ctx.title(id) ?? ""}</span>
-          {#if units !== null}<span class="tabular shrink-0 text-label-md text-muted">{fmt(units)}u</span>{/if}
-          {#if ctx.onAddCourse}<AddButton courseId={id} nodeId={node.id} {ctx} />{/if}
+          <span
+            class="order-last min-w-0 basis-full truncate pb-1 text-body-2 text-ink @lg/req:order-none @lg/req:flex-1 @lg/req:basis-auto @lg/req:pb-0"
+            title={ctx.title(id)}>{ctx.title(id) ?? ""}</span
+          >
+          <span class="ml-auto flex shrink-0 items-center gap-2 @lg/req:ml-0">
+            {#if units !== null}<span class="tabular text-label-md text-muted">{fmt(units)}u</span>{/if}
+            {#if ctx.onAddCourse}<AddButton courseId={id} nodeId={node.id} {ctx} />{/if}
+          </span>
         </li>
       {/each}
     </ul>

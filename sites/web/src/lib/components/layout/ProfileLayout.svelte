@@ -7,6 +7,7 @@
   import IconButton from "../ui/IconButton.svelte";
   import { readLocal, writeLocal } from "../ui/storage";
   import { provideProfileBand } from "./profile-band.svelte";
+  import { RAIL_WIDTH } from "./rail-context";
   import { PROFILE_SECTIONS, profileHref, type ProfileSectionId } from "./profile-sections";
 
   let {
@@ -75,9 +76,7 @@
     <aside
       bind:this={aside}
       aria-label="Profile"
-      class="shrink-0 border-r border-line bg-surface {collapsed
-        ? 'w-16'
-        : 'w-[340px] xl:w-[380px] min-[90rem]:w-[418px]'}"
+      class="shrink-0 border-r border-line bg-surface {collapsed ? 'w-16' : RAIL_WIDTH}"
     >
       <div
         class="scrollbar-thin sticky top-(--header-h) max-h-[calc(100dvh-var(--header-h))] overflow-y-auto"
