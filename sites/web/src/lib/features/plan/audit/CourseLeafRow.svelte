@@ -1,7 +1,7 @@
 <script lang="ts">
   // A requirement for one specific course: done, planned, or an "Add" (and drag) when it's still needed.
   import { Info } from "@lucide/svelte";
-  import { displayState, STATE_LABEL } from "$lib/core/degree/audit/format";
+  import { displayState, fmt, STATE_LABEL } from "$lib/core/degree/audit/format";
   import type { RequirementResult } from "$lib/core/plan-types";
   import { codeOf } from "$lib/core/requisite-format";
   import AddButton from "./AddButton.svelte";
@@ -19,15 +19,21 @@
   const done = $derived(state === "complete" || state === "complete-with-plan");
   const canDrag = $derived(a === undefined && !done && state !== "skipped" && !ctx.inPlan.has(id));
   const drag = $derived(canDrag ? dragNew(id, ctx) : {});
+  const units = $derived(ctx.units(id));
+  const canAdd = $derived(!a && !done && state !== "skipped" && ctx.onAddCourse !== undefined && !ctx.inPlan.has(id));
+  const notOffered = $derived(!a && !done && !ctx.offered(id));
+  /** Where it counted, shortly: "F27" or "Credit"; the whole status is its tooltip. */
+  const when = $derived(a === undefined ? null : a.status === "credit" ? "Credit" : (a.term ?? null));
 </script>
 
-<!-- In a narrow panel (the column beside the semesters, phones) the title takes a second line under the number, so
-     the number and Add share the first; from 32rem it sits between them on one line. -->
+<!-- One line at any width: the number, the title (truncated), and where it counted or its units. Add waits over the
+     line's end (AddButton). -->
 <li
   id="req-{r.nodeId}"
-  class="flex min-h-11 flex-wrap items-center gap-x-2 border-t border-line py-1 first:border-t-0 md:min-h-9 {drag.draggable
+  class="group/leaf relative flex min-h-10 items-center gap-2 border-t border-line py-1 first:border-t-0 md:min-h-9 {drag.draggable
     ? 'cursor-grab'
     : ''}"
+  title={notOffered ? `Not offered in ${ctx.termName}` : undefined}
   {...drag}
 >
   <StateIcon {state} class="size-4" />
@@ -36,32 +42,25 @@
   <a
     href={ctx.href(id, a?.term)}
     draggable={drag.draggable ? "false" : undefined}
-    class="tabular shrink-0 text-label-lg text-strong hover:text-accent-ink hover:underline"
+    class="tabular shrink-0 text-label-lg hover:text-accent-ink hover:underline {notOffered ? 'text-muted' : 'text-strong'}"
   >
     {codeOf(id)}
   </a>
-  <span
-    class="order-last min-w-0 basis-full truncate pb-1 pl-6 text-body-2 @lg/req:order-none @lg/req:flex-1 @lg/req:basis-auto @lg/req:pb-0 @lg/req:pl-0 {state ===
-    'skipped'
-      ? 'text-muted'
-      : 'text-ink'}"
-    {title}
-  >
+  <span class="min-w-0 flex-1 truncate text-body-2 {state === 'skipped' ? 'text-muted' : 'text-ink'}" {title}>
     {title ?? ""}{#if counted}<span class="text-muted"> (as {codeOf(counted)})</span>{/if}
   </span>
-  <span class="ml-auto flex shrink-0 items-center gap-1 @lg/req:ml-0">
+  <span class="tabular flex shrink-0 items-center gap-2 text-label-md text-muted">
     {#if a}
-      <span class="text-label-md text-muted">{assignedStatus(a)}</span>
-    {:else if !done && state !== "skipped" && ctx.onAddCourse && !ctx.inPlan.has(id)}
-      <AddButton courseId={id} nodeId={r.nodeId} {ctx} />
-    {:else if !ctx.offered(id) && !done}
-      <span class="text-label-md text-muted">Not offered in {ctx.termName}</span>
+      <span title={assignedStatus(a)}>{when ?? assignedStatus(a)}<span class="sr-only">, {assignedStatus(a)}</span></span>
     {/if}
+    {#if units !== null}<span>{fmt(units)}u</span>{/if}
+    {#if notOffered}<span class="sr-only">Not offered in {ctx.termName}</span>{/if}
     {#if r.notes.length > 0}
-      <span title={r.notes.join("\n")} class="grid size-7 shrink-0 place-items-center text-muted">
+      <span title={r.notes.join("\n")} class="grid size-5 shrink-0 place-items-center">
         <Info aria-hidden="true" class="size-3.5" />
         <span class="sr-only">{r.notes.join(". ")}</span>
       </span>
     {/if}
   </span>
+  {#if canAdd}<AddButton courseId={id} nodeId={r.nodeId} {ctx} />{/if}
 </li>

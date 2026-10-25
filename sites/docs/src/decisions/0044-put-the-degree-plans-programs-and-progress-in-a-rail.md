@@ -31,6 +31,8 @@ from 1440 pixels up, leaving wide screens' extra room to the content alone.
   below to 600 (560).
 - Requirement rows lay out by the panel's width (a container query): narrower than 32rem, a course's number and its
   Add or status share the first line and its title takes the second; wider, as in the Expand dialog, all sit on one.
+  Amended: every row is one line at any width (number, truncated title, then the semester it counted in and its
+  units), and Add appears over the row's end on hover or focus; on touch it's a + in the row.
 - The rail, here and on every rail page, keeps its widths up to 1440 pixels (340, 380, 418) and then grows with the
   window (`RAIL_WIDTH` in `components/layout/rail-context.ts`). Amended: 480 pixels at 1920, then 30% of each extra
   pixel, to 672 at 2560 and at most 760; and the requirements column grows to 600 pixels (560 beside the detailed

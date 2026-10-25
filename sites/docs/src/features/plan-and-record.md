@@ -55,8 +55,9 @@ beside its requirements:
 When the main column is at least 1120px wide (with the rail open, from about 1700px; hiding the rail makes room
 sooner) the requirements are a sticky column beside the semesters, a third of the column wide (320 to 600px; 300 to 560px beside the detailed table). Below that they're the
 rail's last group (its sheet on phones, "Programs and requirements"), without cards (`AuditPanel`'s `flat`).
-Requirement rows lay out by the panel's width: in the column, the rail and other narrow panels a course's
-number and its Add share a line with its title under them, and in the wider Expand dialog all three share one. Drag and drop
+Requirement rows are one line at any width: the status icon, the number, the title (truncated, whole in its tooltip),
+then the semester a course counted in ("F27") and its units. Add appears over the row's end when the row is hovered or
+focused; on touch, where nothing hovers, it's a + in the row (`AddButton.svelte`). Drag and drop
 (HTML drag events, `DRAG_TYPE` and `DRAG_NEW_COURSE`) moves courses between and within semesters and adds courses
 from the requirements; it's on with a fine pointer from 768px. The course menus and "Add" do the same from the
 keyboard or a touch screen. On phones, past semesters start collapsed.

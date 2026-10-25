@@ -1,5 +1,7 @@
 <script lang="ts">
-  // "Add": puts a suggested course in the plan, in the semester the plan suggests.
+  // "Add": puts a suggested course in the plan, in the semester the plan suggests. With a mouse it waits over the end
+  // of its row (a `group/leaf`) until the row is hovered or focused; on touch, where nothing hovers, it's a + in the
+  // row.
   import { Plus } from "@lucide/svelte";
   import { codeOf } from "$lib/core/requisite-format";
   import type { TreeContext } from "./tree";
@@ -14,8 +16,8 @@
   title={ctx.offered(courseId)
     ? `Add ${codeOf(courseId)} to your plan`
     : `Add ${codeOf(courseId)} (not offered in ${ctx.termName})`}
-  class="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-paper px-2.5 text-label-md text-ink transition-colors hover:bg-line active:bg-pressed md:h-7"
+  class="inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-full bg-paper text-label-md text-ink transition-[background-color,opacity] duration-150 hover:bg-line active:bg-pressed pointer-coarse:w-10 pointer-fine:absolute pointer-fine:top-1/2 pointer-fine:right-0 pointer-fine:h-7 pointer-fine:-translate-y-1/2 pointer-fine:px-2.5 pointer-fine:opacity-0 pointer-fine:ring-4 pointer-fine:ring-surface pointer-fine:group-focus-within/leaf:opacity-100 pointer-fine:group-hover/leaf:opacity-100"
 >
   <Plus aria-hidden="true" class="size-3.5" />
-  Add
+  <span class="pointer-coarse:sr-only">Add</span>
 </button>
