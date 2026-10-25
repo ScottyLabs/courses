@@ -17,7 +17,7 @@ signed out, the pages ask the visitor to sign in, and a non-CMU account is told 
 | `lib/features/instructors/scope.svelte.ts` | State the pages share: semester, filters (in the URL), documents, results, the open instructor |
 | `lib/features/instructors/InstructorResults.svelte` | `/instructors`: cards or rows |
 | `lib/features/instructors/InstructorDetail.svelte` | `/instructors/<slug>`: aggregate data, evaluations by section, teaching, evaluation history |
-| `lib/components/instructor/` | Instructor card and row, and `instructor-fce.ts`: loading an instructor's FCE rows (tested) |
+| `lib/components/instructor/` | Instructor card, row and preview card; `instructor-fce.ts` (an instructor's FCE rows), `directory.ts` (the compact documents' rows and slugs) and `preview.ts` (which links and names preview), tested |
 | `lib/components/course/` | What instructors share with courses: the aggregate window and figures (`fce-aggregate.ts`), the "Aggregate FCEs" settings, stat boxes (`FceStats`), the FCE table and the trend chart |
 
 The layout keeps the list's state while the student opens instructors. In the list view on screens 1280 pixels wide
@@ -42,6 +42,20 @@ Cards follow the Figma: the name and departments, three stat boxes (workload, te
 FCE rows the aggregate counts. A card loads its FCE rows the frame after it comes near the viewport, from the
 `fce/courses/<NN>` documents of the courses the list names for that person, so the names show first and a long list
 only downloads what is seen ([ADR 39](../decisions/0039-build-instructor-fce-rows-in-the-browser.md)).
+
+### Instructor previews
+
+Links to an instructor's page anywhere on the site (the course page's instructors and sections, FCE tables,
+"Teaches with") show a card when the pointer rests on them or keyboard focus reaches them, and on a touch screen
+when they're pressed and held, with "Open instructor"
+([ADR 41](../decisions/0041-preview-every-course-link.md#instructor-links)). The card
+(`lib/components/instructor/InstructorPreviewCard.svelte`) shows the name and departments, what they teach in the
+link's semester (or where they teach, for all semesters), and the FCE aggregate the cards show: teaching and course
+rating, hours a week and the semesters it covers. It reads the list's compact document and the cards' FCE rows
+through `instructor/data.svelte.ts`, loaded once per session; when they don't teach in the semester, it says so and
+describes them from `instructors/all`. The schedule's section picker marks its instructor names with
+`instructorPreview(name, term)` (`instructor/preview.ts`), since its options can't hold links; instructor cards and
+rows opt out. Signed out, nothing previews.
 
 ### Aggregate FCEs
 

@@ -143,6 +143,7 @@
         options={tops}
         current={resolved.section}
         fceCourseId={course.id}
+        {termId}
         {conflictsFor}
         onchange={(name) => {
           if (name !== resolved.section?.name) onsection(name);
@@ -166,6 +167,7 @@
         current={resolved.child}
         {conflictsFor}
         placeholder="Choose a recitation for {partLabel(resolved.section)}"
+        {termId}
         onchange={onchild}
         onpreview={preview}
       />

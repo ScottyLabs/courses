@@ -1,20 +1,20 @@
-// When course previews open and close (CoursePreviewLayer): mouse hover with Courseweave's delays, keyboard focus,
-// and press-and-hold on touch screens, whose following click is swallowed so the press doesn't follow the link.
-import type { PreviewTarget } from "./preview.ts";
+// When link previews open and close (PreviewLayer, for courses and instructors): mouse hover with Courseweave's
+// delays, keyboard focus, and press-and-hold on touch screens, whose following click is swallowed so the press
+// doesn't follow the link.
 
 const OPEN_DELAY = 450;
 /** After a card was open, neighbouring codes open almost at once (like native tooltips). */
 const WARM_DELAY = 90;
 const CLOSE_DELAY = 160;
-/** How long a touch must rest on a course link to open its card. */
+/** How long a touch must rest on a link to open its card. */
 const PRESS_DELAY = 450;
 /** A touch that moves further than this (pixels) is a scroll, not a press. */
 const PRESS_SLOP = 10;
 
-/** A course link or marked element, what it previews and where "Open course" goes. */
-export interface PreviewAnchor {
+/** A link or marked element, what it previews and where the touch card's "Open" action goes. */
+export interface PreviewAnchor<T> {
   anchor: Element;
-  target: PreviewTarget;
+  target: T;
   href: string;
 }
 
@@ -22,19 +22,19 @@ export interface PreviewAnchor {
 export type PreviewMode = "hover" | "touch";
 
 /** What the input needs from the layer. */
-export interface PreviewHost {
-  /** The course link or marked element at a node, or null when it has nothing to preview. */
-  find: (node: EventTarget | null) => PreviewAnchor | null;
+export interface PreviewHost<T> {
+  /** The link or marked element at a node, or null when it has nothing to preview. */
+  find: (node: EventTarget | null) => PreviewAnchor<T> | null;
   /** Whether a node is inside the open card. */
   inCard: (node: EventTarget | null) => boolean;
   /** The open card's anchor and mode, if one is open. */
   current: () => { anchor: Element; mode: PreviewMode } | null;
-  open: (found: PreviewAnchor, mode: PreviewMode) => void;
+  open: (found: PreviewAnchor<T>, mode: PreviewMode) => void;
   close: () => void;
 }
 
-export class PreviewInput {
-  readonly #host: PreviewHost;
+export class PreviewInput<T> {
+  readonly #host: PreviewHost<T>;
   #openTimer: ReturnType<typeof setTimeout> | undefined;
   #closeTimer: ReturnType<typeof setTimeout> | undefined;
   #pressTimer: ReturnType<typeof setTimeout> | undefined;
@@ -45,7 +45,7 @@ export class PreviewInput {
   #warmUntil = 0;
   #lastPointer = "mouse";
 
-  constructor(host: PreviewHost) {
+  constructor(host: PreviewHost<T>) {
     this.#host = host;
   }
 
@@ -83,7 +83,7 @@ export class PreviewInput {
     this.#host.close();
   };
 
-  #scheduleOpen(found: PreviewAnchor): void {
+  #scheduleOpen(found: PreviewAnchor<T>): void {
     this.#clear();
     const current = this.#host.current();
     if (current?.anchor === found.anchor) return;
@@ -180,7 +180,7 @@ export class PreviewInput {
     }
   };
 
-  // A long press on a link opens the browser's link menu; the card takes its place on course links.
+  // A long press on a link opens the browser's link menu; the card takes its place on previewed links.
   readonly #onContextMenu = (event: MouseEvent): void => {
     if (this.#lastPointer === "mouse") return;
     if ((this.#press !== null || this.#touchOpen()) && this.#host.find(event.target) !== null)

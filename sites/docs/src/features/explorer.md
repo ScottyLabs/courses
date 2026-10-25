@@ -46,12 +46,13 @@ share. Each component needs only a course (or its id) and a semester:
 - `course-search.ts` (catalog search for the plan's "Add a course", the record's course picker and the requisite
   explorer) and `links.ts` (`setCourseHref()`, so the Courses page's panel opens course links in place).
 
-Course previews ([decision 41](../decisions/0041-preview-every-course-link.md)): `CoursePreviewLayer`, mounted once in
-the root layout, shows a card about a course (units, title, description, prerequisites, the student's requisite status,
+Course previews ([decision 41](../decisions/0041-preview-every-course-link.md)): `PreviewLayer`
+(`lib/components/preview/`), mounted once in the root layout, shows a card about a course (units, title, description, prerequisites, the student's requisite status,
 the semester's meetings, FCE hours) when the pointer rests on or keyboard focus reaches any link to a course page, the
 requisite explorer or the Courses page's panel, in the link's `term`; on a touch screen, pressing and holding the link
 opens it at the bottom of the screen with "Open course". Codes that aren't links opt in with `coursePreview(id, term)`
-from `preview.ts` (or `attrs` on `Chip`); a course's own card or row opts out with `data-course-preview="off"`.
+from `preview.ts` (or `attrs` on `Chip`); a course's own card or row opts out with `data-course-preview="off"`. The
+same layer previews instructor links ([Instructors](people.md#instructor-previews)).
 
 They load what they show through `data.svelte.ts` (catalog index, a semester, offerings, descriptions, FCEs,
 syllabi, friends taking a course) and `requisite-context.svelte.ts` (the student's requisite context for a

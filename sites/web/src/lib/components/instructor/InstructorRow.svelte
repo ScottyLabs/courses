@@ -36,6 +36,7 @@
 <a
   {id}
   {href}
+  data-instructor-preview="off"
   role="option"
   aria-selected={selected}
   aria-current={selected ? "page" : undefined}

@@ -6,8 +6,9 @@ import {
   type AllInstructors,
   type CourseLookup,
 } from "$lib/core/instructors/allInstructors";
-import { termLabel } from "$lib/core/requisites";
 import { decodeInstructorList, listFromAll, listFromTerm, type ListedDoc } from "./list";
+
+export { teachingSummary } from "$lib/components/instructor/directory";
 
 /** Course titles and departments for any course, from the offerings index and the course catalog. */
 export async function loadCourseLookup(): Promise<CourseLookup> {
@@ -23,14 +24,6 @@ export async function loadAllInstructors(): Promise<AllInstructors | null> {
   const [teaching, lookup] = await Promise.all([catalog.teaching(), loadCourseLookup()]);
   const fce = await catalog.fceInstructors().catch(() => null);
   return allInstructors(teaching, fce, lookup);
-}
-
-/** "Spring 2027 and 3 more", "Course evaluations only": where an all-semesters instructor teaches, newest first. */
-export function teachingSummary(terms: readonly string[]): string {
-  const [latest] = terms;
-  if (latest === undefined) return "Course evaluations only";
-  const more = terms.length - 1;
-  return more > 0 ? `${termLabel(latest)} and ${more} more` : termLabel(latest);
 }
 
 /**
