@@ -80,5 +80,18 @@ hasn't published it, and the SIO calendar import (`SioImport.svelte`) for exams 
 
 ## Profile
 
-`/profile/schedules` (`features/profile/SchedulesSection.svelte`) lists every schedule as a card with its semester,
-units, hours a week and courses, filtered by semester, each opening the schedule.
+`/profile/schedules` (`features/profile/SchedulesSection.svelte`) lists every schedule, newest semester first, filtered
+by semester, with a `ViewToggle` in the title band (remembered on the device as `profile-schedules`) between two views:
+
+- **Preview** (the default): the schedules grouped under their semesters (an accent calendar badge and the semester's
+  name), each a card (`SchedulePreviewCard.svelte`) with the week in miniature over its name and class count ("3
+  classes", "No classes yet"). The miniature is `WeekThumbnail` (`components/calendar/`): one SVG for the faint grid of
+  day columns and hour rows and a block per meeting in the course's color, with no text, laid out by
+  `thumbnailLayout` (`week-thumbnail.ts`) from `core/week-grid.ts`'s days and overlap lanes: Monday to Friday plus a
+  weekend day only when something meets on it, and 8 AM to 6 PM widened so the first and last meetings have at least
+  half an hour around them. Hidden courses are left out, as are courses without a set time (they still count as
+  classes). The blocks come from the semester documents the section already loads (`previewBlocks` in
+  `schedule-previews.ts`). One column on phones, two from 640px, three from 1280px.
+- **Details**: the Figma's cards with the semester, units, hours a week and courses.
+
+Every card opens the schedule on `/schedules`; a preview card is one link named "Schedule 1, Fall 2026, 3 classes".

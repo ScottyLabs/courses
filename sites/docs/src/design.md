@@ -122,7 +122,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `toast()` | `toast(message, { kind, action, duration })` | Rendered by the root layout's `Toaster` |
 | `Tabs` | `tabs`, `bind:value`, `label`, `panel` snippet | |
 | `SegmentedControl` | `options` (label, icon, iconOnly), `bind:value`, `label` | Radio group |
-| `ViewToggle` | `pageKey`, `bind:value` cards or list | Remembers the choice per page |
+| `ViewToggle` | `pageKey`, `bind:value` cards or list; `options` for a page's own views | Remembers the choice per page; read it back with `storedView` (or `storedViewOf` with `options`) |
 | `Avatar` | `name`, `src`, `size` xs, sm, md, lg; `tone` | Initials, or a silhouette without a name |
 | `AvatarGroup` | `people`, `max`, `size`, `label` | "+N" after `max` |
 | `StarRating` | `value`, `max`, `size`, `showValue`, `label` | Partial stars for FCE rates |
