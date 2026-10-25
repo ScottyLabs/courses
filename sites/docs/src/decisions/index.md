@@ -46,3 +46,4 @@
 | 42 | [Ask before adding signed-out drafts to an account](0042-ask-before-adding-signed-out-drafts-to-an-account.md) | accepted |
 | 43 | [List instructors from their own documents](0043-list-instructors-from-their-own-documents.md) | accepted |
 | 44 | [Put the degree plan's programs and progress in a rail](0044-put-the-degree-plans-programs-and-progress-in-a-rail.md) | accepted |
+| 45 | [Lay out the requisite graph ourselves](0045-lay-out-the-requisite-graph-ourselves.md) | accepted |
