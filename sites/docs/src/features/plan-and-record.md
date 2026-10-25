@@ -13,18 +13,26 @@ recently edited). Opening a plan makes it the active one. With no plan yet, the 
 and "Import from Stellic". The semester being browsed for titles, units and "offered in" hints is `?term=`, else the
 last one visited (`resolveTerm`).
 
-The layout follows Courseweave's plan page in the design system's look
-([decision 36](../decisions/0036-lay-out-the-degree-plan-beside-its-requirements.md)):
+The page is a rail page like Courses, Schedules and Profile
+([decision 44](../decisions/0044-put-the-degree-plans-programs-and-progress-in-a-rail.md), amending
+[decision 36](../decisions/0036-lay-out-the-degree-plan-beside-its-requirements.md)), with Courseweave's semesters
+beside its requirements:
 
-- **Header** (`PlanHeader.svelte`): the plan picker, "New plan" (same programs and start), and the plan's options:
-  rename, duplicate, send to Stellic (a script for the student's own Stellic tab, `core/stellic-export.ts`), import
-  from Stellic, delete. Then the programs (`audit/ProgramPicker.svelte`: search with the kind filter for majors,
-  minors, additional majors and concentrations, each with its requirements version by entry year and campus,
-  optional concentrations, and what's checked alongside), and the numbers: units planned (of the degree's total),
-  units completed, requirements met or planned, semesters with the start term, and the overall progress bar
-  (`DegreeProgressBar.svelte`: done, in progress, planned, still needed).
-- **Record prompt** while the record is empty, and **requisite problems**: courses planned before their requisites,
-  each jumping to the course.
+- **Title row** (`PlanHeader.svelte`, at the top of the semesters column, level with the requirements heading; no band
+  above the page): the plan's name as the page title (click it to rename in place; Enter saves, Escape cancels), a
+  chevron beside it that lists the student's plans and "New plan" (same programs and start), and on the right the
+  Cards/Detailed switch (icons only below 1280px) and the plan's options: rename, duplicate, send to Stellic (a script for the student's own Stellic tab, `core/stellic-export.ts`),
+  import from Stellic, delete. On phones, the button that opens the rail's sheet ("Programs and progress") and the
+  progress bar in one line.
+- **Rail** (`PlanRail.svelte`, a sheet on phones): the programs (`audit/ProgramPicker.svelte`: each with its
+  requirements version by entry year and campus, its concentrations, any number of them, pressed again to clear, and
+  what's checked alongside; then the program search, whose panel holds the type filter for majors, minors,
+  additional majors and concentrations while it's in use, and lists a whole type with no query), the progress (the
+  overall bar, `DegreeProgressBar.svelte`: done, in progress, planned, still needed; and the numbers from
+  `numbers.ts` as `StatBox`es: units planned of the degree's total, units completed, requirements met or planned,
+  semesters with the first one), and "Requisites" (`RequisiteProblems.svelte`): courses planned before their
+  requisites, each jumping to the course.
+- **Record prompt** while the record is empty, above the semesters.
 - **Semester grid** (`SemesterGrid.svelte`): incoming credit (AP, IB, transfer, placements), then academic years with
   fall, spring and, when planned, summer (`grid.ts`), slots to add back a removed semester, the next semester and
   summers. A cards or detailed layout (the `planLayout` preference); the detailed one is a table per semester with
@@ -44,7 +52,10 @@ The layout follows Courseweave's plan page in the design system's look
   semester `suggestTerm()` picks (offered, with room, prerequisites met by then) and jumps to it. "Expand" opens the
   requirements in a dialog.
 
-From 1180px the requirements are a sticky column beside the semesters; below that the two are tabs. Drag and drop
+When the main column is at least 900px wide (with the rail open, from 1440px; hiding the rail makes room sooner) the
+requirements are a sticky column beside the semesters, a third of the column wide; below that the two are tabs.
+Requirement rows lay out by the panel's width: in the column, a tab on a phone and other narrow panels a course's
+number and its Add share a line with its title under them, and in the wider Expand dialog all three share one. Drag and drop
 (HTML drag events, `DRAG_TYPE` and `DRAG_NEW_COURSE`) moves courses between and within semesters and adds courses
 from the requirements; it's on with a fine pointer from 768px. The course menus and "Add" do the same from the
 keyboard or a touch screen. On phones, past semesters start collapsed.
@@ -58,7 +69,8 @@ requirements say degree programs need a CMU sign-in
 ([decision 37](../decisions/0037-let-signed-out-visitors-draft-a-degree-plan.md)).
 
 Pure helpers with tests: `grid.ts` (year rows), `rows.ts` (a course row's facts, where a drop lands, nudging),
-`audit/programs.ts` (program search and labels); "Add a course" searches with the shared
+`audit/programs.ts` (program search, a type's list with no query, and labels), and `state/plans.test.ts` (a
+program's concentrations reach the account and come back); "Add a course" searches with the shared
 `components/course/course-search.ts`. "Send to Stellic" opens the schedules' dialog
 (`components/stellic/SendToStellicDialog.svelte`) with `mode="plan"`.
 

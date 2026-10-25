@@ -77,6 +77,8 @@
   /* The focus ring eases out from the element's edge instead of popping in. Rings drawn on a pseudo-element or a
      child (`focus-visible:after:outline-*`, a tab's label) add `animate-focus-ring` to match. */
   --animate-focus-ring: focus-ring 150ms ease-out;
+  /* A row the page jumped to for a problem (the degree plan's requisite list) flashes the danger tint, then fades. */
+  --animate-flash-danger: flash-danger 1.6s ease-out;
 
   @keyframes skeleton {
     0%,
@@ -92,6 +94,18 @@
     from {
       outline-color: transparent;
       outline-offset: 0;
+    }
+  }
+
+  @keyframes flash-danger {
+    0%,
+    35% {
+      background-color: var(--color-danger-bg);
+      box-shadow: inset 3px 0 0 var(--color-danger);
+    }
+    100% {
+      background-color: transparent;
+      box-shadow: inset 3px 0 0 transparent;
     }
   }
 }
@@ -251,6 +265,13 @@
       animation-iteration-count: 1 !important;
       transition-duration: 1ms !important;
       scroll-behavior: auto !important;
+    }
+
+    /* The jump flash holds still instead of fading. */
+    .animate-flash-danger {
+      animation: none !important;
+      background-color: var(--color-danger-bg);
+      box-shadow: inset 3px 0 0 var(--color-danger);
     }
   }
 }

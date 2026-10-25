@@ -101,17 +101,20 @@
   <div class="flex items-start gap-1">
     <ColorPicker color={entry.color} code={course.code} onchange={oncolor} />
     <div class="min-w-0 flex-1 pt-1 {hidden ? 'opacity-50' : ''}">
-      <p class="flex flex-wrap items-baseline gap-x-2">
-        <span {...coursePreview(course.id, termId)} class="tabular text-heading-6 font-semibold text-strong">{course.code}</span>
-        <span class="text-label-md font-normal text-muted">{unitsText(course.units)}</span>
+      <p class="flex min-w-0 items-baseline gap-x-2 whitespace-nowrap">
+        <span {...coursePreview(course.id, termId)} class="tabular shrink-0 text-heading-6 font-semibold text-strong"
+          >{course.code}</span
+        >
+        <span class="min-w-0 truncate text-label-md font-normal text-muted">{unitsText(course.units)}</span>
         {#if !resolved.factorable}
+          <!-- The degree plan's compact pass/fail tag, so the line fits beside the row's buttons. -->
           <span
-            class="text-label-md font-normal text-muted"
+            class="shrink-0 self-center rounded-tag border border-pressed px-1 text-label-sm font-semibold text-muted"
             title={passFailOnly ? PASS_FAIL_ONLY_HELP : "You're taking this pass/fail, so its units don't count toward your QPA."}
-            >not factorable</span
+            >P/F<span class="sr-only">, not factorable</span></span
           >
         {/if}
-        {#if hidden}<span class="text-label-md font-normal text-muted">Hidden</span>{/if}
+        {#if hidden}<span class="shrink-0 text-label-md font-normal text-muted">Hidden</span>{/if}
       </p>
       <a
         href={coursePath(course.code, termId)}

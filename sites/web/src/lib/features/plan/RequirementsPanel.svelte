@@ -40,24 +40,27 @@
   });
 </script>
 
-{#if status === "signin" || status === "forbidden" || (plan.programs.length === 0 && session.status !== "signed-in")}
-  <SignInNote title="Sign in to check requirements" forbidden={status === "forbidden"} />
-{:else if plan.programs.length === 0}
-  <div class="rounded-card border border-dashed border-line-strong bg-surface">
-    <AuditPanel input={page.derived.auditInput} data={null} {base} />
-  </div>
-{:else}
-  <div aria-live="polite" aria-busy={data === null && status !== "error"}>
-    {#if data}
-      <AuditPanel input={page.derived.auditInput} {data} {base} />
-    {:else if status === "error"}
-      <p role="alert" class="rounded-card border border-danger/35 bg-surface px-4 py-3 text-body-2 text-danger">
-        Couldn't load the requirements. {error ?? ""} Reload the page to try again.
-      </p>
-    {:else}
-      <p class="flex items-center gap-2 py-6 text-body-2 text-muted">
-        <Spinner size="sm" decorative /> Checking requirements
-      </p>
-    {/if}
-  </div>
-{/if}
+<!-- A named container: requirement rows lay out by the panel's width (the column, the tab or the dialog). -->
+<div class="@container/req">
+  {#if status === "signin" || status === "forbidden" || (plan.programs.length === 0 && session.status !== "signed-in")}
+    <SignInNote title="Sign in to check requirements" forbidden={status === "forbidden"} />
+  {:else if plan.programs.length === 0}
+    <div class="rounded-card border border-pressed bg-surface">
+      <AuditPanel input={page.derived.auditInput} data={null} {base} />
+    </div>
+  {:else}
+    <div aria-live="polite" aria-busy={data === null && status !== "error"}>
+      {#if data}
+        <AuditPanel input={page.derived.auditInput} {data} {base} />
+      {:else if status === "error"}
+        <p role="alert" class="rounded-card border border-danger/35 bg-surface px-4 py-3 text-body-2 text-danger">
+          Couldn't load the requirements. {error ?? ""} Reload the page to try again.
+        </p>
+      {:else}
+        <p class="flex items-center gap-2 py-6 text-body-2 text-muted">
+          <Spinner size="sm" decorative /> Checking requirements
+        </p>
+      {/if}
+    </div>
+  {/if}
+</div>

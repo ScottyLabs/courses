@@ -1,10 +1,20 @@
 <script lang="ts">
   // The plan's overall progress as one bar: done, in progress (striped), planned and still needed. It fills only
-  // when the plan reaches the unit total and meets every requirement. Courseweave's DegreeProgressBar.
+  // when the plan reaches the unit total and meets every requirement. Courseweave's DegreeProgressBar. The rail
+  // shows it with its legend; the phone toolbar shows the compact one, the status and the bar.
   import { fmt } from "$lib/core/degree/audit/format";
   import type { DegreeProgress } from "$lib/core/degree/progress";
 
-  let { progress, outside = 0 }: { progress: DegreeProgress; outside?: number } = $props();
+  let {
+    progress,
+    outside = 0,
+    compact = false,
+  }: {
+    progress: DegreeProgress;
+    outside?: number;
+    /** Only the status and the bar. */
+    compact?: boolean;
+  } = $props();
 
   type Key = "done" | "inProgress" | "planned" | "needed";
   const FILL: Record<Key, string> = {
@@ -47,12 +57,10 @@
   const summary = $derived(shown.map((s) => `${fmt(s.value)} units ${s.label.toLowerCase()}`).join(", "));
 </script>
 
-<div class="flex flex-col gap-2">
-  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-    <span class="text-label-md text-muted">Degree progress</span>
-    <span class="text-label-lg text-strong" aria-live="polite">{status}</span>
-  </div>
-  <div role="img" aria-label="Degree progress: {summary}." class="flex h-3 gap-[2px] overflow-hidden rounded-full">
+<div class="flex flex-col {compact ? 'gap-1.5' : 'gap-2.5'}">
+  <!-- The compact copy sits beside the rail's in the phone sheet, so only the rail's announces changes. -->
+  <p class="text-label-lg text-strong" aria-live={compact ? undefined : "polite"}>{status}</p>
+  <div role="img" aria-label="Degree progress: {summary}." class="flex h-2.5 gap-[2px] overflow-hidden rounded-full">
     {#each segments as s (s.key)}
       {#if s.value > 0}
         <div
@@ -62,23 +70,27 @@
       {/if}
     {/each}
   </div>
-  <ul class="flex flex-wrap gap-x-4 gap-y-1 text-label-md font-normal text-ink">
-    {#each shown as s (s.key)}
-      <li class="flex items-center gap-1.5">
-        <span aria-hidden="true" class="size-2.5 shrink-0 rounded-[3px]" style={FILL[s.key]}></span>
-        {s.label}
-        <span class="tabular font-semibold text-strong">{fmt(s.value)}</span>
-        {#if s.key === "done" && progress.credit > 0}
-          <span class="text-muted">({fmt(progress.credit)} from AP and transfer credit)</span>
-        {/if}
-        {#if s.key === "needed" && neededNote}<span class="text-muted">({neededNote})</span>{/if}
-      </li>
-    {/each}
-    {#if outside > 0}
-      <li class="text-muted">
-        {fmt(outside)}
-        {outside === 1 ? "unit" : "units"} in this plan {outside === 1 ? "doesn't" : "don't"} count toward the degree
-      </li>
-    {/if}
-  </ul>
+  {#if !compact}
+    <ul class="flex flex-wrap gap-x-4 gap-y-1 text-label-md font-normal text-ink">
+      {#each shown as s (s.key)}
+        <li class="flex flex-wrap items-center gap-x-1.5">
+          <span class="flex items-center gap-1.5 whitespace-nowrap">
+            <span aria-hidden="true" class="size-2.5 shrink-0 rounded-full" style={FILL[s.key]}></span>
+            {s.label}
+            <span class="tabular font-semibold text-strong">{fmt(s.value)}</span>
+          </span>
+          {#if s.key === "done" && progress.credit > 0}
+            <span class="text-muted">({fmt(progress.credit)} from AP and transfer credit)</span>
+          {/if}
+          {#if s.key === "needed" && neededNote}<span class="text-muted">({neededNote})</span>{/if}
+        </li>
+      {/each}
+      {#if outside > 0}
+        <li class="text-muted">
+          {fmt(outside)}
+          {outside === 1 ? "unit" : "units"} in this plan {outside === 1 ? "doesn't" : "don't"} count toward the degree
+        </li>
+      {/if}
+    </ul>
+  {/if}
 </div>

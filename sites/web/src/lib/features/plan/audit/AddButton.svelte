@@ -14,7 +14,7 @@
   title={ctx.offered(courseId)
     ? `Add ${codeOf(courseId)} to your plan`
     : `Add ${codeOf(courseId)} (not offered in ${ctx.termName})`}
-  class="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border border-line-strong px-2.5 text-label-md text-ink transition-colors hover:bg-hover md:h-7"
+  class="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-paper px-2.5 text-label-md text-ink transition-colors hover:bg-line active:bg-pressed md:h-7"
 >
   <Plus aria-hidden="true" class="size-3.5" />
   Add

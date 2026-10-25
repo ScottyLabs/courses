@@ -45,9 +45,11 @@ Type is Inter, with utilities named after the Figma text styles:
 | `text-label-md` | 12/16 medium | Chips, small buttons, counts |
 | `text-label-sm` | 10/14 | Phone tags |
 
-Radii are `rounded-tag` (4px: chips, compact selects, stat boxes), `rounded-field` (10px: fields) and `rounded-card`
-(10px); buttons and pills are `rounded-full`. Shadows are `shadow-header`, `shadow-popover` and `shadow-dialog`. Use
-`tabular` for numbers that line up.
+Radii are `rounded-tag` (4px: chips, stat boxes), `rounded-field` (10px: fields and selects, and rows that fill
+on hover inside a card) and `rounded-card` (10px); buttons and pills are `rounded-full`. Give each element the radius
+of its role, and separate things inside a card with spacing, a fill (`bg-surface-2` wells, `bg-paper` soft buttons) or
+a hairline `border-line` between rows of data rather than another outlined box. Shadows are `shadow-header`,
+`shadow-popover` and `shadow-dialog`. Use `tabular` for numbers that line up.
 
 Dark mode is the `dark` class on `<html>`. An inline script in `app.html` sets it before the first paint from the saved
 choice (`cmucourses:theme` in localStorage) or the system setting, and `theme` in
@@ -82,7 +84,7 @@ the ring:
 | --- | --- |
 | Fields: `TextInput`, `Select`, `Combobox`, `MultiSelect`, the boxed `SearchInput`, inline inputs | `focus-field`: the border eases to accent and thickens to 2px (inside, so nothing shifts or gets clipped); red while invalid. Shown for clicks too, since you type into the field |
 | The underline `SearchInput` | A 2px accent rule grows from the center over its line |
-| A transparent native select over an icon or a label | `focus-ring-within` on the wrapper |
+| A `Select` drawn as an icon or inline text (its `trigger` snippet) | The ring around that button |
 | Full-width rows and list items (profile sections, pick lists), segments of a `SegmentedControl` | The ring drawn inside (`focus-visible:-outline-offset-2`), where a screen edge, a scroll box or the group's border can't cover it |
 | `Tabs` | The ring around the tab's label, centered on the text rather than the tall tab |
 | Slider thumbs | A ring around the thumb, not the track |
@@ -105,14 +107,14 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `IconButton` | `label` (required), `icon`, `size`, `variant` ghost, outline, solid; `pressed`, `href` | |
 | `TextInput` | `bind:value`, `label`, `hideLabel`, `hint`, `error`, `icon`, `size` md, sm | |
 | `SearchInput` | `bind:value`, `label`, `placeholder`, `variant` underline (page search), field; `onsubmit` | Escape clears; has a clear button |
-| `Select` | `bind:value`, `options`, `placeholder`, `label`, `variant` field (rail), compact (toolbar) | Styled native select |
+| `Select` | `bind:value`, `options`, `placeholder`, `label`, `variant` field (rail), compact (toolbar); `onchange`, `placement`, `trigger` | A select-only combobox ([decision 30](decisions/0030-build-ui-primitives-on-native-elements.md#amendment-custom-selects)): the field opens a list in a popover with a check on the chosen option. Compact is 36px, 40px on phones. `trigger` draws it as an icon or inline text |
 | `Combobox` | `bind:value` (string or null), `options`, `label`, `placeholder`, `clearable` | Type to filter; for departments |
 | `MultiSelect` | `bind:value` (string array), `options`, `label`, `placeholder` | Searchable checklist; for requirements |
 | `Checkbox` | `bind:checked`, `indeterminate`, `label`, `description` | |
 | `Switch` | `bind:checked`, `label`, `hideLabel`, `icon`, `tone` accent, neutral | |
 | `RangeSlider` | `bind:low`, `bind:high`, `min`, `max`, `step`, `label`, `presets` | Two thumbs; presets are the unit pills |
-| `ToggleChips` | `bind:value` (array), `options` (with `fullLabel` for a shortened label), `multiple`, `label`, `stretch` | Pressable pills that stay on one line, such as sessions |
-| `Chip` | `tone` outline, soft, neutral, ok, warn, accent, strong; `size` xs, sm, md; `icon`, `href`, `onremove`, `onclick`, `attrs` | `onremove` makes a removable filter chip; `attrs` adds attributes such as `coursePreview()` |
+| `ToggleChips` | `bind:value` (array), `options` (with `fullLabel` for a shortened label), `multiple`, `label`, `stretch`, `check` | Pressable pills that stay on one line, such as sessions; `check` marks pressed ones with a check (the plan's concentrations) |
+| `Chip` | `tone` outline, soft, neutral, ok, warn, accent, strong; `size` xs, sm, md; `icon`, `href`, `onremove`, `onclick`, `pressed`, `attrs` | `onremove` makes a removable filter chip; `pressed` takes a pressed ToggleChips pill's look in place of the tone; `attrs` adds attributes such as `coursePreview()` |
 | `StatusChip` | `status` satisfied, planned, in-progress, unsatisfied | Check, arrow or x on the status colors |
 | `CourseChip` | `code`, `title`, `status`, `tone`, `href`, `link` | Links to `/course/[code]`; shows the course preview |
 | `Card` | `as`, `href`, `padding` none, sm, md, lg; `interactive` | White card with the Figma border |
@@ -135,12 +137,14 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 
 ## Layout patterns
 
-The root layout renders the header, `<main>` and the footer around every page. Pages pick one of four patterns.
+The root layout renders the header, `<main>` and the footer around every page. Pages pick one of three patterns.
 
-**Rail layout** (courses, instructors, schedules). A white rail on the left with a title and a Hide
-button, and the page on the right: a white toolbar band, then content on the page background. Below 1024px the rail is
-a sheet opened from the toolbar's Filter button, which shows the active filter count; `sheetDone` adds a button at
-the sheet's foot that closes it, such as "Show 85 courses".
+**Rail layout** (courses, instructors, schedules, plan). A white rail on the left with a title and a Hide
+button, and the page on the right: a white toolbar band, then content on the page background. The rail is 340, 380 and
+418px wide up to 1440px, then grows with the window to 560px at 2560px (`RAIL_WIDTH`, shared with the profile's
+rail). Below 1024px the rail is a sheet opened from the toolbar's Filter button (`FilterButton`), which shows the
+active filter count; `sheetDone` adds a button at the sheet's foot that closes it, such as "Show 85 courses", and
+`getRail().close()` closes it from inside, as the plan's requisite list does before jumping to a course.
 
 ```svelte
 <RailLayout storageKey="courses" filterCount={active} backLabel="Search">
@@ -168,7 +172,9 @@ the sheet's foot that closes it, such as "Show 85 courses".
 short lines under it (the schedule's courses and totals). `RailSection` is a collapsible filter with an icon, label
 and chevron. `sheetButtonLabel` and `sheetIcon` replace the Filter button's text and icon where the rail isn't
 filters (the schedules page's "Courses (6)").
-`RailLayout`'s `autoCollapse` folds the rail to its strip while something sits beside the results (the Courses page's
+`RailLayout`'s `showTitle={false}` keeps the rail's title for screen readers only, when the page's own title already
+says where the student is (the degree plan); `railFooter` pins a snippet to the bottom of the rail and of its phone
+sheet (a schedule's totals). `autoCollapse` folds the rail to its strip while something sits beside the results (the Courses page's
 course panel below 1440px), with `bind:railCollapsed` to follow it.
 `PageToolbar` has slots for the title, an intro, the search field, the result count, removable chips (plus a Reset
 pill on phones) and right-aligned actions; `actionsLayout` (`auto`, `inline`, `row`) chooses whether the actions share
@@ -181,9 +187,9 @@ hands its own actions and filters to the band with `profileBand(() => ({ actions
 `$lib/components/layout`, using snippets declared in its markup. On phones
 the sections become an accordion with the open one's content under it.
 
-**Plan layout** (`/plan`, [decision 36](decisions/0036-lay-out-the-degree-plan-beside-its-requirements.md)). A
-full-width page: a header, then the semester grid beside a sticky requirements column from 1180px up, and tabs below
-that.
+The degree plan (`/plan`, [decision 44](decisions/0044-put-the-degree-plans-programs-and-progress-in-a-rail.md)) is
+a rail page: the programs, progress and requisite problems in the rail, the plan picker in the band, and in the main
+column the semester grid beside a sticky requirements column once the column is 900px wide, with tabs below that.
 
 **Page container** (course page, shared schedule, invite, errors). A centered column, `narrow`, `default` or `wide`.
 

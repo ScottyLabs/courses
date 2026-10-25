@@ -8,6 +8,7 @@
 </script>
 
 <script lang="ts">
+  import { Check } from "@lucide/svelte";
   import { togglePill } from "./styles";
 
   let {
@@ -16,6 +17,7 @@
     multiple = true,
     label,
     stretch = false,
+    check = false,
     class: className = "",
   }: {
     options: readonly ToggleChip[];
@@ -26,6 +28,8 @@
     label: string;
     /** Make every pill the same width, filling the row. */
     stretch?: boolean;
+    /** Show a check on pressed pills, for choices where the gray fill alone is easy to miss. */
+    check?: boolean;
     class?: string;
   } = $props();
 
@@ -39,13 +43,14 @@
   {#each options as option (option.value)}
     <button
       type="button"
-      class="{togglePill} whitespace-nowrap {stretch ? 'flex-1' : 'px-4'}"
+      class="{togglePill} whitespace-nowrap {stretch ? 'flex-1' : 'px-4'} {check ? 'gap-1' : ''}"
       aria-pressed={value.includes(option.value)}
       aria-label={option.fullLabel}
       title={option.fullLabel}
       disabled={option.disabled}
       onclick={() => toggle(option.value)}
     >
+      {#if check && value.includes(option.value)}<Check aria-hidden="true" class="-ml-1 size-3.5 shrink-0" />{/if}
       {option.label}
     </button>
   {/each}

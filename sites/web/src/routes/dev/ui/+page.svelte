@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    ArrowDownUp,
     BookmarkPlus,
     Calendar1,
     Clock,
@@ -65,6 +66,7 @@
       search: "",
       select: "",
       compact: "",
+      sort: "number",
       department: null as string | null,
       chosen: [] as string[],
       checked: true,
@@ -140,6 +142,16 @@
     { value: "200", label: "200 level" },
     { value: "300", label: "300 level" },
     { value: "graduate", label: "Graduate" },
+  ];
+  const sorts = [
+    { value: "relevance", label: "Relevance", disabled: true },
+    { value: "number", label: "Number" },
+    { value: "title", label: "Title" },
+    { value: "units", label: "Units" },
+    { value: "fewest-hours", label: "Fewest FCE hours" },
+    { value: "most-hours", label: "Most FCE hours" },
+    { value: "course-rating", label: "Course rating" },
+    { value: "teaching-rating", label: "Teaching rating" },
   ];
   const fceColumns = [
     { key: "semester", label: "Semester" },
@@ -246,6 +258,17 @@
         <Select bind:value={state.select} label="Course level" hideLabel={false} placeholder="None" options={levels} />
         <Select value="" label="GenEd category" hideLabel={false} placeholder="Select GenEd Category" options={levels} disabled />
         <Select bind:value={state.compact} label="Show" variant="compact" placeholder="Show" options={levels} />
+        <div class="flex items-center gap-2">
+          <Select bind:value={state.sort} label="Sort by" variant="compact" options={sorts} class="w-48" />
+          <Select bind:value={state.sort} label="Sort by" options={sorts} placement="bottom-end">
+            {#snippet trigger(props, current)}
+              <button {...props} title="Sort by: {current}" class="grid size-9 place-items-center rounded-full border border-line-strong text-ink hover:bg-hover aria-expanded:bg-hover">
+                <ArrowDownUp aria-hidden="true" class="size-5" />
+                <span class="sr-only">{current}</span>
+              </button>
+            {/snippet}
+          </Select>
+        </div>
         <Combobox options={departments} bind:value={state.department} label="Department" hideLabel={false} placeholder="Any department" />
         <MultiSelect options={requirements} bind:value={state.chosen} label="Requirements" hideLabel={false} placeholder="Any requirement" />
       </div>

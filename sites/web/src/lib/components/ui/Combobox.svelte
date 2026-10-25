@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Check, ChevronsUpDown, X } from "@lucide/svelte";
+  import { Check, ChevronDown, X } from "@lucide/svelte";
   import { untrack } from "svelte";
   import { follow, hidePanel, showPanel } from "./floating";
   import { matchesQuery, step } from "./listbox";
@@ -140,7 +140,7 @@
 
   $effect(() => {
     if (open && active >= 0) {
-      document.getElementById(optionId(active))?.scrollIntoView({ block: "nearest" });
+      document.querySelector(`#${CSS.escape(optionId(active))}`)?.scrollIntoView({ block: "nearest" });
     }
   });
 </script>
@@ -182,11 +182,11 @@
         <X aria-hidden="true" class="size-4" />
       </button>
     {/if}
-    <ChevronsUpDown
+    <ChevronDown
       aria-hidden="true"
-      class="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 {disabled
-        ? 'text-faint'
-        : 'text-ink'}"
+      class="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 transition-transform {open
+        ? 'rotate-180'
+        : ''} {disabled ? 'text-faint' : 'text-ink'}"
     />
   </div>
   <div

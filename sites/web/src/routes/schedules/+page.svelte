@@ -206,6 +206,10 @@
 
 <ImportLinkDialog {term} onswitch={(id) => t.set(id)} />
 
+{#snippet totalsFooter()}
+  {#if view && term}<WorkloadTotals {view} {term} variant="footer" />{/if}
+{/snippet}
+
 <RailLayout
   title="Schedule"
   name="schedule panel"
@@ -215,6 +219,7 @@
   backLabel="Schedule"
   storageKey="schedules"
   filterCount={courseCount}
+  railFooter={view && term && !loadingAccount && view.entries.length > 0 ? totalsFooter : undefined}
 >
   {#snippet rail()}
     <RailGroup>
@@ -224,7 +229,7 @@
           label="Semester"
           hideLabel={false}
           options={t.terms.value.map((x) => ({ value: x.id, label: x.name }))}
-          onchange={(event) => t.set((event.currentTarget as HTMLSelectElement).value)}
+          onchange={(event) => t.set(event.currentTarget.value)}
         />
       {:else}
         <Skeleton variant="block" class="h-16" />
@@ -232,11 +237,6 @@
     </RailGroup>
 
     <RailGroup title="Courses" count={view && !loadingAccount && courseCount > 0 ? courseCount : undefined}>
-      {#snippet summary()}
-        {#if view && term && !loadingAccount}
-          <WorkloadTotals {view} {term} />
-        {/if}
-      {/snippet}
       <!-- The search adds to the list under it, so the two sit closer than the rail's groups. -->
       <div class="flex flex-col gap-3">
         {#if session.status === "signed-out"}

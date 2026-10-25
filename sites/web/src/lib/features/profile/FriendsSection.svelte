@@ -118,7 +118,7 @@
             options={terms.value.map((t) => ({ value: t.id, label: t.name }))}
             value={termId ?? ""}
             onchange={(event) => (chosenTerm = event.currentTarget.value)}
-            class="w-full sm:w-48 [&_select]:max-sm:h-10"
+            class="w-full sm:w-48"
           />
         {/if}
       </div>

@@ -37,7 +37,7 @@
 | 33 | [Open courses in a panel beside the course list](0033-open-courses-beside-the-course-list.md) | accepted |
 | 34 | [Show final exams in a dialog on each schedule](0034-show-final-exams-in-a-dialog-on-each-schedule.md) | accepted |
 | 35 | [Share schedules by token when signed in, by a link that carries the schedule when signed out](0035-share-schedules-by-token-or-by-a-link-that-carries-it.md) | accepted |
-| 36 | [Lay out the degree plan beside its requirements, not in a rail](0036-lay-out-the-degree-plan-beside-its-requirements.md) | accepted |
+| 36 | [Lay out the degree plan beside its requirements, not in a rail](0036-lay-out-the-degree-plan-beside-its-requirements.md) | superseded in part by 44 |
 | 37 | [Let signed-out visitors draft a degree plan; degree programs need a CMU sign-in](0037-let-signed-out-visitors-draft-a-degree-plan.md) | accepted |
 | 38 | [Show an invite's sender before it's accepted](0038-show-an-invites-sender-before-it-is-accepted.md) | accepted |
 | 39 | [Build an instructor's FCE rows in the browser from the course documents](0039-build-instructor-fce-rows-in-the-browser.md) | accepted |
@@ -45,3 +45,4 @@
 | 41 | [Preview every course link, by hover or by press and hold](0041-preview-every-course-link.md) | accepted |
 | 42 | [Ask before adding signed-out drafts to an account](0042-ask-before-adding-signed-out-drafts-to-an-account.md) | accepted |
 | 43 | [List instructors from their own documents](0043-list-instructors-from-their-own-documents.md) | accepted |
+| 44 | [Put the degree plan's programs and progress in a rail](0044-put-the-degree-plans-programs-and-progress-in-a-rail.md) | accepted |

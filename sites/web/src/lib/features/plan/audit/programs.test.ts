@@ -54,6 +54,17 @@ describe("searchPrograms", () => {
       searchPrograms(PROGRAMS, "computer", "major", new Set([1])).map((p) => p.catalogId),
     ).toEqual([3]);
   });
+
+  it("lists a kind with an empty query, Pittsburgh first, and nothing for all", () => {
+    expect(searchPrograms(PROGRAMS, "", "major", new Set()).map((p) => p.catalogId)).toEqual([
+      1, 6, 3,
+    ]);
+    expect(searchPrograms(PROGRAMS, " ", "minor", new Set()).map((p) => p.catalogId)).toEqual([2]);
+    expect(searchPrograms(PROGRAMS, "", "major", new Set([6])).map((p) => p.catalogId)).toEqual([
+      1, 3,
+    ]);
+    expect(searchPrograms(PROGRAMS, "", "all", new Set())).toEqual([]);
+  });
 });
 
 describe("programCampus", () => {

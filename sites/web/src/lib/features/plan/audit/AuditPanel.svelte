@@ -33,6 +33,7 @@
       .reduce((n, c) => n + c.units, 0),
   );
   const courseOf = (id: string) => input.courses.find((c) => c.courseId === id);
+  const CARD = "rounded-card border border-pressed bg-surface";
 </script>
 
 {#if input.programs.length === 0 || data === null}
@@ -44,13 +45,17 @@
     description="The audit shows which requirements your courses cover and suggests courses for the rest."
   />
 {:else}
-  <div class="flex flex-col gap-8">
+  <!-- Each program is a card, like the semesters; what's checked with it (gen eds, concentrations) follows in
+       cards of its own. -->
+  <div class="flex flex-col gap-4">
     {#each selected as p (p.auditId)}
       <section aria-label={p.programName ?? p.name} class="flex flex-col gap-4">
-        <ProgramAudit program={p} version={data.versions.get(p.auditId)} base={shared} />
+        <div class="{CARD} p-4">
+          <ProgramAudit program={p} version={data.versions.get(p.auditId)} base={shared} />
+        </div>
         {#each result.programs.filter((a) => a.attachedTo === p.catalogId) as a (a.auditId)}
-          <div class="rounded-card border border-line bg-paper p-3">
-            <p class="mb-2 text-label-md text-muted">Required with {p.programName ?? p.name}</p>
+          <div class="{CARD} p-4">
+            <p class="mb-1.5 text-label-md font-normal text-muted">Required with {p.programName ?? p.name}</p>
             <ProgramAudit program={a} version={data.versions.get(a.auditId)} base={shared} nested />
           </div>
         {/each}
@@ -58,7 +63,7 @@
     {/each}
 
     {#if result.unassigned.length > 0}
-      <section aria-labelledby="audit-free" class="border-t border-line pt-4">
+      <section aria-labelledby="audit-free" class="{CARD} p-4">
         <h3 id="audit-free" class="text-label-lg text-strong">Free electives</h3>
         <p class="mt-0.5 text-label-md font-normal text-muted">
           {fmt(freeUnits)} units that don't count toward a specific requirement. They still count toward your degree's
