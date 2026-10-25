@@ -14,7 +14,7 @@ course components other pages reuse. They port Courseweave's explorer, catalog a
 | `url-state.svelte.ts` | Keeps the query and the URL in step: edits replace the history entry after a pause, a semester change or an opened course adds one, and links or Back are read back in |
 | `explorer.svelte.ts` | Everything computed from the query: the semester (`resolveTerm`, `term=all` for all semesters), the documents it needs, the compiled requirement filter, the results and the courses other semesters offer |
 | `results.ts` | Ranked search (`scoreCourse`), Courseweave's filters and the extra ones, sorting; other semesters' matches and the "Show courses not offered" list |
-| `ExplorerRail.svelte` | The filter rail: saved only, fits my schedule, department, units, offered in, level, requirement (gen eds or any program requirement, members only), days and times, session, delivery, scheduled only, FCE hours and rating, how cards aggregate FCEs, and courses not offered |
+| `ExplorerRail.svelte` | The filter rail: saved only, fits my schedule, department, units (a range, and Courseweave's variable units as "Variable units only", `units=var`), offered in, level, requirement (gen eds or any program requirement, members only), days and times, session, delivery, scheduled only, FCE hours and rating, how cards aggregate FCEs, and courses not offered |
 | `ExplorerToolbar.svelte`, `chips.ts` | Search, result count, removable filter chips, semester, sort, the FCE chart and the cards/list switch |
 | `CourseResults.svelte` | Cards (20 at a time), rows (100 at a time) or the hours chart; more load as the end of the list scrolls into view |
 
