@@ -24,6 +24,17 @@ export function shellSession(
     get detail() {
       return session.user?.andrewId;
     },
+    sync: {
+      get status() {
+        return personal.status;
+      },
+      get error() {
+        return personal.error;
+      },
+      retry: () => {
+        personal.retry();
+      },
+    },
     signIn: () => {
       session.signIn();
     },
