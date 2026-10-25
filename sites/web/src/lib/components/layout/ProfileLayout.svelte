@@ -108,7 +108,8 @@
             </nav>
           </div>
         {:else}
-          <div class="relative px-[30px] pt-[55px]">
+          <!-- The same header as RailLayout's, so Hide and the title sit where they do on every rail. -->
+          <div class="relative px-6 pt-[39px] min-[90rem]:px-[31px]">
             <h2 class="text-heading-5 text-ink">Profile</h2>
             <Button
               variant="ghost"
@@ -116,13 +117,13 @@
               aria-label="Hide profile menu"
               aria-expanded="true"
               data-rail-toggle
-              class="absolute top-[23px] right-[18px]"
+              class="absolute top-[19px] right-2 min-[90rem]:right-[18px]"
               onclick={() => setCollapsed(true)}
             >
               Hide
             </Button>
           </div>
-          <div class="flex items-center gap-4 px-6 pt-6 pb-[23px]">
+          <div class="flex items-center gap-4 px-6 pt-6 pb-[23px] min-[90rem]:px-[31px]">
             <Avatar {name} src={avatar} size="lg" decorative />
             <div class="min-w-0">
               <p class="truncate text-heading-5 text-strong">{name ?? "Your profile"}</p>
