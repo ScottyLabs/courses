@@ -1,29 +1,60 @@
 <script lang="ts">
-  import { ChevronLeft } from "@lucide/svelte";
+  import { ChevronLeft, ListTree, Network } from "@lucide/svelte";
+  import { untrack } from "svelte";
   import { goto } from "$app/navigation";
+  import { page } from "$app/state";
   import { catalogIndex, termData } from "$lib/components/course/data.svelte";
+  import { termRequisites } from "$lib/components/course/requisite-context.svelte";
   import RequiresAndUnlocks from "$lib/components/course/RequiresAndUnlocks.svelte";
   import PageContainer from "$lib/components/layout/PageContainer.svelte";
   import Title from "$lib/components/shell/Title.svelte";
   import CourseChip from "$lib/components/ui/CourseChip.svelte";
+  import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
+  import { storedViewOf, storeView } from "$lib/components/ui/ViewToggle.svelte";
   import { buildUnlocks, prerequisiteDepth } from "$lib/core/catalog";
   import { codeOf } from "$lib/core/requisite-format";
   import { coursePath, coursesPath } from "$lib/core/routes";
   import { formatUnits } from "$lib/core/time";
   import { catalog, resource } from "$lib/data";
   import { device, isAllSemesters, resolveTerm } from "$lib/state";
-  import { requisitesPath } from "./paths";
+  import RequisiteGraph from "./graph/RequisiteGraph.svelte";
+  import { requisitesPath, type RequisitesView } from "./paths";
   import RequisiteSearch from "./RequisiteSearch.svelte";
 
   let {
     courseId,
     requestedTerm,
+    requestedView = null,
   }: {
     /** The course in the middle, as a five-digit id; null for the starting points. */
     courseId: string | null;
     requestedTerm: string | null;
+    /** The view the link asked for (`?view=`); null for the one this device last chose. */
+    requestedView?: RequisitesView | null;
   } = $props();
+
+  const VIEWS: readonly RequisitesView[] = ["list", "graph"];
+  const VIEW_OPTIONS = [
+    { value: "list", label: "List", icon: ListTree },
+    { value: "graph", label: "Graph", icon: Network },
+  ];
+  let view = $state<RequisitesView>(untrack(() => requestedView) ?? storedViewOf("requisites", VIEWS) ?? "list");
+  $effect(() => {
+    if (requestedView !== null) view = requestedView;
+  });
+
+  /** Switches views, remembering the choice on this device and in the address (so it can be shared). */
+  function chooseView(next: string): void {
+    const chosen = VIEWS.find((v) => v === next);
+    if (chosen === undefined || chosen === view) return;
+    view = chosen;
+    storeView("requisites", chosen);
+    const url = new URL(page.url);
+    if (chosen === "graph") url.searchParams.set("view", "graph");
+    else url.searchParams.delete("view");
+    void goto(url, { replaceState: true, noScroll: true, keepFocus: true });
+  }
 
   const terms = resource(() => catalog.terms());
   const termId = $derived(
@@ -33,8 +64,11 @@
   const termValue = $derived(term?.value ?? null);
   const index = $derived(catalogIndex());
 
-  // Every course link moves the explorer to that course, so the chain can be walked either way.
-  const recenter = (id: string): string => requisitesPath(id, termId);
+  // Every course link moves the explorer to that course, so the chain can be walked either way, in the same view.
+  const recenter = (id: string): string => requisitesPath(id, termId, view === "graph" ? "graph" : null);
+  // The student's standing on each requisite, once there's something to check against (as the course page does).
+  const requisites = $derived(termId === null ? null : termRequisites(termId));
+  const checking = $derived((requisites?.ctx?.credits.size ?? 0) > 0);
   const titleOf = (id: string): string | undefined =>
     termValue?.courseById.get(id)?.title ?? index.value?.courses[id]?.title;
   const offeredHere = (id: string): boolean => termValue?.courseById.has(id) ?? false;
@@ -143,17 +177,42 @@
             </div>
           </dl>
         </section>
-        <RequiresAndUnlocks
-          id={courseId}
-          index={index.value}
-          {unlocks}
-          href={recenter}
-          title={titleOf}
-          offered={termValue ? offeredHere : undefined}
-          termName={termValue?.meta.name}
-          departments={termValue?.departments ?? []}
-          headingLevel={2}
-        />
+        <div class="flex items-center justify-end">
+          <SegmentedControl
+            options={VIEW_OPTIONS}
+            label="Show requisites as"
+            bind:value={() => view, chooseView}
+          />
+        </div>
+        {#if view === "graph"}
+          {#key courseId}
+            <RequisiteGraph
+              {courseId}
+              index={index.value}
+              {unlocks}
+              {termId}
+              termName={termValue?.meta.name}
+              offered={termValue ? offeredHere : undefined}
+              departments={termValue?.departments ?? []}
+              title={titleOf}
+              centerHref={recenter}
+            />
+          {/key}
+        {:else}
+          <RequiresAndUnlocks
+            id={courseId}
+            index={index.value}
+            {unlocks}
+            href={recenter}
+            title={titleOf}
+            status={checking ? (requisites?.prereqStatus ?? undefined) : undefined}
+            coreqStatus={checking ? (requisites?.coreqStatus ?? undefined) : undefined}
+            offered={termValue ? offeredHere : undefined}
+            termName={termValue?.meta.name}
+            departments={termValue?.departments ?? []}
+            headingLevel={2}
+          />
+        {/if}
       </div>
     {/if}
   {:else}

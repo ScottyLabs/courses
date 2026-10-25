@@ -13,13 +13,10 @@
   let {
     courseId,
     termId,
-    onshowtree,
   }: {
     courseId: string;
     /** The semester requisites are checked for; null shows plain chips. */
     termId: string | null;
-    /** The prerequisite tree is further down this page: scroll to it. Without it, the link opens the explorer. */
-    onshowtree?: () => void;
   } = $props();
 
   type ProfileKey = keyof NonNullable<CatalogDetails["profile"]>;
@@ -99,22 +96,13 @@
           {#if entry.prereqText}
             <p class="mt-1 text-label-md text-muted">Schedule of Classes: {entry.prereqText}</p>
           {/if}
-          {#if onshowtree}
-            <button
-              type="button"
-              onclick={onshowtree}
-              class="mt-1 flex min-h-10 w-fit items-center gap-1.5 text-label-lg text-accent-ink underline-offset-2 hover:underline sm:min-h-8"
-            >
-              <GitFork aria-hidden="true" class="size-4" />Prerequisite tree and what it unlocks
-            </button>
-          {:else}
-            <a
-              href={requisitesPath(courseId, termId)}
-              class="mt-1 flex min-h-10 w-fit items-center gap-1.5 text-label-lg text-accent-ink underline-offset-2 hover:underline sm:min-h-8"
-            >
-              <GitFork aria-hidden="true" class="size-4" />Prerequisite tree and what it unlocks
-            </a>
-          {/if}
+          <!-- The requisite explorer's graph: the whole chain, with the student's standing on each course. -->
+          <a
+            href={requisitesPath(courseId, termId, "graph")}
+            class="mt-1 flex min-h-10 w-fit items-center gap-1.5 text-label-lg text-accent-ink underline-offset-2 hover:underline sm:min-h-8"
+          >
+            <GitFork aria-hidden="true" class="size-4" />Prerequisite tree and what it unlocks
+          </a>
         </dd>
         {#if entry.coreqs.length > 0}
           {@render row("Corequisites")}
