@@ -145,8 +145,8 @@
       <span class="inline-flex min-h-7 items-center">{info.units}</span>
     {/if}
   </td>
-  <td class="py-1.5 pr-2 text-label-md font-normal">
-    <span class="flex min-h-7 items-center"><SatisfiesCell {satisfies} {freeElective} /></span>
+  <td class="pr-2 text-label-md font-normal max-md:pb-1.5 md:py-1.5">
+    <span class="block pb-1 md:pt-[5px]"><SatisfiesCell {satisfies} {freeElective} /></span>
   </td>
   <td
     class="py-1.5 pr-2 text-label-md font-normal {info.offeringWarning ? 'text-warn' : 'text-ink'}"
@@ -160,7 +160,7 @@
       {offered ?? "\u2013"}
     </span>
   </td>
-  <td class="py-0.5 pr-2 text-label-md font-normal text-ink">
+  <td class="pr-2 text-label-md font-normal text-ink max-md:py-0 md:py-1.5">
     <span class="flex min-w-0 items-start gap-1">
       {#if info.level !== null && info.statusText !== null}
         <StatusButton
@@ -188,7 +188,7 @@
   <td class="tabular py-1.5 pr-2 text-right text-label-md font-normal text-muted" title={FCE_HOURS_HELP}>
     <span class="inline-flex min-h-7 items-center">{hours === null ? "" : `${formatHours(hours)}h`}</span>
   </td>
-  <td class="py-0.5 pr-1 text-right">
+  <td class="pr-1 text-right max-md:py-0 md:py-1">
     <CourseOptions
       {course}
       {info}

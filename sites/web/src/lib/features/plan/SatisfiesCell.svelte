@@ -23,7 +23,7 @@
   }
 
   const linkClass =
-    "min-h-10 text-left leading-snug underline decoration-line-strong decoration-dotted underline-offset-2 hover:text-strong md:min-h-0";
+    "text-left leading-[18px] underline decoration-line-strong decoration-dotted underline-offset-2 hover:text-strong max-md:py-[11px]";
 </script>
 
 {#if satisfies && satisfies.items.length > 0}
