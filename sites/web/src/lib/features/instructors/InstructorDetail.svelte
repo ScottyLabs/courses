@@ -42,7 +42,7 @@
 
 {#if !scope.signedIn}
   <!-- The layout asks the visitor to sign in. -->
-{:else if !scope.ready}
+{:else if !scope.detailReady}
   <div aria-busy="true" class="flex flex-col gap-4">
     <span class="sr-only" aria-live="polite">Loading the instructor</span>
     <Skeleton class="h-72 w-full rounded-card" />

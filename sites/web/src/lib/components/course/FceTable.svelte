@@ -9,7 +9,7 @@
   import { codeOf } from "$lib/core/requisite-format";
   import { coursePath, instructorPath } from "$lib/core/routes";
   import { responseRate } from "./fce-aggregate";
-  import { NO_VALUE, cellNumber } from "./fce-format";
+  import { NO_VALUE, hoursText, ratingText } from "./fce-format";
 
   type Row = FceRow & { courseId?: string };
 
@@ -48,9 +48,9 @@
     { key: "rate", label: "Response Rate" },
   ]);
 
-  /** A figure, or a dash for sections nobody answered. */
-  function figure(row: Row, value: number | null): string {
-    return row.responses > 0 ? cellNumber(value) : NO_VALUE;
+  /** A figure, or a dash for sections nobody answered: hours to one decimal, ratings to two, as everywhere. */
+  function figure(row: Row, value: number | null, format: (value: number) => string): string {
+    return row.responses > 0 && value !== null ? format(value) : NO_VALUE;
   }
 
   function percent(row: Row): string {
@@ -80,17 +80,17 @@
         <a
           href={instructorPath(instructorSlug(displayFceName(row.instructor)))}
           class="underline decoration-line-strong underline-offset-2 hover:text-accent-ink hover:decoration-current"
-          >{row.instructor}</a
+          >{displayFceName(row.instructor)}</a
         >
       {:else}
         {NO_VALUE}
       {/if}
     {:else if column.key === "hours"}
-      {figure(row, row.hours)}
+      {figure(row, row.hours, hoursText)}
     {:else if column.key === "teaching"}
-      {figure(row, row.teachingRate)}
+      {figure(row, row.teachingRate, ratingText)}
     {:else if column.key === "course-rate"}
-      {figure(row, row.courseRate)}
+      {figure(row, row.courseRate, ratingText)}
     {:else if column.key === "responses"}
       {row.responses}
     {:else}

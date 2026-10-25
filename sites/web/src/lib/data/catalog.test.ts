@@ -57,7 +57,10 @@ async function catalogDir(): Promise<string> {
       ],
     },
     "catalog/index.json": { courses: {} },
-    "catalog/details/15.json": { "15122": { description: "Imperative programming." } },
+    "catalog/details/15.json": {
+      "15122": { description: "Imperative programming." },
+      "15150": { description: "No course description provided.", website: "https://example.edu" },
+    },
     "offerings.json": {
       terms: ["S27"],
       courses: {
@@ -131,6 +134,33 @@ describe("catalog documents", () => {
     expect(fceMiniOf("15122")).toEqual({ share: 1, half: "first" });
     const term = await catalog.term("S27");
     expect(term.courseById.get("15122")?.instructors).toEqual(["Ada Lovelace"]);
+  });
+
+  it("treats the registrar's placeholder as no description", async () => {
+    const { catalog } = await setup(false);
+    expect((await catalog.courseDetails("15122"))?.description).toBe("Imperative programming.");
+    const placeholder = await catalog.courseDetails("15150");
+    expect(placeholder?.description).toBeUndefined();
+    expect(placeholder?.website).toBe("https://example.edu");
+  });
+
+  it("doesn't request member documents a gate says would be refused", async () => {
+    const { server, catalog } = await setup(false);
+    let answer: "signin" | "forbidden" | null = "signin";
+    catalog.setMemberGate(() => Promise.resolve(answer));
+    expect(await settle(catalog.fceSummary())).toEqual({ status: "signin" });
+    answer = "forbidden";
+    expect(await settle(catalog.programsIndex())).toEqual({ status: "forbidden" });
+    expect(server.log.some((l) => l.includes("fce/summary") || l.includes("programs/"))).toBe(
+      false,
+    );
+    // Public documents don't ask.
+    expect((await catalog.term("S27")).courses).toHaveLength(2);
+
+    server.signedIn = true;
+    answer = null;
+    catalog.invalidate();
+    expect((await catalog.fceSummary())?.courses.get("15122")?.hours).toBe(10.5);
   });
 
   it("decodes FCE rows and treats missing chunks as empty", async () => {

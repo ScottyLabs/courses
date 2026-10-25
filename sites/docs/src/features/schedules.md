@@ -58,7 +58,8 @@ and delete. A semester without a schedule shows "Schedule 1", created on the fir
   schedules"; `?import=<payload>` links open in `ImportLinkDialog.svelte`.
 
 Signed out, the page works on a draft kept in the tab, with a notice that it isn't saved; rooms, instructors and
-hours a week ask the student to sign in.
+hours a week ask the student to sign in (section rows leave the room out rather than call it "Room TBA"). While the
+record is empty, the rail's requisite check asks for the courses taken instead of listing missing prerequisites.
 
 ## Final exams
 

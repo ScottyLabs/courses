@@ -48,8 +48,14 @@
   const titleOf = (id: string): string | undefined => index.value?.courses[id]?.title;
   const courseHref = getCourseHref();
   const hrefOf = (id: string): string => courseHref(id, termId);
-  // Nothing taken, planned or scheduled yet: every check would read "missing", which says nothing.
-  const unchecked = $derived(ctx !== null && ctx.credits.size === 0);
+  // Nothing taken, planned or scheduled yet: every check would read "missing", which says nothing. With an empty
+  // record, a missing prerequisite most likely means "not entered yet", so it asks for the record rather than
+  // reporting an error, even once schedules or a plan give it courses to check against.
+  const unchecked = $derived(
+    ctx !== null &&
+      (ctx.credits.size === 0 ||
+        (record.isEmpty && summary?.level === "problem" && check !== null && check.antireqs.length === 0)),
+  );
   const plainText = $derived.by(() => {
     if (!entry) return "";
     const parts = [entry.prereqs ? `Requires ${describeRequisite(entry.prereqs)}` : null];

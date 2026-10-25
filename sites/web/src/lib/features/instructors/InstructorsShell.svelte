@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { goto } from "$app/navigation";
-  import { ArrowDownUp, Bookmark, ChevronLeft, GraduationCap, SearchX, UserX } from "@lucide/svelte";
+  import { Bookmark, ChevronLeft, GraduationCap, SearchX, UserX } from "@lucide/svelte";
   import FceAggregateSettings from "$lib/components/course/FceAggregateSettings.svelte";
   import FilterButton from "$lib/components/layout/FilterButton.svelte";
   import PageToolbar from "$lib/components/layout/PageToolbar.svelte";
@@ -11,11 +11,9 @@
   import SignInPrompt from "$lib/components/shell/SignInPrompt.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Chip from "$lib/components/ui/Chip.svelte";
-  import Combobox from "$lib/components/ui/Combobox.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import MultiSelect from "$lib/components/ui/MultiSelect.svelte";
   import SearchInput from "$lib/components/ui/SearchInput.svelte";
-  import SegmentedControl from "$lib/components/ui/SegmentedControl.svelte";
   import Select from "$lib/components/ui/Select.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
   import Switch from "$lib/components/ui/Switch.svelte";
@@ -32,6 +30,10 @@
   let { children }: { children: Snippet } = $props();
 
   const scope = provideInstructorsScope(storedView("instructors") ?? "cards");
+  const SORTS = [
+    { value: "name", label: "Last name" },
+    { value: "sections", label: "Most sections" },
+  ];
   const open = $derived(scope.slug !== null);
   const split = $derived(scope.split);
   const SIDE_ROWS = 200;
@@ -51,7 +53,7 @@
   // The search field moves through the rows with the arrow keys, as Courseweave's does; Enter opens one.
   let active = $state(-1);
   $effect(() => {
-    void [scope.query, scope.dept, scope.sort, scope.savedOnly, scope.termParam];
+    void [scope.query, scope.depts, scope.sort, scope.savedOnly, scope.termParam];
     active = -1;
   });
 
@@ -63,7 +65,7 @@
       const delta = event.key === "ArrowDown" ? 1 : -1;
       const from = active === -1 ? (delta > 0 ? -1 : 0) : active;
       active = Math.max(0, Math.min(results.length - 1, from + delta));
-      document.getElementById(`instructor-row-${active}`)?.scrollIntoView({ block: "nearest" });
+      document.querySelector(`#instructor-row-${active}`)?.scrollIntoView({ block: "nearest" });
     } else if (event.key === "Escape" && scope.query !== "") {
       event.preventDefault();
       scope.query = "";
@@ -105,6 +107,17 @@
   {/if}
 {/snippet}
 
+{#snippet sortPicker(width: string, variant: "field" | "compact")}
+  <Select
+    {variant}
+    label="Sort by"
+    options={SORTS}
+    value={scope.sort}
+    onchange={(event) => scope.setParams({ sort: event.currentTarget.value === "sections" ? "sections" : null })}
+    class={width}
+  />
+{/snippet}
+
 {#snippet toolbar()}
   <PageToolbar
     title="Instructors"
@@ -113,8 +126,11 @@
     onreset={scope.filterCount > 0 || scope.query !== "" ? () => scope.reset() : undefined}
   >
     {#snippet intro()}
-      <!-- Phones: the semester gets its own row; wider screens have it beside the view switch. -->
-      <div class="mb-2 lg:hidden">{@render semesterPicker("w-full", "field")}</div>
+      <!-- Phones: the semester and the sort get their own row; wider screens have them beside the view switch. -->
+      <div class="mb-2 grid grid-cols-2 gap-2 lg:hidden">
+        {@render semesterPicker("min-w-0", "field")}
+        {@render sortPicker("min-w-0", "field")}
+      </div>
     {/snippet}
     {#snippet search()}
       <SearchInput
@@ -131,9 +147,12 @@
       />
     {/snippet}
     {#snippet chips()}
-      {#if scope.dept !== ""}
-        <Chip label={departmentName(scope.dept)} onremove={() => scope.setParams({ dept: null })} />
-      {/if}
+      {#each scope.depts as code (code)}
+        <Chip
+          label={departmentName(code)}
+          onremove={() => scope.setParams({ dept: scope.depts.filter((d) => d !== code).join(",") })}
+        />
+      {/each}
       {#if scope.savedOnly}
         <Chip label="Saved courses" onremove={() => scope.setParams({ saved: null })} />
       {/if}
@@ -143,6 +162,8 @@
     {/snippet}
     {#snippet actions()}
       <div class="hidden lg:block">{@render semesterPicker("w-44", "compact")}</div>
+      <!-- Sort lives in the toolbar, as on the Courses page. -->
+      <div class="hidden lg:block">{@render sortPicker("w-[10.5rem]", "compact")}</div>
       <ViewToggle pageKey="instructors" bind:value={scope.view} />
     {/snippet}
   </PageToolbar>
@@ -152,17 +173,31 @@
   storageKey="instructors"
   filterCount={scope.filterCount + (open ? scope.courses.length : 0)}
   backLabel={open ? "Instructor" : "Instructors"}
-  header={!open || split ? toolbar : undefined}
+  sheetDone={!scope.signedIn || open
+    ? undefined
+    : !scope.ready
+      ? "Show instructors"
+      : `Show ${scope.results.length.toLocaleString("en-US")} ${scope.results.length === 1 ? "instructor" : "instructors"}`}
+  header={scope.signedIn && (!open || split) ? toolbar : undefined}
 >
   {#snippet rail()}
+    {#if !scope.signedIn}
+      <!-- Nothing to filter until there are instructors to show. -->
+      <RailGroup>
+        <p class="text-body-2 text-muted">
+          {scope.sessionLoading ? "Checking your session\u2026" : "Sign in to search and filter instructors."}
+        </p>
+      </RailGroup>
+    {:else}
     <RailGroup>
-      <RailSection title="Department" icon={GraduationCap} badge={scope.dept === "" ? 0 : 1}>
-        <Combobox
+      <RailSection title="Department" icon={GraduationCap} badge={scope.depts.length}>
+        <MultiSelect
           options={scope.deptOptions}
-          value={scope.dept === "" ? null : scope.dept}
-          label="Department"
+          value={scope.depts}
+          label="Departments"
           placeholder="Any department"
-          onchange={(value) => scope.setParams({ dept: value })}
+          searchPlaceholder="Search departments"
+          onchange={(value: string[]) => scope.setParams({ dept: value.join(",") })}
         />
       </RailSection>
       <RailSection title="Saved courses" icon={Bookmark} badge={scope.savedOnly ? 1 : 0}>
@@ -176,17 +211,6 @@
         {#if saved.ids.length === 0}
           <p class="text-label-md font-normal text-muted">Save courses on the Courses page to use this filter.</p>
         {/if}
-      </RailSection>
-      <RailSection title="Sort by" icon={ArrowDownUp}>
-        <SegmentedControl
-          label="Sort by"
-          options={[
-            { value: "name", label: "Last name" },
-            { value: "sections", label: "Most sections" },
-          ]}
-          value={scope.sort}
-          onchange={(value) => scope.setParams({ sort: value === "sections" ? "sections" : null })}
-        />
       </RailSection>
       <Button variant="secondary" full onclick={() => scope.reset()}>Reset</Button>
     </RailGroup>
@@ -209,6 +233,7 @@
         </div>
       {/if}
     </RailGroup>
+    {/if}
   {/snippet}
 
   {#if open && !split}

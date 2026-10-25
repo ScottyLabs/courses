@@ -147,7 +147,7 @@ describe("buildIcs", () => {
     expect(recitation).toContain("DTSTART;TZID=America/New_York:20270120T110000");
     expect(recitation).toContain("LOCATION:WEH 5302");
     expect(recitation).toContain("DESCRIPTION:Recitation F (Lecture 1)\\n12 units");
-    expect(out).toContain("PRODID:-//Courseweave//CMU course planner//EN");
+    expect(out).toContain("PRODID:-//ScottyLabs//CMU Courses//EN");
   });
 
   it("skips unscheduled sections", () => {

@@ -3,7 +3,12 @@ import { describe, it } from "node:test";
 import { expect } from "../../testing.ts";
 import type { FceRow, InstructorFce } from "../../core/fce.ts";
 import { NameIndex } from "../../core/fce-names.ts";
-import { loadInstructorFce, recentTeachingRate, type InstructorRow } from "./instructor-fce.ts";
+import {
+  loadInstructorFce,
+  loadInstructorRows,
+  recentTeachingRate,
+  type InstructorRow,
+} from "./instructor-fce.ts";
 
 // Made-up people and numbers.
 function row(term: string, courseId: string, patch: Partial<FceRow> = {}): InstructorRow {
@@ -91,5 +96,19 @@ describe("loadInstructorFce", () => {
 
   it("gives the recent teaching rating", () => {
     expect(recentTeachingRate(summary, 2)).toBeCloseTo(4.5);
+  });
+});
+
+describe("loadInstructorRows", () => {
+  it("loads rows from the courses a list document names, without the FCE index", async () => {
+    const rows = await loadInstructorRows({ fceCourses: source.fceCourses }, "Ada Example", [
+      "21127",
+      "15112",
+    ]);
+    expect(rows.map((r) => `${r.term} ${r.courseId} ${r.instructor}`)).toEqual([
+      "F25 15112 EXAMPLE, ADA",
+      "S25 15112 EXAMPLE, ADA",
+      "F24 21127 EXAMPLE, ADA",
+    ]);
   });
 });

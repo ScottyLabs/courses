@@ -2,6 +2,7 @@
   import "./layout.css";
   import type { Snippet } from "svelte";
   import { afterNavigate, goto } from "$app/navigation";
+  import { updated } from "$app/state";
   import CoursePreviewLayer from "$lib/components/course/CoursePreviewLayer.svelte";
   import AppFooter from "$lib/components/shell/AppFooter.svelte";
   import AppHeader from "$lib/components/shell/AppHeader.svelte";
@@ -11,6 +12,7 @@
   import { shellSession } from "$lib/state/shell-session";
   import { applyTheme, theme } from "$lib/components/shell/theme.svelte";
   import Toaster from "$lib/components/ui/Toaster.svelte";
+  import { toast } from "$lib/components/ui/toast.svelte";
   import HeldDraftsDialog from "$lib/features/profile/HeldDraftsDialog.svelte";
   import RecordOnboarding from "$lib/features/record/RecordOnboarding.svelte";
 
@@ -26,6 +28,18 @@
 
   // A tab opened before a deploy reloads instead of failing to load the new build's pages.
   $effect(() => installUpdateReload());
+
+  // Once a new build is out, offer to reload. Nothing is lost: the student's data is on the server, and changes not
+  // saved yet are kept in the tab through a reload. The next link followed loads the new build anyway.
+  let updateOffered = false;
+  $effect(() => {
+    if (!updated.current || updateOffered) return;
+    updateOffered = true;
+    toast("A new version of CMU Courses is available.", {
+      action: { label: "Reload", run: () => location.reload() },
+      duration: 0,
+    });
+  });
 
   // "Back to plan" and the remembered semester both follow navigation.
   afterNavigate(({ to }) => {

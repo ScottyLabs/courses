@@ -44,7 +44,7 @@
       {id}
       bind:value
       {disabled}
-      class="w-full appearance-none bg-surface transition-colors outline-none hover:border-muted focus:border-accent disabled:border-line disabled:text-faint {variant ===
+      class="w-full appearance-none bg-surface transition-colors hover:border-muted focus:border-accent disabled:border-line disabled:text-faint {variant ===
       'field'
         ? 'h-10 rounded-field border border-line-strong pr-11 pl-4 text-body-2'
         : 'h-9 rounded-tag border-[0.5px] border-muted pr-10 pl-3.5 text-body-2'} {empty

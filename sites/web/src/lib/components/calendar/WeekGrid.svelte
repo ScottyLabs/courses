@@ -160,7 +160,7 @@
 
   const variants = {
     solid: "course-tint border-l-[3px] border-(--course)",
-    preview: "hatch z-10 border border-dashed border-(--course) bg-surface/85 text-ink",
+    preview: "hatch z-10 border border-dashed border-(--course) bg-surface/85 text-strong",
     ghost:
       "border border-dashed border-line-strong bg-surface/75 text-muted hover:course-tint hover:border-(--course) hover:text-ink focus-visible:course-tint",
   };
@@ -301,26 +301,30 @@
     aria-label={showSwitch && view === "day" ? `${label}, ${DAY_LONG[activeDay]}` : label}
     class="relative flex min-w-0 flex-col"
   >
-    <div class="flex border-b border-line" aria-hidden="true">
+    <!-- The rule under the day names spans the days only, like the hour lines, so the first hour's label sits on its
+         line without a rule through it. -->
+    <div class="flex" aria-hidden="true">
       <div class="shrink-0 {small ? 'w-8' : 'w-12'}"></div>
-      {#each visibleDays as d (d)}
-        <div
-          class="min-w-0 flex-1 text-center font-semibold text-ink {small
-            ? 'py-1 text-[11px]'
-            : 'py-2 text-label-md'}"
-        >
-          {view === "day" ? DAY_LONG[d] : DAY_SHORT[d]}
-        </div>
-      {/each}
+      <div class="flex min-w-0 flex-1 border-b border-line">
+        {#each visibleDays as d (d)}
+          <div
+            class="min-w-0 flex-1 text-center font-semibold text-ink {small
+              ? 'py-1 text-[11px]'
+              : 'py-2 text-label-md'}"
+          >
+            {view === "day" ? DAY_LONG[d] : DAY_SHORT[d]}
+          </div>
+        {/each}
+      </div>
     </div>
 
     <div class="relative flex" style="height:{hours.length * rowHeight}px">
       <div class="relative shrink-0 {small ? 'w-8' : 'w-12'}" aria-hidden="true">
         {#each hours as h (h)}
           <div
-            class="tabular absolute right-1.5 whitespace-nowrap text-muted {h === range.from
-              ? 'translate-y-0.5'
-              : '-translate-y-1/2'} {small ? 'text-[10px]' : 'text-[11px]'}"
+            class="tabular absolute right-1.5 -translate-y-1/2 whitespace-nowrap text-muted {small
+              ? 'text-[10px]'
+              : 'text-[11px]'}"
             style="top:{top(h * 60)}px"
           >
             {hourLabel(h)}

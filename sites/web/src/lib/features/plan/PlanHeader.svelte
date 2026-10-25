@@ -2,7 +2,7 @@
   // The plan page's header: the plan picker, new plan and the plan's options (rename, duplicate, send to and import
   // from Stellic, delete), the programs audited, the plan's numbers and its overall progress.
   // Courseweave's features/degree/PlanHeader.tsx.
-  import { Copy, FileUp, Pencil, Plus, Send, Trash2 } from "@lucide/svelte";
+  import { ChevronDown, Copy, FileUp, Pencil, Plus, Send, Trash2 } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import SendToStellicDialog from "$lib/components/stellic/SendToStellicDialog.svelte";
   import Button from "$lib/components/ui/Button.svelte";
@@ -60,7 +60,7 @@
   }
 
   function newPlan(): void {
-    go(plans.createPlan({ startTerm: plan.startTerm, programs: plan.programs.map((p) => ({ ...p })) }));
+    go(plans.createPlan({ startTerm: plan.startTerm, programs: plan.programs.map((p) => Object.assign({}, p)) }));
   }
 
 </script>
@@ -135,14 +135,24 @@
       <dd class="tabular text-heading-4 text-strong">{page.derived.columns.length}</dd>
       <dd class="flex items-center gap-1 text-label-md font-normal text-muted">
         <label for="plan-start">Starts</label>
-        <select
-          id="plan-start"
-          value={plan.startTerm}
-          onchange={(event) => plans.setStartTerm(plan.id, event.currentTarget.value)}
-          class="-my-1 min-h-10 min-w-0 field-sizing-content cursor-pointer rounded-tag border-0 bg-transparent py-0 pr-7 pl-1 text-label-md text-ink underline decoration-line-strong underline-offset-2 hover:decoration-accent md:min-h-7"
+        <!-- The semester's name with a chevron right after it, over a transparent native select, so the chevron
+             stays beside the value in every browser. -->
+        <span
+          class="relative -my-1 inline-flex min-h-10 items-center gap-0.5 rounded-tag pl-1 text-label-md text-ink has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-accent md:min-h-7"
         >
-          {#each startOptions as o (o.value)}<option value={o.value}>{o.label}</option>{/each}
-        </select>
+          <span class="underline decoration-line-strong underline-offset-2"
+            >{startOptions.find((o) => o.value === plan.startTerm)?.label ?? termLabel(plan.startTerm)}</span
+          >
+          <ChevronDown aria-hidden="true" class="size-3.5 shrink-0 text-muted" />
+          <select
+            id="plan-start"
+            value={plan.startTerm}
+            onchange={(event) => plans.setStartTerm(plan.id, event.currentTarget.value)}
+            class="absolute inset-0 cursor-pointer appearance-none opacity-0"
+          >
+            {#each startOptions as o (o.value)}<option value={o.value}>{o.label}</option>{/each}
+          </select>
+        </span>
       </dd>
     </div>
     {#if progress}

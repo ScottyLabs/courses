@@ -167,6 +167,14 @@
       bind:high={() => extra.unitsHigh, (high) => setExtra({ unitsHigh: high })}
       presets={unitPresets}
     />
+    <!-- Courseweave's VAR units chip: research, independent study and other courses with units set per student. -->
+    <Checkbox
+      label="Variable units only"
+      checked={f.units.includes("var")}
+      onchange={(event) =>
+        set("units", event.currentTarget.checked ? ["var"] : f.units.filter((u) => u !== "var"))}
+      class="-ml-2"
+    />
   </RailSection>
 
   <RailSection title="Offered in" icon={CalendarDays}>
@@ -244,6 +252,7 @@
           label="Session"
           options={sessionOptions}
           bind:value={() => f.sessions, (next) => set("sessions", next)}
+          stretch
         />
       </RailSection>
     {/if}

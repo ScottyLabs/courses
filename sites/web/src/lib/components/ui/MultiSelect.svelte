@@ -169,7 +169,7 @@
         spellcheck="false"
         oninput={() => (active = step(filtered, -1, 1))}
         onkeydown={onsearchkeydown}
-        class="h-9 w-full rounded-[8px] border border-line-strong bg-surface px-3 text-body-2 text-ink outline-none placeholder:text-muted focus:border-accent"
+        class="h-9 w-full rounded-[8px] border border-line-strong bg-surface px-3 text-body-2 text-ink placeholder:text-muted focus:border-accent"
       />
     </div>
     <ul

@@ -137,7 +137,7 @@
           rows="3"
           aria-describedby="record-paste-hint"
           placeholder="15-122, 21-127, 76-101"
-          class="w-full rounded-field border border-line-strong bg-surface px-4 py-2 text-body-2 text-ink outline-none placeholder:text-muted hover:border-muted focus:border-accent"
+          class="w-full rounded-field border border-line-strong bg-surface px-4 py-2 text-body-2 text-ink placeholder:text-muted hover:border-muted focus:border-accent"
         ></textarea>
         <p id="record-paste-hint" class="text-label-md font-normal text-muted">
           Paste from SIO or type them: 15-122, 21-127, 76101. Grades can be added after.

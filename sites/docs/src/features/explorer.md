@@ -14,7 +14,7 @@ course components other pages reuse. They port Courseweave's explorer, catalog a
 | `url-state.svelte.ts` | Keeps the query and the URL in step: edits replace the history entry after a pause, a semester change or an opened course adds one, and links or Back are read back in |
 | `explorer.svelte.ts` | Everything computed from the query: the semester (`resolveTerm`, `term=all` for all semesters), the documents it needs, the compiled requirement filter, the results and the courses other semesters offer |
 | `results.ts` | Ranked search (`scoreCourse`), Courseweave's filters and the extra ones, sorting; other semesters' matches and the "Show courses not offered" list |
-| `ExplorerRail.svelte` | The filter rail: saved only, fits my schedule, department, units, offered in, level, requirement (gen eds or any program requirement, members only), days and times, session, delivery, scheduled only, FCE hours and rating, how cards aggregate FCEs, and courses not offered |
+| `ExplorerRail.svelte` | The filter rail: saved only, fits my schedule, department, units (a range, and Courseweave's variable units as "Variable units only", `units=var`), offered in, level, requirement (gen eds or any program requirement, members only), days and times, session, delivery, scheduled only, FCE hours and rating, how cards aggregate FCEs, and courses not offered |
 | `ExplorerToolbar.svelte`, `chips.ts` | Search, result count, removable filter chips, semester, sort, the FCE chart and the cards/list switch |
 | `CourseResults.svelte` | Cards (20 at a time), rows (100 at a time) or the hours chart; more load as the end of the list scrolls into view |
 
@@ -81,7 +81,8 @@ The page shows the course facts ("Also listed as" for cross-listings with the sa
 adding it to the semester's active schedule with any section or recitation (`CourseSchedule` in
 `course-schedule.svelte.ts`, over the `schedules` store, with conflicts against the rest of the schedule), the
 requisite status checked against the student's record, plan and schedules (with waivers through
-`record.setOverride`), the catalog description and requisites, which of the active degree plan's requirements it
+`record.setOverride`; while the record is empty, a missing prerequisite asks for the courses taken instead of
+showing an error, and status chips leave "missing" uncolored), the catalog description and requisites, which of the active degree plan's requirements it
 counts toward, the semesters offering it, FCE summary, trend charts and history tables, past syllabi (PDF preview in a
 dialog, downloads), and the prerequisite tree beside what it unlocks. Beside the sections (from 1024px; before them on
 narrower screens) the semester's active schedule shows as a week calendar (`ScheduleCalendar.svelte`, on the shared

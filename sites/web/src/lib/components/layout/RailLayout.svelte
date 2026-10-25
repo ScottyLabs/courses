@@ -18,6 +18,7 @@
     filterCount = 0,
     sheetLabel = "Filter",
     backLabel = "Back",
+    sheetDone,
     storageKey,
     autoCollapse = false,
     railCollapsed = $bindable(false),
@@ -41,6 +42,8 @@
     sheetLabel?: string;
     /** Back button text in the phone sheet (Figma "< Search"). */
     backLabel?: string;
+    /** A button at the foot of the phone sheet that closes it, such as "Show 85 courses". */
+    sheetDone?: string;
     /** Remember "Hide" on this device under this key. */
     storageKey?: string;
     /**
@@ -177,8 +180,18 @@
   </div>
 </div>
 
+{#snippet doneFooter()}
+  <Button variant="primary" full onclick={() => (sheetOpen = false)}>{sheetDone}</Button>
+{/snippet}
+
 {#if !desktop.current}
-  <Sheet bind:open={sheetOpen} title={sheetLabel} {backLabel} side="right">
+  <Sheet
+    bind:open={sheetOpen}
+    title={sheetLabel}
+    {backLabel}
+    side="right"
+    footer={sheetDone === undefined ? undefined : doneFooter}
+  >
     <div class="pt-2">{@render rail()}</div>
   </Sheet>
 {/if}

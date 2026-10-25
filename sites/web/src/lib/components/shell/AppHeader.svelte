@@ -10,6 +10,7 @@
   import Skeleton from "../ui/Skeleton.svelte";
   import { NAV_ITEMS, isActive } from "./nav";
   import { getSession } from "./session";
+  import SyncStatus from "./SyncStatus.svelte";
   import ThemeSwitch from "./ThemeSwitch.svelte";
 
   const session = getSession();
@@ -53,6 +54,7 @@
       {#if session.status === "loading"}
         <Skeleton class="h-10 w-[110px] rounded-full" />
       {:else if session.status === "signed-in"}
+        {#if session.sync}<SyncStatus sync={session.sync} />{/if}
         <Button
           icon={LogOut}
           title={session.name ? `Signed in as ${session.name}` : undefined}
@@ -83,6 +85,9 @@
       {#if session.status === "loading"}
         <Skeleton variant="circle" class="size-[33px]" />
       {:else if session.status === "signed-in"}
+        {#if session.sync && session.sync.status !== "saved"}
+          <SyncStatus sync={session.sync} compact class="mr-1" />
+        {/if}
         <a href="/profile" aria-label="Your profile" class="rounded-full">
           <Avatar name={session.name} size="sm" decorative class="size-[33px]! text-label-md!" />
         </a>
@@ -125,6 +130,7 @@
           {#if session.detail}<p class="truncate text-body-2 text-muted">{session.detail}</p>{/if}
         </div>
       </div>
+      {#if session.sync}<SyncStatus sync={session.sync} class="mb-3" />{/if}
       <Button icon={LogOut} full onclick={() => session.signOut()}>Sign out</Button>
     {:else if session.status === "signed-out"}
       <Button variant="primary" icon={LogIn} full onclick={() => session.signIn()}>Sign in</Button>

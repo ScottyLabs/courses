@@ -195,7 +195,7 @@
               finishRename(false);
             }
           }}
-          class="mb-1.5 h-9 w-52 shrink-0 rounded-field border border-accent bg-surface px-3 text-heading-6 text-strong outline-none"
+          class="mb-1.5 h-9 w-52 shrink-0 rounded-field border border-accent bg-surface px-3 text-heading-6 text-strong"
         />
       {:else}
         <button

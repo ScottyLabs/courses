@@ -26,16 +26,20 @@
     const catalog = index.value;
     if (catalog === undefined || ctx === null) return null;
     const out: { code: string; courseId: string; text: string; level: string }[] = [];
+    let unchecked = 0;
     for (const { course } of entries) {
       const entry = catalog.courses[course.id];
       const check = checkCourse(course.id, entry, ctx);
       const summary = summarizeCheck(check, entry);
-      if (summary.level === "problem" || check.issues.some((i) => i.severity === "warning"))
+      // With nothing on record, a missing prerequisite most likely means "not entered yet": ask for the record
+      // instead of listing it as a problem.
+      if (record.isEmpty && summary.level === "problem" && check.antireqs.length === 0) unchecked++;
+      else if (summary.level === "problem" || check.issues.some((i) => i.severity === "warning"))
         out.push({ code: course.code, courseId: course.id, text: summary.text, level: summary.level });
     }
-    return out;
+    return { list: out, unchecked };
   });
-  const problems = $derived(rows?.filter((r) => r.level === "problem").length ?? 0);
+  const problems = $derived(rows?.list.filter((r) => r.level === "problem").length ?? 0);
 </script>
 
 {#if entries.length > 0}
@@ -43,7 +47,17 @@
     <p class="text-body-2 text-muted">Couldn't check requisites. {index.error}</p>
   {:else if rows === null}
     <p class="text-body-2 text-muted" aria-live="polite">Checking requisites&hellip;</p>
-  {:else if rows.length === 0}
+  {:else if rows.list.length === 0 && rows.unchecked > 0}
+    <p class="flex items-start gap-2 text-body-2 text-ink" aria-live="polite">
+      <Info aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-muted" />
+      <span>
+        {rows.unchecked === 1 ? "1 course has" : `${rows.unchecked} courses have`} prerequisites.
+        <a href={profilePath("taken")} class="text-accent-ink underline underline-offset-2"
+          >Add the courses you've taken</a
+        > to check them.
+      </span>
+    </p>
+  {:else if rows.list.length === 0}
     <p class="flex items-center gap-2 text-body-2 text-ink" aria-live="polite">
       <Check aria-hidden="true" class="size-4 shrink-0 text-ok" />
       {record.entries.length > 0 ? "Requisites look good for every course" : "No requisite problems found"}
@@ -62,14 +76,14 @@
           <span class="min-w-0 flex-1">
             {problems > 0
               ? `${problems} ${problems === 1 ? "course needs" : "courses need"} requisites`
-              : `${rows.length} ${rows.length === 1 ? "course" : "courses"} to double-check`}
+              : `${rows.list.length} ${rows.list.length === 1 ? "course" : "courses"} to double-check`}
           </span>
           <ChevronDown aria-hidden="true" class="size-4 shrink-0 transition-transform {open ? 'rotate-180' : ''}" />
         </button>
       </h3>
       <div {id} hidden={!open} class="flex flex-col gap-3 border-t border-line px-3 pt-2 pb-3">
         <ul class="flex flex-col gap-2.5">
-          {#each rows as row (row.courseId)}
+          {#each rows.list as row (row.courseId)}
             <li class="flex min-w-0 items-start gap-2">
               {#if row.level === "problem"}
                 <TriangleAlert aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-danger" />
@@ -87,7 +101,7 @@
             </li>
           {/each}
         </ul>
-        {#if record.entries.length === 0}
+        {#if record.isEmpty}
           <p class="text-label-md font-normal text-muted">
             Courses you've taken count toward prerequisites.
             <a href={profilePath("taken")} class="text-accent-ink underline underline-offset-2">Add them to your record</a>.

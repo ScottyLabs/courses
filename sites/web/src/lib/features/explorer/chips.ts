@@ -38,7 +38,8 @@ function catalogChips(query: ExplorerQuery, names: ChipNames, add: Add, addExtra
     addExtra("units", label, { unitsLow: EMPTY_EXTRA.unitsLow, unitsHigh: EMPTY_EXTRA.unitsHigh });
   }
   for (const bucket of f.units) {
-    const label = UNIT_BUCKETS.find((b) => b.id === bucket)?.label ?? bucket;
+    const label =
+      bucket === "var" ? "Variable" : (UNIT_BUCKETS.find((b) => b.id === bucket)?.label ?? bucket);
     add(`bucket:${bucket}`, `${label} units`, { units: f.units.filter((u) => u !== bucket) });
   }
   if (query.extra.seasons.length > 0) {

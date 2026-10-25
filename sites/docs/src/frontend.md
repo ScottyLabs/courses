@@ -32,6 +32,7 @@ can load them; components import them as `$lib/data`, `$lib/state` and so on.
 | `catalogIndex()`, `catalogDetails(prefix)`, `courseDetails(courseId)` | The course catalog: titles, units, requisites; descriptions by course-number prefix |
 | `offerings()` | Which semesters offer each course, indexed for search; null without the document |
 | `teaching()` | Who teaches what in each semester (member data) |
+| `instructorList(scope)` | The instructor list's rows for a semester or `all` (member data); null for a catalog built without them |
 | `fceSummary()`, `fceAccess()`, `fceCourses(prefix)`, `courseFce(courseId)`, `fceCoursesIndex()`, `fceInstructors()` | FCEs, decoded from the documents' tuples (member data) |
 | `programsIndex()`, `program(auditId)`, `programs(ids)`, `auditVersions(selections)` | Degree programs and the versions an audit needs (member data) |
 | `syllabi(prefix)`, `courseSyllabi(courseId)` | Past syllabi (member data); `syllabusPath(key)` in `$lib/api` links to a file |
@@ -44,7 +45,9 @@ document (404) becomes the empty value Courseweave used (no details, no syllabi,
 so the next call tries again.
 
 Member documents reject with `SignInRequiredError`: its `reason` is `signin` when nobody is signed in and `forbidden`
-for a signed-in account that isn't a CMU one. `settle(promise)` turns any load into
+for a signed-in account that isn't a CMU one. The website's catalog waits for the session's first answer before
+requesting a member document and doesn't request it at all when the server would refuse it (`setMemberGate`), so a
+signed-out page makes no requests that end in 401. `settle(promise)` turns any load into
 `{ status: "ready" | "signin" | "forbidden" | "error" }` without throwing. In a component, `resource()` does the same
 as reactive state and loads again whenever what the loader reads changes:
 
@@ -132,7 +135,9 @@ answer, in localStorage. The color theme and the cards/list choice belong to the
 The root layout already supplies the session. The shell should also:
 
 - call `installUpdateReload()` (from `$lib/data`) once, and `handleStaleBuild(error)` from `handleError` in
-  `src/hooks.client.ts`, so a tab opened before a deploy reloads instead of failing to load a page;
+  `src/hooks.client.ts`, so a tab opened before a deploy reloads instead of failing to load a page; SvelteKit also
+  checks for a new build every five minutes (`kit.version.pollInterval`), and the root layout then shows a toast
+  offering to reload, which loses nothing since unsaved changes survive a reload;
 - call `trackOrigin(url.pathname, url.search)` and `device.rememberTerm(term)` after each navigation;
 - after the session loads, go to `session.consumeReturnPath()` when it isn't null.
 

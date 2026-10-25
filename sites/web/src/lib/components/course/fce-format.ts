@@ -3,12 +3,12 @@
 /** Shown where a figure is missing: an en dash. */
 export const NO_VALUE = String.fromCodePoint(0x2013);
 
-/** Up to two decimals without trailing zeros: 15.19, 17.1, 4.5. */
-export function trimNumber(value: number): string {
-  return String(Number(value.toFixed(2)));
+/** Hours a week, to one decimal everywhere FCEs show them (Courseweave's formatHours): 15.2. */
+export function hoursText(value: number): string {
+  return value.toFixed(1);
 }
 
-/** A table cell: the number, or an en dash when there is none. */
-export function cellNumber(value: number | null | undefined): string {
-  return value === null || value === undefined ? NO_VALUE : trimNumber(value);
+/** A rating out of 5, to two decimals everywhere FCEs show them (Courseweave's formatRating): 4.50. */
+export function ratingText(value: number): string {
+  return value.toFixed(2);
 }

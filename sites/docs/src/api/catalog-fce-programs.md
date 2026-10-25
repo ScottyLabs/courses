@@ -76,6 +76,43 @@ The tuples are arrays, to keep the documents small:
 - Course rows are newest first, then by section, then by instructor, compared with Unicode collation
   ([decision 21](../decisions/0021-sort-catalog-strings-with-unicode-collation.md)).
 
+## Instructor list documents
+
+`crates/courses-index/src/instructors.rs` also writes, member-only, `instructors/<termId>` for each semester and
+`instructors/all`: the rows of the website's instructor list (`/instructors`), so the list doesn't load the whole
+semester, `fce/instructors` and the course catalog to show names
+([decision 43](../decisions/0043-list-instructors-from-their-own-documents.md)). They're new in CMU Courses.
+
+```json
+{
+  "titles": { "15112": "Fundamentals of Programming and Computer Science" },
+  "instructors": [
+    {
+      "name": "David Kosbie",
+      "depts": ["CS"],
+      "courses": ["15112", "15151"],
+      "sections": 4,
+      "topics": { "15390": ["Robotics"] },
+      "terms": ["S27", "F26"],
+      "fce": { "rating": 4.52, "courses": ["15110", "15112"] }
+    }
+  ]
+}
+```
+
+| Field | Contents |
+| --- | --- |
+| `titles` | The title of every course listed, for search: the semester's own, or for all semesters the newest semester's, then the course catalog's (titles that only repeat the course number are left out) |
+| `instructors` | In the order the website numbers repeated URL slugs: a semester's in the order its sections first name them, all semesters' in `teaching` order and then the people only FCEs know |
+| `name` | As the Schedule of Classes prints it; people only FCEs know get their FCE name, first name first |
+| `depts`, `courses`, `sections` | A semester's departments and courses in the order its sections name them, counting the sections they teach (recitations that repeat their lecture's instructors don't count). For all semesters, `teaching`'s departments, the sorted courses of every semester and the section total; people only FCEs know get the departments of their FCE courses |
+| `topics` | Semesters only, left out when empty: titles of sections that differ from their course's, by course |
+| `terms` | All semesters only: the built semesters they teach in, newest first |
+| `fce` | Left out when no FCE record matches the name (matched as `fce::names::NameIndex` matches it). `rating` is the teaching rating over their last 4 semesters with responses, weighted by responses, to 0.01, or null; `courses` the courses `fce/instructors` lists for them, which say which `fce/courses/<NN>` hold their rows |
+
+On 2026-10-24's catalog a semester's list was about 420 KB of JSON (95 KB gzipped) and `instructors/all` 1.4 MB
+(270 KB gzipped).
+
 ## Program documents
 
 | Name | Contents |

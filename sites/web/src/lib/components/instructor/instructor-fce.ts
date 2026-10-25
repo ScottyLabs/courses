@@ -42,7 +42,23 @@ export async function loadInstructorFce(
   const index = await source.fceInstructors();
   const summary = index?.get(name);
   if (summary === undefined) return null;
-  const courseIds = summary.courses.map((course) => course.courseId);
+  const rows = await loadInstructorRows(
+    source,
+    name,
+    summary.courses.map((course) => course.courseId),
+  );
+  return { summary, rows };
+}
+
+/**
+ * Every FCE row of an instructor's, newest first, from the courses their FCE record lists (`courseIds`, as the
+ * instructor list documents give them), without loading the FCE index.
+ */
+export async function loadInstructorRows(
+  source: Pick<FceSource, "fceCourses">,
+  name: string,
+  courseIds: readonly string[],
+): Promise<InstructorRow[]> {
   const prefixes = [...new Set(courseIds.map((id) => id.slice(0, 2)))];
   const chunks = await Promise.all(prefixes.map((prefix) => source.fceCourses(prefix)));
   const byCourse = new Map<string, FceRow[]>();
@@ -52,10 +68,7 @@ export async function loadInstructorFce(
       .filter((row) => sameInstructor(row.instructor, name))
       .map((row): InstructorRow => Object.assign({ courseId }, row)),
   );
-  return {
-    summary,
-    rows: rows.toSorted(
-      (a, b) => termOrder(b.term) - termOrder(a.term) || a.courseId.localeCompare(b.courseId),
-    ),
-  };
+  return rows.toSorted(
+    (a, b) => termOrder(b.term) - termOrder(a.term) || a.courseId.localeCompare(b.courseId),
+  );
 }

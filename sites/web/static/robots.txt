@@ -1,3 +1,10 @@
-# allow crawling everything by default
+# The web API serves the real robots.txt, with the sitemap's full address (crates/courses-web-api/src/seo.rs).
+# This copy, for a build served on its own, keeps crawlers off the same pages.
 User-agent: *
-Disallow:
+Disallow: /api/
+Disallow: /auth/
+Disallow: /schedules
+Disallow: /plan
+Disallow: /profile
+Disallow: /finals
+Disallow: /instructors

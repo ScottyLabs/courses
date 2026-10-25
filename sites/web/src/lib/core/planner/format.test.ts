@@ -9,8 +9,10 @@ import {
   childForSection,
   conflictingCodes,
   initialChoice,
+  locationSummary,
   partLabel,
   sectionCounts,
+  timesAndRoom,
 } from "./format.ts";
 
 const h = (hours: number, minutes = 0) => hours * 60 + minutes;
@@ -143,5 +145,29 @@ describe("planner choices", () => {
       nonFactorable: 12,
       hasVariable: false,
     });
+  });
+});
+
+describe("timesAndRoom", () => {
+  const redacted: Section = {
+    ...sec("1", [1, 3], h(12, 30), h(13, 50)),
+    meetings: [{ days: [1, 3], start: h(12, 30), end: h(13, 50), building: null, room: null }],
+  };
+
+  it("gives the shared room after the times", () => {
+    expect(timesAndRoom(sec("1", [1, 3], h(9, 30), h(10, 50)))).toEqual({
+      times: "TR 9:30\u201310:50 AM",
+      room: "GHC 4401",
+    });
+  });
+
+  it("says a room is to be announced when the section has none", () => {
+    expect(timesAndRoom(redacted).room).toBe("Room TBA");
+  });
+
+  it("leaves rooms out, rather than calling them TBA, when they're hidden from signed-out visitors", () => {
+    expect(timesAndRoom(redacted, true)).toEqual({ times: "TR 12:30\u20131:50 PM", room: null });
+    expect(locationSummary(redacted, true)).toBe("Sign in to see rooms");
+    expect(locationSummary(redacted)).toBe("TBA");
   });
 });

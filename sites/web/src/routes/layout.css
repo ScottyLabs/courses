@@ -299,6 +299,15 @@
   scrollbar-color: var(--color-pressed) transparent;
 }
 
+/* The focus ring for a field drawn by its wrapper (search boxes, inline inputs): shown while the input inside has
+   keyboard-visible focus, as the global :focus-visible ring would be on the input itself. */
+@utility focus-ring-within {
+  &:has(> input:focus-visible, > textarea:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }

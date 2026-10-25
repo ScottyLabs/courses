@@ -7,13 +7,14 @@
   import { fceOptions } from "../course/fce-options.svelte";
   import FceStats from "../course/FceStats.svelte";
   import FceTable from "../course/FceTable.svelte";
-  import { loadInstructorFce } from "./instructor-fce";
+  import { loadInstructorFce, loadInstructorRows, type InstructorRow } from "./instructor-fce";
 
   let {
     name,
     depts,
     href,
     meta,
+    fceCourses,
     headingLevel = 2,
     class: className = "",
   }: {
@@ -25,13 +26,24 @@
     href: string;
     /** A line under the departments, such as the courses they teach this semester. */
     meta?: Snippet;
+    /**
+     * The courses with FCE rows for them, from the instructor list's document (null: no FCE record matches the name).
+     * Without it the card looks them up in the FCE index first.
+     */
+    fceCourses?: readonly string[] | null;
     headingLevel?: 2 | 3;
     class?: string;
   } = $props();
 
-  // FCE rows load once the card comes near the viewport, so a long list only fetches what is seen.
+  // FCE rows load once the card comes near the viewport, after the list has painted, so a long list only fetches
+  // what is seen and the names show first.
   let near = $state(false);
-  const fce = resource(() => (near ? loadInstructorFce(catalog, name) : null));
+  async function load(): Promise<{ rows: InstructorRow[] } | null> {
+    if (fceCourses === undefined) return loadInstructorFce(catalog, name);
+    if (fceCourses === null) return null;
+    return { rows: await loadInstructorRows(catalog, name, fceCourses) };
+  }
+  const fce = resource(() => (near ? load() : null));
   const rows = $derived(fce.value === undefined || fce.value === null ? [] : selectFceRows(fce.value.rows, fceOptions.value));
   const stats = $derived(fce.value ? aggregateFce(rows) : null);
   const loading = $derived(!near || (fce.status === "loading" && fce.value === undefined));
@@ -41,8 +53,9 @@
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          near = true;
           observer.disconnect();
+          // The next frame, once this one has painted.
+          requestAnimationFrame(() => setTimeout(() => (near = true)));
         }
       },
       { rootMargin: "600px 0px" },

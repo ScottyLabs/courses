@@ -86,12 +86,12 @@
         onchange={upload}
       />
       <Button variant="primary" size="sm" icon={Upload} loading={busy} onclick={() => input?.click()}>
-        Upload Schedule
+        Upload SIO calendar
       </Button>
     {:else}
       <Button variant="primary" size="sm" icon={LogIn} onclick={() => session.signIn()}>Sign in to upload</Button>
     {/if}
-    <Button size="sm" icon={Download} href={SIO_EXPORT}>SIO Export</Button>
+    <Button size="sm" icon={Download} href={SIO_EXPORT}>Export from SIO</Button>
   </div>
   <p class="sr-only" aria-live="polite">{status}</p>
 

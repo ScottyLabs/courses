@@ -18,6 +18,7 @@
     terms,
     backHref,
     allHref,
+    showBack = true,
     compact = false,
   }: {
     courseId: string;
@@ -28,6 +29,8 @@
     backHref?: string;
     /** The course in the all-semesters view; defaults to its page there. */
     allHref?: string;
+    /** Offer "Back to all courses"; off where the page already has a back link. */
+    showBack?: boolean;
     /** In the detail panel: smaller type, headings one level down. */
     compact?: boolean;
   } = $props();
@@ -79,12 +82,14 @@
           <Button icon={GitFork} href={requisitesPath(courseId, termId)}>Prerequisites</Button>
         {/if}
       </div>
-      <a
-        href={backHref ?? coursesPath(termId)}
-        class="mt-5 inline-flex min-h-10 items-center text-label-lg text-accent-ink underline-offset-2 hover:underline"
-      >
-        Back to all courses
-      </a>
+      {#if showBack}
+        <a
+          href={backHref ?? coursesPath(termId)}
+          class="mt-5 inline-flex min-h-10 items-center text-label-lg text-accent-ink underline-offset-2 hover:underline"
+        >
+          Back to all courses
+        </a>
+      {/if}
     </div>
   {/if}
 </div>

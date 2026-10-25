@@ -22,10 +22,29 @@
   });
   // One address per course across semesters, as the server renders it (decision 25).
   const canonical = $derived(`${page.url.origin}/course/${encodeURIComponent(code)}`);
+
+  // The page's one description tag (app.html's, or the server's for a course page) says what this course is, and the
+  // site's description again on leaving. Adding a second tag would leave crawlers two to choose from.
+  const SITE_DESCRIPTION =
+    "Search CMU courses, read FCEs, plan schedules and degrees, and see what your friends are taking.";
+  $effect(() => {
+    const text = summary;
+    if (text === "") return;
+    let meta = document.head.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (meta === null) {
+      meta = document.createElement("meta");
+      meta.name = "description";
+      document.head.append(meta);
+    }
+    meta.content = text;
+    const tag = meta;
+    return () => {
+      tag.content = SITE_DESCRIPTION;
+    };
+  });
 </script>
 
 <Title value={title ? `${code} ${title}` : code} />
 <svelte:head>
-  {#if summary}<meta name="description" content={summary} />{/if}
   <link rel="canonical" href={canonical} />
 </svelte:head>

@@ -20,7 +20,7 @@ Courseweave's source is the reference implementation: when this page says "as Co
 | Degree plan: programs, requirement audit, semester grid with drag and drop, progress bar, requisite problems | Plan page (`/plan`); signed out it is a draft, and degree programs ask for a CMU sign-in ([decision 37](decisions/0037-let-signed-out-visitors-draft-a-degree-plan.md)) |
 | Academic record: SIO and Stellic PDF import, taken courses, transfer credit, exams, waivers | Profile, under "Courses Taken" and "Currently Taking" |
 | Accounts, sync, sign out and clear this device | Keycloak sign-in; data on the server ([decision 17](decisions/0017-store-personal-data-on-the-server.md)) |
-| Search-engine course pages and sitemap | The web API adds course head tags to `/course/[code]` and serves `/sitemap.xml` |
+| Search-engine course pages and sitemap | The web API adds course head tags to `/course/[code]` and serves `/sitemap.xml`; `app.html` has the site's description, Open Graph image (`static/og-image.png`), touch icon and WebSite search action |
 | - | Friends: requests, invite links, friends taking a course, friends' schedules (new) |
 | - | Final exam schedule from the registrar, in a dialog on each schedule: that schedule's exams with conflict warnings, search across the semester's exams, .ics export; SIO calendar import stays (new) |
 
@@ -76,9 +76,10 @@ document doesn't exist publicly.
 | `term/<id>` | `TermData` (`types.ts`), from `build-data.ts` | without instructors and rooms | full |
 | `offerings` | `OfferingsData` | yes | same |
 | `catalog/index` | `CatalogIndex` (`catalog-types.ts`), from `build-catalog.ts` | yes | same |
-| `catalog/details/<NN>` | `Record<courseId, CatalogDetails>` | yes | same |
+| `catalog/details/<NN>` | `Record<courseId, CatalogDetails>`; every course-number prefix has one, `{}` when none of its courses has details | yes | same |
 | `teaching` | `TeachingData` | no | full |
 | `fce/summary`, `fce/courses/index`, `fce/courses/<NN>`, `fce/instructors` | FCE files from `build-fce.ts` | no | full |
+| `instructors/<id>`, `instructors/all` | The instructor list's rows, new ([decision 43](decisions/0043-list-instructors-from-their-own-documents.md), [format](api/catalog-fce-programs.md#instructor-list-documents)) | no | full |
 | `programs/index`, `programs/<auditId>` | `ProgramsIndex`, `ProgramVersion` (`plan-types.ts`, `degree-types.ts`), from `build-programs.ts` | no | full |
 | `syllabi/<NN>` | syllabus index from `build-syllabi.ts` | no | full |
 | `finals/<id>` | final exam schedule, new (below) | without instructors | full |

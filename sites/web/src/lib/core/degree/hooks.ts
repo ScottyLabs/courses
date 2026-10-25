@@ -28,7 +28,7 @@ import {
   type UnitsOf,
 } from "../plan.ts";
 import type { AuditInput } from "../plan-types.ts";
-import { isFactorableGrade, normalizeGrade } from "../requisites.ts";
+import { earnsCredit, isFactorableGrade, normalizeGrade } from "../requisites.ts";
 import { coursePath } from "../routes.ts";
 import type { Schedule } from "../state/store.ts";
 import type { TermIndexEntry } from "../types.ts";
@@ -121,9 +121,10 @@ export function planDerived(input: PlanDerivedInput): PlanDerived | null {
     const recordUnits = new Map<string, number>();
     const items = [
       ...col.recorded.map((e) => {
-        const units = e.units ?? unitsOf(e.courseId ?? "") ?? 0;
-        recordUnits.set(e.id, units);
         const grade = normalizeGrade(e.grade);
+        // A withdrawal or other no-credit grade earns no units, as Courses Taken counts it (a fix to Courseweave).
+        const units = earnsCredit(grade) ? (e.units ?? unitsOf(e.courseId ?? "") ?? 0) : 0;
+        recordUnits.set(e.id, units);
         return {
           courseId: e.courseId ?? "",
           units,

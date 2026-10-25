@@ -7,7 +7,6 @@
   import Skeleton from "$lib/components/ui/Skeleton.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import InstructorCard from "$lib/components/instructor/InstructorCard.svelte";
-  import type { AllInstructor } from "$lib/core/instructors/allInstructors";
   import { codeOf } from "$lib/core/requisite-format";
   import { coursePath } from "$lib/core/routes";
   import { teachingSummary } from "./data";
@@ -21,7 +20,7 @@
   // More appear as the end of the list comes into view.
   let limit = $state(PAGE.cards);
   $effect(() => {
-    void [scope.query, scope.dept, scope.sort, scope.savedOnly, scope.termParam, scope.view];
+    void [scope.query, scope.depts, scope.sort, scope.savedOnly, scope.termParam, scope.view];
     limit = untrack(() => PAGE[scope.view]);
   });
   const visible = $derived(scope.results.slice(0, limit));
@@ -64,11 +63,16 @@
     <ul class="flex flex-col gap-6" aria-label="Instructors">
       {#each visible as doc (doc.inst.slug)}
         <li>
-          <InstructorCard name={doc.inst.name} depts={doc.inst.depts} href={scope.href(doc.inst.slug)}>
+          <InstructorCard
+            name={doc.inst.name}
+            depts={doc.inst.depts}
+            href={scope.href(doc.inst.slug)}
+            fceCourses={doc.inst.fceCourses}
+          >
             {#snippet meta()}
               {#if scope.allMode}
                 <p class="mt-2 text-label-md font-normal text-muted">
-                  {teachingSummary((doc.inst as AllInstructor).terms)}
+                  {teachingSummary(doc.inst.terms ?? [])}
                 </p>
               {:else}
                 <ul class="mt-3 flex flex-wrap gap-1.5" aria-label="Teaching in {scope.scopeName}">

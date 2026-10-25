@@ -29,7 +29,8 @@ The layout follows Courseweave's plan page in the design system's look
   fall, spring and, when planned, summer (`grid.ts`), slots to add back a removed semester, the next semester and
   summers. A cards or detailed layout (the `planLayout` preference); the detailed one is a table per semester with
   the requirements each course satisfies, when it's usually offered and its prerequisites colored against the plan.
-- **Semester cards** (`TermCard.svelte`): record courses (read-only, with grades) and planned courses, each with
+- **Semester cards** (`TermCard.svelte`): record courses (read-only, with grades; a W or other no-credit grade counts
+  0 units, as on Courses Taken, unlike Courseweave) and planned courses, each with
   pass/fail, offering warnings, the requisite state (its issues and "Mark requisites as waived" on click), FCE hours,
   units (editable for variable-unit courses) and a menu: move up or down, move to another semester, pass/fail, units,
   view, remove. "Add a course" searches the whole catalog and says whether the semester offers each result. The

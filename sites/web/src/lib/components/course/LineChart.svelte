@@ -103,6 +103,16 @@
     return reference.value.findLast((v) => v !== null) ?? null;
   });
 
+  /**
+   * Where the reference's label goes: beside its line, or moved clear of the last value's label when the two would
+   * overlap at the right edge.
+   */
+  function referenceLabelY(y: number): number {
+    if (lastValue === null || active !== null) return y;
+    const valueY = sy(lastValue);
+    return Math.abs(y - valueY) < 12 ? valueY + (y > valueY ? 12 : -12) : y;
+  }
+
   function indexAt(event: PointerEvent): number {
     const target = event.currentTarget;
     if (!(target instanceof Element) || n <= 1) return 0;
@@ -154,7 +164,12 @@
           stroke-width="1"
           stroke-dasharray="4 3"
         />
-        <text x={M.left + innerW + 4} y={sy(reference.value)} dy="0.32em" class="fill-muted text-[10.5px]">
+        <text
+          x={M.left + innerW + 4}
+          y={referenceLabelY(sy(reference.value))}
+          dy="0.32em"
+          class="fill-muted text-[10.5px]"
+        >
           {reference.label}
         </text>
       {/if}
@@ -162,7 +177,9 @@
         <path {d} fill="none" class="stroke-muted" stroke-width="1" stroke-dasharray="4 3" />
       {/each}
       {#if stepLast !== null && reference}
-        <text x={sx(n - 1) + 4} y={sy(stepLast)} dy="0.32em" class="fill-muted text-[10.5px]">{reference.label}</text>
+        <text x={sx(n - 1) + 4} y={referenceLabelY(sy(stepLast))} dy="0.32em" class="fill-muted text-[10.5px]"
+          >{reference.label}</text
+        >
       {/if}
       {#if n > 0}
         <text x={sx(0)} y={height - 6} text-anchor={n > 1 ? "start" : "middle"} class="fill-muted text-[10.5px]">

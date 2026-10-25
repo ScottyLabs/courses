@@ -29,6 +29,42 @@ export interface RegistrarFinal {
   instructors: string[];
 }
 
+/** The instructor list for a semester or all of them (`instructors/<termId>`, `instructors/all`; decision 43). */
+export interface InstructorListFile {
+  /** Course titles, for search. */
+  titles: Record<string, string>;
+  /** In the order slugs are given out. */
+  instructors: {
+    name: string;
+    depts: string[];
+    courses: string[];
+    sections: number;
+    /** Section topic titles, by course (semesters only). */
+    topics?: Record<string, string[]>;
+    /** Built semesters they teach in, newest first (all semesters only). */
+    terms?: string[];
+    /** Left out when no FCE record matches the name. */
+    fce?: { rating: number | null; courses: string[] };
+  }[];
+}
+
+/**
+ * A `catalog/details/<NN>` chunk without the registrar's placeholder description ("No course description
+ * provided."), so every page words a missing description alike.
+ */
+export function withoutPlaceholders(
+  chunk: Record<string, CatalogDetails>,
+): Record<string, CatalogDetails> {
+  const out: Record<string, CatalogDetails> = {};
+  for (const [id, details] of Object.entries(chunk)) {
+    if (/^no course description provided\.?$/iu.test(details.description?.trim() ?? "")) {
+      const { description: _placeholder, ...rest } = details;
+      out[id] = rest;
+    } else out[id] = details;
+  }
+  return out;
+}
+
 /** Course-number prefix of a course id: "15" for "15122". Large documents are split by it. */
 export function prefixOf(courseId: string): string {
   return courseId.slice(0, 2);
@@ -47,6 +83,8 @@ export const docs = {
   fceCoursesIndex: "fce/courses/index",
   fceCourses: (prefix: string) => `fce/courses/${prefix}`,
   fceInstructors: "fce/instructors",
+  /** The instructor list for a semester, or "all" (decision 43). */
+  instructorList: (scope: string) => `instructors/${scope}`,
   programsIndex: "programs/index",
   program: (auditId: number) => `programs/${auditId}`,
   syllabi: (prefix: string) => `syllabi/${prefix}`,
@@ -55,7 +93,7 @@ export const docs = {
 
 /** Documents that only signed-in members can load (signed out they answer 401). */
 export function isMemberOnly(name: string): boolean {
-  return /^(?:teaching|fce\/.*|programs\/.*|syllabi\/.*)$/u.test(name);
+  return /^(?:teaching|fce\/.*|instructors\/.*|programs\/.*|syllabi\/.*)$/u.test(name);
 }
 
 /** What each document parses to. */
@@ -71,6 +109,7 @@ export interface DocumentTypes {
   fceCoursesIndex: string[];
   fceCourses: FceCoursesFile;
   fceInstructors: FceInstructorsFile;
+  instructorList: InstructorListFile;
   programsIndex: ProgramsIndex;
   program: ProgramVersion;
   syllabi: SyllabiChunk;

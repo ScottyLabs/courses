@@ -5,6 +5,7 @@
   import { codeOf } from "$lib/core/requisite-format";
   import { evaluateRequisite, requisiteCourses, type RequisiteStatus } from "$lib/core/requisites";
   import { profilePath } from "$lib/core/routes";
+  import { record } from "$lib/state";
   import { catalogIndex } from "./data.svelte";
   import { termRequisites } from "./requisite-context.svelte";
   import RequisiteExpression from "./RequisiteExpression.svelte";
@@ -35,13 +36,16 @@
   });
   const requisites = $derived(termRequisites(termId));
   const ctx = $derived(requisites.ctx);
-  // Nothing on record, planned or scheduled: every check would read "missing", which says nothing.
-  const unchecked = $derived(ctx === null || ctx.credits.size === 0);
   const waived = $derived(ctx?.overrides[courseId]?.[kind] === true);
   const result = $derived.by((): RequisiteStatus | null => {
     if (expression === null || ctx === null) return null;
     return evaluateRequisite(expression, ctx, { allowConcurrent: kind === "coreqs" }).status;
   });
+  // Nothing on record, planned or scheduled: every check would read "missing", which says nothing. With an empty
+  // record, "missing" most likely means "not entered yet", so it isn't reported as unmet.
+  const unchecked = $derived(
+    ctx === null || ctx.credits.size === 0 || (record.isEmpty && result === "missing"),
+  );
   // Unchecked, the trigger names the courses briefly: "15-122", "15-122 and 4 more".
   const brief = $derived.by(() => {
     const ids = requisiteCourses(expression);

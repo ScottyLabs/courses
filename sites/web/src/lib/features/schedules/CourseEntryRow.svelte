@@ -21,6 +21,7 @@
   import { childSections, topSections } from "$lib/core/sections";
   import type { ResolvedEntry, ScheduleView } from "$lib/core/state/schedule-view";
   import type { Section } from "$lib/core/types";
+  import { session } from "$lib/data";
   import ColorPicker from "./ColorPicker.svelte";
   import { conflictCodes } from "./planner";
   import SectionPicker from "./SectionPicker.svelte";
@@ -149,7 +150,7 @@
         onpreview={preview}
       />
     {:else if resolved.section}
-      {@const where = timesAndRoom(resolved.section)}
+      {@const where = timesAndRoom(resolved.section, !session.signedIn)}
       <p class="flex min-w-0 gap-2 text-body-2 text-ink">
         <span class="shrink-0 font-semibold text-strong">{partLabel(resolved.section)}</span>
         <span class="min-w-0 truncate">{where.times}</span>
@@ -169,7 +170,7 @@
         onpreview={preview}
       />
     {:else if resolved.child}
-      {@const where = timesAndRoom(resolved.child)}
+      {@const where = timesAndRoom(resolved.child, !session.signedIn)}
       <p class="flex min-w-0 gap-2 text-body-2 text-ink">
         <span class="shrink-0 font-semibold text-strong">{partLabel(resolved.child)}</span>
         <span class="min-w-0 truncate">{where.times}</span>

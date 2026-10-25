@@ -197,6 +197,13 @@ pub fn course_page(template: &str, origin: &str, c: &SeoCourse) -> Option<String
             "<meta property=\"og:description\" content=\"{}\" />",
             escape_html(&description)
         ),
+        // The website's social image (sites/web/static/og-image.png), at its full address as Open Graph wants it.
+        format!(
+            "<meta property=\"og:image\" content=\"{}/og-image.png\" />",
+            escape_html(origin)
+        ),
+        "<meta property=\"og:image:width\" content=\"1200\" />".to_owned(),
+        "<meta property=\"og:image:height\" content=\"630\" />".to_owned(),
         format!(
             "<script type=\"application/ld+json\">{}</script>",
             script_json(&ld)
@@ -456,6 +463,9 @@ mod tests {
         assert!(html.contains("&#39; quotes"));
         assert!(html.contains("<noscript><main><h1>15-122 Principles"));
         assert!(html.contains("Offered: Spring 2027, Fall 2026"));
+        assert!(html.contains(
+            "<meta property=\"og:image\" content=\"https://cmu.courses/og-image.png\" />"
+        ));
         assert!(html.contains("12 units"));
         let ld_start =
             html.find("application/ld+json\">").unwrap() + "application/ld+json\">".len();

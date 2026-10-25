@@ -24,16 +24,24 @@ The layout keeps the list's state while the student opens instructors. In the li
 or more, an open instructor shows beside Courseweave's rows, which stay in their own scrolling column; in the cards
 view and on narrower screens the instructor page is on its own, with "All instructors" going back to the list.
 
-The list keeps its filters in the URL (`q`, `dept`, `saved=1`, `sort=sections`), so Back from an instructor, a
+The rail and toolbar match the Courses page: departments are a searchable multi-select and the sort a toolbar select
+(on phones, beside the semester); signed out, neither offers filters. The list keeps its filters in the URL (`q`,
+`dept=CS,MSC`, `saved=1`, `sort=sections`), so Back from an instructor, a
 reload or a shared link shows the same list. Search is Courseweave's: names first, then course numbers (`15-122`,
 `15-1`) and course titles; `/` focuses the field, the arrow keys move through the rows and Enter opens one. Saved is
 a filter, matching instructors who teach one of the student's saved courses. The cards/list switch is remembered per
 device; rows have letter headings when sorted by name.
 
+The list reads one small document, `instructors/<termId>` or `instructors/all`, with each row's name, departments,
+courses, titles to search, teaching rating and FCE courses
+([ADR 43](../decisions/0043-list-instructors-from-their-own-documents.md)); the semester, `teaching`, the FCE index
+and course titles load only once an instructor is open. With a catalog built before those documents, the list is
+built from the full documents as before (`lib/features/instructors/list.ts`).
+
 Cards follow the Figma: the name and departments, three stat boxes (workload, teaching rate, course rate) and the
-FCE rows the aggregate counts. A card loads its FCE rows when it comes near the viewport, from the `fce/courses/<NN>`
-documents of the courses the FCE index lists for that person, so a long list only downloads what is seen
-([ADR 39](../decisions/0039-build-instructor-fce-rows-in-the-browser.md)).
+FCE rows the aggregate counts. A card loads its FCE rows the frame after it comes near the viewport, from the
+`fce/courses/<NN>` documents of the courses the list names for that person, so the names show first and a long list
+only downloads what is seen ([ADR 39](../decisions/0039-build-instructor-fce-rows-in-the-browser.md)).
 
 ### Aggregate FCEs
 
@@ -64,17 +72,19 @@ Friends are new in CMU Courses; the Figma's "Profile Page (Friends)" sets the lo
 | `lib/features/friends/friends.ts` | The friends store: friends and requests, the invite made in this tab, sharing; errors in plain words (tested) |
 | `lib/features/friends/instance.svelte.ts` | The website's store, emptied when the account changes |
 | `lib/features/profile/FriendsSection.svelte` | The section: requests, friend cards, sent requests, sharing settings |
-| `lib/features/friends/FriendsActions.svelte` | "Share Link" and "Add Friends" beside the heading, with their dialogs |
+| `lib/features/friends/FriendsActions.svelte` | "Share link" and "Add friends" beside the heading, with their dialogs |
 | `lib/features/friends/FriendSchedule.svelte` | A friend's friends-visible schedule for a semester |
 | `lib/features/friends/InvitePage.svelte` | The invite page |
 
+- **Friends taking a course** show on course cards and the course panel as avatars on a button that lists their names
+  (for touch and keyboard users as well as hover).
 - **Friend cards** show the friend's name and Andrew ID, "Schedule" when they share schedules, and the courses they're
   taking in the chosen semester (from `GET /api/friends/courses`), with the ones the student is also taking (their
   schedule for the semester and courses in progress on their record) first and marked. The semester defaults to the
   one in session. The card's menu removes the friend after a confirmation.
-- **Requests**: incoming ones can be accepted or declined, sent ones canceled. "Add Friends" sends a request by Andrew
+- **Requests**: incoming ones can be accepted or declined, sent ones canceled. "Add friends" sends a request by Andrew
   ID (an email address works too); when nobody with that ID has signed in, it offers an invite link instead.
-- **Invite links**: "Share Link" makes a link (`/invite/<token>`, built from the site's own origin), copies or shares
+- **Invite links**: "Share link" makes a link (`/invite/<token>`, built from the site's own origin), copies or shares
   it, makes a new one or revokes it. The API can't list a student's links, so the dialog shows only the one made in
   this tab.
 - **Sharing**: "What friends can see" holds the two switches, share my courses and share my schedules, each saying

@@ -155,7 +155,7 @@ export function buildStellicScript(terms: ExportTerm[], generatedAt = new Date()
         `//   ${t.name}: ${t.courses.length} course${t.courses.length === 1 ? "" : "s"} from ${t.source}`,
     )
     .join("\n");
-  return `// Courseweave \u2192 Stellic (generated ${generatedAt.toISOString().slice(0, 10)})
+  return `// CMU Courses \u2192 Stellic (generated ${generatedAt.toISOString().slice(0, 10)})
 ${summary}
 //
 // Adds these courses (and the sections you chose) to your Stellic plan. It reads your plan first, shows exactly what
@@ -332,7 +332,7 @@ ${summary}
     alert('Added ' + added + ' of ' + toAdd.length + ' course' + (toAdd.length === 1 ? '' : 's') + ' to "' + planName + '".' + (added < toAdd.length ? ' See the console for the rest.' : '') + ' Reload Stellic to see them.');
   } catch (e) {
     console.error(e);
-    alert('Courseweave export stopped: ' + (e && e.message ? e.message : e) + ' Nothing after this point was changed.');
+    alert('CMU Courses export stopped: ' + (e && e.message ? e.message : e) + ' Nothing after this point was changed.');
   }
 })();
 `;
@@ -359,7 +359,7 @@ export function buildSioScript(terms: ExportTerm[], generatedAt = new Date()): s
         `//   ${t.name}: ${t.courses.length} course${t.courses.length === 1 ? "" : "s"} from ${t.source}`,
     )
     .join("\n");
-  return `// Courseweave \u2192 SIO planned schedule (generated ${generatedAt.toISOString().slice(0, 10)})
+  return `// CMU Courses \u2192 SIO planned schedule (generated ${generatedAt.toISOString().slice(0, 10)})
 ${summary}
 //
 // Adds these courses (and your sections) to the SIO planned schedule you're viewing, using SIO's own "Add course"

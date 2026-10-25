@@ -112,7 +112,8 @@ The root layout renders the header, `<main>` and the footer around every page. P
 
 **Rail layout** (courses, instructors, schedules). A white rail on the left with a title and a Hide
 button, and the page on the right: a white toolbar band, then content on the page background. Below 1024px the rail is
-a sheet opened from the toolbar's Filter button, which shows the active filter count.
+a sheet opened from the toolbar's Filter button, which shows the active filter count; `sheetDone` adds a button at
+the sheet's foot that closes it, such as "Show 85 courses".
 
 ```svelte
 <RailLayout storageKey="courses" filterCount={active} backLabel="Search">
@@ -163,7 +164,9 @@ device's choice.
 ## App shell
 
 The header shows the logo, the navigation (Courses, Instructors, Schedules, Plan, Profile), the theme switch
-and a Sign in or Sign out pill; below 1024px it becomes a menu button, the logo and the account control. The shell
+and a Sign in or Sign out pill; below 1024px it becomes a menu button, the logo and the account control. Signed in,
+`SyncStatus` beside Sign out says whether changes have reached the account (Saved, Saving, Offline, Not saved) with
+a Retry after a failure; on phones it shows only while something isn't saved, and in full in the menu sheet. The shell
 reads the session from context:
 
 ```ts
@@ -173,6 +176,8 @@ interface ShellSession {
   readonly detail?: string; // second line on the profile, such as the department
   signIn: () => void;
   signOut: () => void;
+  /** Save status while signed in: status, error and retry(), from `personal`. */
+  readonly sync?: ShellSync;
 }
 ```
 

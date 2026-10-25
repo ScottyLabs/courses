@@ -29,6 +29,7 @@
   import CourseSections from "./CourseSections.svelte";
   import CourseSyllabi from "./CourseSyllabi.svelte";
   import { CourseSchedule } from "./course-schedule.svelte";
+  import { termOrder } from "$lib/core/fce-names";
   import NotOfferedHere from "./NotOfferedHere.svelte";
   import OfferingHistory from "./OfferingHistory.svelte";
   import { requisitesPath } from "./paths";
@@ -102,9 +103,11 @@
   const chipHref = (id: string): string => coursePath(id, termId !== null && term?.value?.courseById.has(id) ? termId : null);
   const offeredHere = (id: string): boolean => term?.value?.courseById.has(id) ?? false;
 
+  // The semesters offering it, plus the one asked for when it doesn't, newest first.
   const termOptions = $derived([
-    ...offered.map((t) => ({ value: t, label: termLabel(t) })),
-    ...(termId !== null && !offered.includes(termId) ? [{ value: termId, label: termLabel(termId) }] : []),
+    ...[...offered, ...(termId !== null && !offered.includes(termId) ? [termId] : [])]
+      .toSorted((a, b) => termOrder(b) - termOrder(a))
+      .map((t) => ({ value: t, label: termLabel(t) })),
     { value: "all", label: "All semesters" },
   ]);
   const nextTerm = $derived(resolved === null ? undefined : nearestTerm(offered, resolved));
@@ -162,7 +165,7 @@
       <Button onclick={() => location.reload()}>Reload</Button>
     </EmptyState>
   {:else if view.kind === "term" && termId !== null && !course}
-    <NotOfferedHere {courseId} {termId} terms={terms.value ?? []} />
+    <NotOfferedHere {courseId} {termId} terms={terms.value ?? []} showBack={false} />
   {:else if view.kind === "all" && !title}
     <EmptyState
       title="No course {code}"
