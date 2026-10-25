@@ -201,11 +201,14 @@ const SOURCES: RecordSource[] = ["taken", "transfer", "exam", "waiver"];
 /** Validates an imported file. Returns null with a reason when it isn't a Courseweave record. */
 export function parseRecordExport(value: unknown): { data: RecordData } | { error: string } {
   if (!value || typeof value !== "object")
-    return { error: "This file isn't a Courseweave record." };
+    return { error: "This file isn't a record backup from CMU Courses (or Courseweave)." };
   const v = value as Partial<RecordExport>;
-  if (v.format !== RECORD_FORMAT) return { error: "This file isn't a Courseweave record export." };
+  if (v.format !== RECORD_FORMAT)
+    return { error: "This file isn't a record backup from CMU Courses (or Courseweave)." };
   if (v.version !== 1)
-    return { error: `This record was exported by a newer version (format ${String(v.version)}).` };
+    return {
+      error: `This backup comes from a newer version of CMU Courses (format ${String(v.version)}). Reload the page and try again.`,
+    };
   if (!Array.isArray(v.entries)) return { error: "The record has no entries list." };
   const entries: RecordEntry[] = [];
   for (const raw of v.entries as unknown[]) {

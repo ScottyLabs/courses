@@ -203,7 +203,7 @@ export function buildIcs(items: IcsItem[], term: TermMeta, options: IcsOptions):
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Courseweave//CMU course planner//EN",
+    "PRODID:-//ScottyLabs//CMU Courses//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${escapeText(options.calendarName)}`,
