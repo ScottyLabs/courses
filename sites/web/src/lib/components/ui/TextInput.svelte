@@ -58,7 +58,7 @@
       {type}
       aria-invalid={error ? "true" : undefined}
       aria-describedby={error || hint ? messageId : undefined}
-      class="w-full border bg-surface text-ink transition-colors placeholder:text-muted hover:border-muted focus:border-accent disabled:border-line disabled:text-faint {sizes[
+      class="focus-field w-full border bg-surface text-ink placeholder:text-muted hover:border-muted disabled:border-line disabled:text-faint {sizes[
         size
       ]} {error ? 'border-danger' : 'border-line-strong'} {Icon ? 'pl-11' : ''}"
       {...rest}

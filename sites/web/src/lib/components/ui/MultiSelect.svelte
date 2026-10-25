@@ -131,9 +131,9 @@
         open = true;
       }
     }}
-    class="flex h-10 w-full items-center justify-between gap-2 rounded-field border border-line-strong bg-surface px-4 text-left text-body-2 transition-colors hover:border-muted disabled:border-line disabled:text-faint {open
-      ? 'border-accent'
-      : ''}"
+    class="focus-field flex h-10 w-full items-center justify-between gap-2 rounded-field border bg-surface px-4 text-left text-body-2 disabled:border-line disabled:text-faint {open
+      ? 'border-accent shadow-[inset_0_0_0_1px_var(--color-accent)]'
+      : 'border-line-strong hover:border-muted'}"
   >
     <span class="truncate {value.length === 0 ? 'text-muted' : 'text-ink'}">{summary}</span>
     <ChevronDown
@@ -169,7 +169,7 @@
         spellcheck="false"
         oninput={() => (active = step(filtered, -1, 1))}
         onkeydown={onsearchkeydown}
-        class="h-9 w-full rounded-[8px] border border-line-strong bg-surface px-3 text-body-2 text-ink placeholder:text-muted focus:border-accent"
+        class="focus-field h-9 w-full rounded-[8px] border border-line-strong bg-surface px-3 text-body-2 text-ink placeholder:text-muted"
       />
     </div>
     <ul

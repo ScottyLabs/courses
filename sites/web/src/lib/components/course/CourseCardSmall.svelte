@@ -59,7 +59,7 @@
 <article class="relative flex min-w-0 flex-col gap-1 rounded-card border border-pressed bg-surface px-5 py-4 text-ink {className}">
   <div class="flex items-start gap-3">
     <h3 class="min-w-0 flex-1 text-heading-6 text-ink">
-      <a {href} data-course-preview="off" class="outline-none after:absolute after:inset-0 after:rounded-card after:content-[''] focus-visible:after:outline-2 focus-visible:after:outline-accent">
+      <a {href} data-course-preview="off" class="outline-none after:absolute after:inset-0 after:rounded-card after:content-[''] focus-visible:after:animate-focus-ring focus-visible:after:outline-2 focus-visible:after:outline-accent">
         <span class="tabular mr-2 font-semibold text-strong">{code}</span>{title}
       </a>
     </h3>

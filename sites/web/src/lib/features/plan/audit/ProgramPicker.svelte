@@ -98,7 +98,7 @@
                 <button
                   type="button"
                   onclick={() => add(p)}
-                  class="flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-paper md:min-h-9"
+                  class="flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-paper focus-visible:-outline-offset-2 md:min-h-9"
                 >
                   <Plus aria-hidden="true" class="size-4 shrink-0 text-muted" />
                   <span class="min-w-0 flex-1 text-body-2 text-strong">{p.name}</span>

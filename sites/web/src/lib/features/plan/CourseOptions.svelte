@@ -81,7 +81,7 @@
         checked={info.passFail}
         disabled={info.passFailOnly}
         onchange={(event) => onupdate({ passFail: event.currentTarget.checked })}
-        class="size-4 rounded-[3px] border-line-strong text-accent focus:ring-accent"
+        class="size-4 rounded-[3px] border-line-strong text-accent"
       />
       {info.passFailOnly ? "Pass/fail only" : "Take pass/fail"}
     </label>

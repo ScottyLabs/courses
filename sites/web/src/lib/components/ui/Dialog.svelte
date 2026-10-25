@@ -41,7 +41,11 @@
       previous = document.activeElement;
       element.showModal();
       const body = element.querySelector<HTMLElement>("[data-dialog-body]");
-      (focusableWithin(body ?? element).at(0) ?? body ?? element).focus();
+      // A dialog that opens on its own (nothing had focus, as on page load) focuses its content, so its first control
+      // doesn't wear a focus ring nobody asked for; Tab still reaches that control next.
+      const opened = previous instanceof HTMLElement && previous !== document.body;
+      const first = opened ? focusableWithin(body ?? element).at(0) : undefined;
+      (first ?? body ?? element).focus();
     } else if (!open && element.open) {
       element.close();
     }

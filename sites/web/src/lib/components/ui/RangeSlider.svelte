@@ -140,7 +140,7 @@
     background: var(--color-accent);
     cursor: grab;
     pointer-events: auto;
-    transition: box-shadow 0.15s;
+    transition: box-shadow 0.15s ease-out;
   }
 
   .range input::-moz-range-track {
@@ -155,6 +155,7 @@
     background: var(--color-accent);
     cursor: grab;
     pointer-events: auto;
+    transition: box-shadow 0.15s ease-out;
   }
 
   .range input:focus-visible::-webkit-slider-thumb {

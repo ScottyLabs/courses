@@ -88,7 +88,7 @@
     <!-- Phones: an icon over the native list of sorts, so long names aren't cut off. -->
     <label
       title="Sort by: {sortLabel}"
-      class="relative grid size-10 shrink-0 place-items-center rounded-full border border-line-strong text-ink transition-colors hover:bg-hover has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-accent sm:hidden"
+      class="relative grid size-10 shrink-0 place-items-center rounded-full border border-line-strong text-ink transition-colors focus-ring-within hover:bg-hover sm:hidden"
     >
       <ArrowDownUp aria-hidden="true" class="size-5" />
       <select

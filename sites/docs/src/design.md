@@ -58,7 +58,8 @@ subtree can show the other theme.
 
 - Icons are `@lucide/svelte`, sized with classes (`size-5` in buttons, `size-6` in navigation). Decorative icons get
   `aria-hidden="true"`; icon-only buttons use `IconButton`, which requires a `label`.
-- Focus shows the global 2px accent ring. Do not remove outlines without a visible replacement.
+- Focus: see [Focus](#focus) below. Every control shows one visible focus indicator; don't remove outlines without
+  a visible replacement.
 - Source files are ASCII: write symbols as icons or HTML entities.
 - Course links preview their course on hover, focus or a long press (`CoursePreviewLayer`, decision 41). Mark a code
   that isn't a link with `coursePreview(id)` from `$lib/components/course/preview`, and a course's own card or row
@@ -66,6 +67,30 @@ subtree can show the other theme.
 - Device conveniences (theme, cards or list, a hidden rail) go through `readLocal`/`writeLocal` in
   `lib/components/ui/storage.ts`, which survive blocked storage. Personal data never goes to localStorage
   ([decision 17](decisions/0017-store-personal-data-on-the-server.md)).
+
+## Focus
+
+Keyboard focus (`:focus-visible`) draws a 2px accent ring 2px outside the control, following its radius. It eases in
+over 150ms (`animate-focus-ring`; reduced motion makes it instant), and a control that focus scrolls into view keeps
+8px of room so the edge of a scroll box doesn't cut the ring off. A pointer click shows no ring, so style focus rings
+with `focus-visible:`, never `focus:`. Each control shows one indicator, so some controls use something other than
+the ring:
+
+| Control | Focus indicator |
+| --- | --- |
+| Fields: `TextInput`, `Select`, `Combobox`, `MultiSelect`, the boxed `SearchInput`, inline inputs | `focus-field`: the border eases to accent and thickens to 2px (inside, so nothing shifts or gets clipped); red while invalid. Shown for clicks too, since you type into the field |
+| The underline `SearchInput` | A 2px accent rule grows from the center over its line |
+| A transparent native select over an icon or a label | `focus-ring-within` on the wrapper |
+| Full-width rows and list items (profile sections, pick lists), segments of a `SegmentedControl` | The ring drawn inside (`focus-visible:-outline-offset-2`), where a screen edge, a scroll box or the group's border can't cover it |
+| `Tabs` | The ring around the tab's label, centered on the text rather than the tall tab |
+| Slider thumbs | A ring around the thumb, not the track |
+| Menu items and roving list options | The hover fill |
+
+Rings must fit what they surround. Give a scroll box that holds controls at its edge room for the ring (a negative
+margin with matching padding, as the plan's requirements column does), give text buttons that keep a 40px tap height
+a little padding and `rounded-tag` so the ring isn't a tight box, and don't draw a ring over an element that already
+shows focus another way. A dialog that opens on its own, with nothing focused before it, focuses its content rather
+than its first control, so no control looks chosen until the person presses Tab.
 
 ## Components
 

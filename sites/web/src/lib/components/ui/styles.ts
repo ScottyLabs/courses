@@ -7,7 +7,7 @@ export const togglePill =
 
 /** Bordered form field (Figma "Text field"): selects, comboboxes, text inputs. */
 export const fieldBox =
-  "h-10 w-full rounded-field border border-line-strong bg-surface text-body-2 text-ink transition-colors placeholder:text-muted hover:border-muted focus-within:border-accent disabled:border-line disabled:text-faint";
+  "focus-field h-10 w-full rounded-field border border-line-strong bg-surface text-body-2 text-ink placeholder:text-muted hover:border-muted disabled:border-line disabled:text-faint";
 
 /** Floating panel surface for popovers, menus and dropdown lists. */
 export const panelSurface = "rounded-[8px] border border-line bg-surface text-ink shadow-popover";

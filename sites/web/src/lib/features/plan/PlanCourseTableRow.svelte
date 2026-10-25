@@ -136,7 +136,7 @@
         aria-label="Units for {code}"
         value={course.units ?? info.units}
         oninput={onunits}
-        class="tabular h-8 w-14 rounded-tag border border-line bg-surface px-1.5 text-right text-body-2 text-ink md:h-7"
+        class="tabular focus-field h-8 w-14 rounded-tag border border-line bg-surface px-1.5 text-right text-body-2 text-ink md:h-7"
       />
     {:else}
       <span class="inline-flex min-h-7 items-center">{info.units}</span>
