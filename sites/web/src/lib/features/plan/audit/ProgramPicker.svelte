@@ -34,6 +34,7 @@
   let open = $state(false);
   let root = $state<HTMLElement>();
   let input = $state<HTMLInputElement>();
+  let panel = $state<HTMLElement>();
 
   const index = resource(() => catalog.programsIndex());
   const idsKey = $derived(value.map((v) => v.auditId).join(","));
@@ -77,6 +78,12 @@
     event.preventDefault();
     open = false;
   }
+
+  // The panel opens under the search, often near the rail's foot: bring it into view, and again when a type fills it.
+  $effect(() => {
+    void filter;
+    panel?.scrollIntoView({ block: "nearest" });
+  });
 
   $effect(() => {
     if (!open) return;
@@ -125,6 +132,7 @@
              panel stays open; keyboard users Tab into the filter and the matches. -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <div
+          bind:this={panel}
           id={panelId}
           role="region"
           aria-label="Degree programs"
