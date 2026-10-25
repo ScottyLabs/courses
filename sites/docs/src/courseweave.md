@@ -20,7 +20,7 @@ Courseweave's source is the reference implementation: when this page says "as Co
 | Degree plan: programs, requirement audit, semester grid with drag and drop, progress bar, requisite problems | Plan page (`/plan`); signed out it is a draft, and degree programs ask for a CMU sign-in ([decision 37](decisions/0037-let-signed-out-visitors-draft-a-degree-plan.md)) |
 | Academic record: SIO and Stellic PDF import, taken courses, transfer credit, exams, waivers | Profile, under "Courses Taken" and "Currently Taking" |
 | Accounts, sync, sign out and clear this device | Keycloak sign-in; data on the server ([decision 17](decisions/0017-store-personal-data-on-the-server.md)) |
-| Search-engine course pages and sitemap | The web API adds course head tags to `/course/[code]` and serves `/sitemap.xml` |
+| Search-engine course pages and sitemap | The web API adds course head tags to `/course/[code]` and serves `/sitemap.xml`; `app.html` has the site's description, Open Graph image (`static/og-image.png`), touch icon and WebSite search action |
 | - | Friends: requests, invite links, friends taking a course, friends' schedules (new) |
 | - | Final exam schedule from the registrar, in a dialog on each schedule: that schedule's exams with conflict warnings, search across the semester's exams, .ics export; SIO calendar import stays (new) |
 

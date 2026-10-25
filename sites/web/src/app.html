@@ -6,12 +6,43 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f0f4f8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0e151c" media="(prefers-color-scheme: dark)" />
+    <!-- Keep the description in sync with SITE_DESCRIPTION in src/lib/features/course/CourseHead.svelte. The web
+         API replaces the description and Open Graph tags on course pages (crates/courses-web-api/src/seo.rs). -->
     <meta
       name="description"
       content="Search CMU courses, read FCEs, plan schedules and degrees, and see what your friends are taking."
     />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CMU Courses" />
+    <meta property="og:title" content="CMU Courses" />
+    <meta
+      property="og:description"
+      content="Search CMU courses, read FCEs, plan schedules and degrees, and see what your friends are taking."
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="CMU Courses: search courses, read FCEs, plan schedules and degrees"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="%sveltekit.assets%/favicon.ico" />
+    <link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
     <link rel="manifest" href="%sveltekit.assets%/manifest.json" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "CMU Courses",
+        "url": "/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link
