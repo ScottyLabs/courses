@@ -4,7 +4,8 @@ Date: 2026-10-24
 
 ## Status
 
-Accepted
+Accepted. Superseded in part by [decision 44](0044-put-the-degree-plans-programs-and-progress-in-a-rail.md), which
+moves the header's programs and numbers into a rail like the other pages'.
 
 ## Context
 
