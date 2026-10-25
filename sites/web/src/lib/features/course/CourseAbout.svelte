@@ -94,7 +94,7 @@
               href={hrefOf}
             />
           {:else}
-            None listed
+            <p class="pt-0.5">None listed</p>
           {/if}
           {#if entry.prereqText}
             <p class="mt-1 text-label-md text-muted">Schedule of Classes: {entry.prereqText}</p>
@@ -103,14 +103,14 @@
             <button
               type="button"
               onclick={onshowtree}
-              class="mt-1 inline-flex min-h-10 items-center gap-1.5 text-label-lg text-accent-ink underline-offset-2 hover:underline sm:min-h-8"
+              class="mt-1 flex min-h-10 w-fit items-center gap-1.5 text-label-lg text-accent-ink underline-offset-2 hover:underline sm:min-h-8"
             >
               <GitFork aria-hidden="true" class="size-4" />Prerequisite tree and what it unlocks
             </button>
           {:else}
             <a
               href={requisitesPath(courseId, termId)}
-              class="mt-1 inline-flex min-h-10 items-center gap-1.5 text-label-lg text-accent-ink underline-offset-2 hover:underline sm:min-h-8"
+              class="mt-1 flex min-h-10 w-fit items-center gap-1.5 text-label-lg text-accent-ink underline-offset-2 hover:underline sm:min-h-8"
             >
               <GitFork aria-hidden="true" class="size-4" />Prerequisite tree and what it unlocks
             </a>
