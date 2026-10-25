@@ -78,7 +78,7 @@
       <button
         type="button"
         {...props}
-        class="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-tag py-0.5 pr-1 text-left text-body-1 text-ink hover:bg-hover {className}"
+        class="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-tag py-0.5 pr-1 pl-1.5 text-left text-body-1 text-ink hover:bg-hover {className}"
       >
         {#if waived}
           <span class="grid size-4 shrink-0 place-items-center rounded-[3px] bg-ok-bg text-ok">
