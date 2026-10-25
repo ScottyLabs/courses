@@ -120,10 +120,7 @@
 
   <section aria-labelledby="settings-calendar">
     <h2 id="settings-calendar" class="text-heading-6 text-strong">Calendar</h2>
-    <p class="mt-1 text-body-2 text-muted">
-      The course number is always shown. Choose what else appears on each class in every calendar.
-      {signedIn ? "Saved to your account." : "Kept in this tab until you sign in."}
-    </p>
+    {#if !signedIn}<p class="mt-1 text-body-2 text-muted">Kept in this tab until you sign in.</p>{/if}
     <fieldset class="mt-3">
       <legend class="sr-only">Show on calendar classes</legend>
       <div class="flex flex-col gap-1">

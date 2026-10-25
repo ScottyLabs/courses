@@ -90,7 +90,6 @@
 <RecordSection
   id="record-taken"
   title="Courses taken"
-  description="CMU courses you've finished or are taking now. Grades are optional; without one, a course counts as passed."
 >
   <div class="flex flex-col gap-4 rounded-card border border-pressed bg-surface p-5">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_160px_170px_96px]">

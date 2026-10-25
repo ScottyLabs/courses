@@ -103,7 +103,6 @@
 <RecordSection
   id="record-exams"
   title="AP, IB and A-Level credit"
-  description="Pick an exam and score to see what CMU awards, from the registrar's charts (updated March 2026). Exam credit earns units but never counts toward QPA."
 >
   <div class="flex flex-col gap-4 rounded-card border border-pressed bg-surface p-5">
     <div role="group" aria-label="Exam program" class="flex flex-wrap gap-2">

@@ -109,9 +109,6 @@
         <ChevronLeft aria-hidden="true" class="size-5" />{courseId !== null && offered ? codeOf(courseId) : "Courses"}
       </a>
       <h1 class="text-heading-3 text-strong">Requisites</h1>
-      <p class="mt-1 max-w-[60ch] text-body-2 text-ink">
-        See what a course requires and which courses it opens up. Select any course to follow the chain.
-      </p>
     </div>
     <div class="w-full md:w-[380px]">
       <RequisiteSearch index={index.value ?? null} term={termValue} onpick={(id) => goto(recenter(id))} />

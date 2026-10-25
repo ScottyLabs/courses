@@ -7,6 +7,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import HelpTip from "$lib/components/ui/HelpTip.svelte";
   import { termRequisites } from "$lib/components/course/requisite-context.svelte";
   import type { Unlock } from "$lib/core/catalog";
   import type { CatalogIndex } from "$lib/core/catalog-types";
@@ -296,10 +297,15 @@
   </GraphCanvas>
 
   <div class="flex flex-col gap-2 border-t border-line px-4 py-3 {lonely ? 'hidden' : ''}">
-    <GraphLegend unlocks={showUnlocks && unlocks.length > 0} />
-    <p id="{uid}-keys" class="text-label-md text-muted">
-      Drag or scroll to move around; ctrl and scroll, or pinch, to zoom. With the keyboard, the arrow keys move between
-      courses, Enter does what a click does, and + and &minus; zoom.
+    <div class="flex items-start justify-between gap-3">
+      <GraphLegend unlocks={showUnlocks && unlocks.length > 0} />
+      <HelpTip
+        label="How to move around the graph"
+        text="Drag to pan; ctrl+scroll or pinch to zoom. Arrow keys move between courses."
+      />
+    </div>
+    <p id="{uid}-keys" class="sr-only">
+      Arrow keys move between courses, Enter does what a click does, and plus and minus zoom.
     </p>
   </div>
 </section>

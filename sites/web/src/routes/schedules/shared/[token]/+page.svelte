@@ -7,6 +7,7 @@
   import PageContainer from "$lib/components/layout/PageContainer.svelte";
   import Title from "$lib/components/shell/Title.svelte";
   import Button from "$lib/components/ui/Button.svelte";
+  import Chip from "$lib/components/ui/Chip.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import Spinner from "$lib/components/ui/Spinner.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
@@ -95,8 +96,9 @@
   {:else}
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
-        <h1 class="text-heading-3 text-strong">{shared.name}</h1>
-        <p class="mt-1 text-body-2 text-muted">A shared schedule. Copy it to your schedules to change it.</p>
+        <h1 class="flex flex-wrap items-center gap-x-3 gap-y-1 text-heading-3 text-strong">
+          {shared.name}<Chip tone="neutral" size="sm" label="Read only" />
+        </h1>
       </div>
       <Button variant="primary" icon={Copy} onclick={copy} disabled={personal.mode === "loading"}>
         Copy to my schedules

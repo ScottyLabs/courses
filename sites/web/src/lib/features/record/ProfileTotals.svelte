@@ -71,7 +71,6 @@
           value={record.profile.college ?? ""}
           onchange={(event) => set("college", event.currentTarget.value)}
         />
-        <p class="mt-1 text-label-md font-normal text-muted">Some exam credit depends on it.</p>
       </div>
       <Select
         label="First semester at CMU"
@@ -120,10 +119,6 @@
         </div>
       {/each}
     </dl>
-    <p class="text-label-md font-normal text-muted">
-      Factorable units have letter grades (A&ndash;D, or R) and count toward QPA. Pass/fail, transfer and exam credit
-      earn units without affecting QPA.{totals.ungraded > 0 ? ` ${fmt(totals.ungraded)} units have no grade yet.` : ""}
-    </p>
     <a
       href={planPath()}
       class="inline-flex min-h-10 items-center gap-1 self-start text-label-lg text-accent-ink underline-offset-2 hover:underline"

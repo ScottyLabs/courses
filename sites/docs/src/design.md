@@ -32,7 +32,9 @@ color: every token has a dark value.
 | `hover` / `active` | ink at 7% / 12% | ink at 9% / 15% | Hover and pressed fills that work on any surface |
 | `selected` | accent at 9% over surface | accent at 16% over surface | The row a list or panel is showing (the course or instructor open beside the list) |
 
-Selection, emphasis and warnings are fills, icons and text color, never a colored stripe down one side of a card,
+Copy doesn't explain what a page is for or restate what students know (that FCE hours include class time, that
+pass/fail units don't count toward QPA); how-to hints go behind a `HelpTip`. Selection, emphasis and warnings are
+fills, icons and text color, never a colored stripe down one side of a card,
 row or block: a calendar block is a firmer tint of its course's color with a hairline edge (`course-block`), a selected
 row takes `selected`, and a number past its guidance turns `warn` with a warning icon and says why on hover.
 
@@ -128,6 +130,7 @@ Import primitives from `$lib/components/ui`, layouts from `$lib/components/layou
 | `Popover` | `bind:open`, `trigger` snippet (spread its props on a button), `placement`, `matchWidth` | Closes on outside click and Escape |
 | `Menu` | `items` (label, icon, onselect or href, danger), `label`, `trigger` snippet | Arrow keys, Home, End |
 | `Tooltip` | `text`, `trigger` snippet | Hover and focus |
+| `HelpTip` | `text`, `label` | A (?) with a short how-to hint, for help most people don't need on screen |
 | `toast()` | `toast(message, { kind, action, duration })` | Rendered by the root layout's `Toaster` |
 | `Tabs` | `tabs`, `bind:value`, `label`, `panel` snippet | |
 | `SegmentedControl` | `options` (label, icon, iconOnly), `bind:value`, `label`, `size`, `full` | Radio group; `full` fills the width with equal segments, as rail filters do |

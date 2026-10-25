@@ -42,10 +42,6 @@
 {:else}
 <div class="flex flex-col gap-10" aria-label={title} role="region">
   <div class="flex flex-col gap-4">
-    <p class="max-w-[62ch] text-body-2 text-ink">
-      What you've already earned: CMU courses, exam and transfer credit, and placements. Prerequisite checks in your
-      schedules and your degree plan use it.
-    </p>
     {#if record.isEmpty}
       <RecordEmptyStart />
     {/if}

@@ -47,7 +47,6 @@
 <RecordSection
   id="record-transfer"
   title="Transfer credit"
-  description="Courses from other schools that CMU accepted. Transfer credit earns units without a grade, so it never counts toward QPA."
 >
   <div class="flex flex-col gap-4 rounded-card border border-pressed bg-surface p-5">
     <Checkbox

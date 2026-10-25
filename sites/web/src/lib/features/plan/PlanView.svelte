@@ -7,6 +7,7 @@
   import { untrack } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
   import RailGroup from "$lib/components/layout/RailGroup.svelte";
+  import HelpTip from "$lib/components/ui/HelpTip.svelte";
   import RailLayout from "$lib/components/layout/RailLayout.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
@@ -51,6 +52,7 @@
   /** The main column's width (without its padding) from which the requirements get a column of their own beside the
    *  semesters; below it they sit at the end of the rail, so the semesters keep the whole column. */
   const WIDE_MIN = 1120;
+  const DRAG_HINT = "Drag a course onto a semester, or use Add.";
   const current = currentTerm();
   const compactQuery = new MediaQuery("(max-width: 767px)");
   const dragQuery = new MediaQuery("(pointer: fine) and (min-width: 768px)");
@@ -245,11 +247,14 @@
     {#if !wide}
       <RailGroup title="Requirements">
         {#snippet action()}
-          <Button size="sm" variant="ghost" icon={Maximize2} onclick={() => (expanded = true)}>Expand</Button>
+          <span class="flex items-center gap-1">
+            {#if dragQuery.current && plan.programs.length > 0}<HelpTip
+                label="Adding courses"
+                text={DRAG_HINT}
+              />{/if}
+            <Button size="sm" variant="ghost" icon={Maximize2} onclick={() => (expanded = true)}>Expand</Button>
+          </span>
         {/snippet}
-        {#if dragQuery.current && plan.programs.length > 0}
-          <p class="-mt-4 text-label-md font-normal text-muted">Drag a course onto a semester, or use Add.</p>
-        {/if}
         <RequirementsPanel {data} status={versions.status} error={auditError} drag={dragQuery.current} flat />
       </RailGroup>
     {/if}
@@ -303,13 +308,11 @@
         >
           <div class="flex items-center gap-2">
             <h2 id="requirements-heading" class="text-heading-5 text-strong">Requirements</h2>
+            {#if dragQuery.current && plan.programs.length > 0}<HelpTip label="Adding courses" text={DRAG_HINT} />{/if}
             <Button size="sm" variant="ghost" icon={Maximize2} class="ml-auto" onclick={() => (expanded = true)}>
               Expand
             </Button>
           </div>
-          {#if dragQuery.current && plan.programs.length > 0}
-            <p class="-mt-2 text-label-md font-normal text-muted">Drag a course onto a semester, or use Add.</p>
-          {/if}
           <RequirementsPanel {data} status={versions.status} error={auditError} drag={dragQuery.current} />
         </aside>
       </div>

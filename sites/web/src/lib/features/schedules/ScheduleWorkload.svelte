@@ -100,13 +100,13 @@
         </li>
       {/each}
     </ul>
-    <p class="mt-3 text-label-md font-normal text-muted">
-      FCE hours include class time.{load.halves
-        ? " Minis count only in their half, at twice their units a week."
-        : ""}
-      {missing > 0
-        ? `${missing} ${missing === 1 ? "course has" : "courses have"} no FCE hours and ${missing === 1 ? "counts" : "count"} at what its units suggest.`
-        : "Every course has FCE hours."}
-    </p>
+    {#if load.halves || missing > 0}
+      <p class="mt-3 text-label-md font-normal text-muted">
+        {load.halves ? "Minis count only in their half, at twice their units a week." : ""}
+        {missing > 0
+          ? `${missing} ${missing === 1 ? "course has" : "courses have"} no FCE hours and ${missing === 1 ? "counts" : "count"} at what its units suggest.`
+          : ""}
+      </p>
+    {/if}
   </section>
 {/if}
