@@ -15,6 +15,7 @@
     titleAction,
     rail,
     railFooter,
+    showTitle = true,
     header,
     children,
     filterCount = 0,
@@ -38,6 +39,8 @@
     rail: Snippet;
     /** Pinned to the bottom of the rail (and of the phone sheet), such as a schedule's totals. */
     railFooter?: Snippet;
+    /** False to keep the title for screen readers only, when the header already says where the student is. */
+    showTitle?: boolean;
     /** White band at the top of the main column, usually a PageToolbar. */
     header?: Snippet;
     /** Main content on the page background. */
@@ -162,8 +165,8 @@
             {/if}
           </div>
         {:else}
-          <div class="relative px-6 pt-[39px] pb-6 min-[90rem]:px-[31px]">
-            <div class="flex items-center gap-2 pr-20">
+          <div class="relative px-6 pt-[39px] min-[90rem]:px-[31px] {showTitle ? 'pb-6' : ''}">
+            <div class={showTitle ? "flex items-center gap-2 pr-20" : "sr-only"}>
               <h2 class="text-heading-5 text-ink">{title}</h2>
               {@render titleAction?.()}
             </div>

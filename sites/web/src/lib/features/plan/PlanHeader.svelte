@@ -1,17 +1,17 @@
 <script lang="ts">
-  // The plan page's band above the semesters (decision 44): the title, the plan picker, new plan and the plan's
-  // options (rename, duplicate, send to and import from Stellic, delete). On phones, where the rail with the
+  // The plan page's band above the semesters (decision 44): the plan's name as the page title (click to rename), a
+  // switcher beside it listing the student's plans and "New plan", and the plan's options (rename, duplicate, send to
+  // and import from Stellic, delete). On phones, where the rail with the
   // programs and numbers is a sheet, the button that opens it and the plan's progress in a line.
   // Courseweave's features/degree/PlanHeader.tsx.
-  import { Copy, FileUp, Pencil, Plus, Send, Trash2 } from "@lucide/svelte";
+  import { Check, ChevronDown, Copy, FileUp, Pencil, Plus, Send, Trash2 } from "@lucide/svelte";
+  import { tick } from "svelte";
   import { goto } from "$app/navigation";
   import FilterButton from "$lib/components/layout/FilterButton.svelte";
   import { getRail } from "$lib/components/layout/rail-context";
   import SendToStellicDialog from "$lib/components/stellic/SendToStellicDialog.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Dialog from "$lib/components/ui/Dialog.svelte";
-  import Select from "$lib/components/ui/Select.svelte";
-  import TextInput from "$lib/components/ui/TextInput.svelte";
   import { toast } from "$lib/components/ui/toast.svelte";
   import { planPath } from "$lib/core/routes";
   import SioImportButton from "$lib/features/record/SioImportButton.svelte";
@@ -29,11 +29,26 @@
 
   let renaming = $state(false);
   let name = $state("");
+  let nameInput = $state<HTMLInputElement>();
   let confirmDelete = $state(false);
   let sending = $state(false);
   let importer = $state<SioImportButton>();
 
-  const planOptions = $derived(plans.list.map((p) => ({ value: p.id, label: p.name })));
+  function startRename(): void {
+    name = plan.name;
+    renaming = true;
+    void tick().then(() => {
+      nameInput?.focus();
+      nameInput?.select();
+    });
+  }
+
+  function finishRename(save: boolean): void {
+    if (!renaming) return;
+    const next = name.trim();
+    if (save && next !== "" && next !== plan.name) plans.renamePlan(plan.id, next);
+    renaming = false;
+  }
 
   function go(id: string): void {
     plans.setActivePlan(id);
@@ -45,31 +60,74 @@
   }
 </script>
 
-<!-- Like the profile's band: the title, with the plan's controls to its right. -->
-<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-  <h1 class="text-heading-4 text-strong">Degree plan</h1>
-  <div class="flex min-w-0 items-center gap-2 max-sm:w-full">
-    <Select
-      label="Plan"
-      class="min-w-0 max-sm:flex-1 sm:w-64"
-      value={plan.id}
-      options={planOptions}
-      onchange={(event) => go(event.currentTarget.value)}
-    />
-    <Button icon={Plus} onclick={newPlan} aria-label="New plan">
-      <span class="max-sm:sr-only">New plan</span>
-    </Button>
-    <OptionsMenu label="Plan options" variant="outline" size="md">
+<!-- Like the profile's band: the plan's name as the title, its switcher, and the plan's options on the right. -->
+<div class="flex items-center justify-between gap-3">
+  <div class="flex min-w-0 flex-1 items-center gap-1">
+    {#if renaming}
+      <input
+        bind:this={nameInput}
+        bind:value={name}
+        aria-label="Plan name"
+        maxlength={120}
+        onblur={() => finishRename(true)}
+        onkeydown={(event) => {
+          if (event.key === "Enter") finishRename(true);
+          if (event.key === "Escape") {
+            event.preventDefault();
+            finishRename(false);
+          }
+        }}
+        class="focus-field -ml-2 h-10 w-full max-w-md min-w-0 rounded-field border border-line-strong bg-surface px-2 text-heading-4 text-strong"
+      />
+    {:else}
+      <h1 class="-ml-2 min-w-0">
+        <button
+          type="button"
+          title="Rename plan"
+          aria-label="{plan.name}, rename"
+          onclick={startRename}
+          class="group flex max-w-full min-w-0 items-center gap-2 rounded-field px-2 py-0.5 text-left hover:bg-hover"
+        >
+          <span class="truncate text-heading-4 text-strong">{plan.name}</span>
+          <Pencil
+            aria-hidden="true"
+            class="size-4 shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+          />
+        </button>
+      </h1>
+    {/if}
+    <OptionsMenu label="Switch plan" icon={ChevronDown} placement="bottom-start" size="md">
       {#snippet children(close)}
-        <MenuItem icon={Pencil} onclick={() => { close(); name = plan.name; renaming = true; }}>Rename</MenuItem>
-        <MenuItem icon={Copy} onclick={() => { close(); go(plans.duplicatePlan(plan.id)); }}>Duplicate</MenuItem>
-        <MenuItem icon={Send} onclick={() => { close(); sending = true; }}>Send to Stellic</MenuItem>
-        <MenuItem icon={FileUp} onclick={() => { close(); importer?.choose(); }}>Import from Stellic</MenuItem>
+        <p class="px-3.5 pt-1 pb-1 text-label-md text-muted">Your plans</p>
+        {#each plans.list as p (p.id)}
+          <button
+            type="button"
+            aria-current={p.id === plan.id ? "true" : undefined}
+            onclick={() => {
+              close();
+              if (p.id !== plan.id) go(p.id);
+            }}
+            class="flex min-h-10 w-full items-center gap-3 px-3.5 py-1.5 text-left text-body-2 text-ink outline-none hover:bg-paper focus-visible:bg-paper md:min-h-9"
+          >
+            <Check aria-hidden="true" class="size-4 shrink-0 text-accent-ink {p.id === plan.id ? '' : 'invisible'}" />
+            <span class="truncate {p.id === plan.id ? 'font-semibold' : ''}">{p.name}</span>
+          </button>
+        {/each}
         <div role="separator" class="my-1.5 h-px bg-line"></div>
-        <MenuItem icon={Trash2} danger onclick={() => { close(); confirmDelete = true; }}>Delete plan</MenuItem>
+        <MenuItem icon={Plus} onclick={() => { close(); newPlan(); }}>New plan</MenuItem>
       {/snippet}
     </OptionsMenu>
   </div>
+  <OptionsMenu label="Plan options" variant="outline" size="md">
+    {#snippet children(close)}
+      <MenuItem icon={Pencil} onclick={() => { close(); startRename(); }}>Rename</MenuItem>
+      <MenuItem icon={Copy} onclick={() => { close(); go(plans.duplicatePlan(plan.id)); }}>Duplicate</MenuItem>
+      <MenuItem icon={Send} onclick={() => { close(); sending = true; }}>Send to Stellic</MenuItem>
+      <MenuItem icon={FileUp} onclick={() => { close(); importer?.choose(); }}>Import from Stellic</MenuItem>
+      <div role="separator" class="my-1.5 h-px bg-line"></div>
+      <MenuItem icon={Trash2} danger onclick={() => { close(); confirmDelete = true; }}>Delete plan</MenuItem>
+    {/snippet}
+  </OptionsMenu>
 </div>
 {#if rail?.asSheet}
   <div class="mt-3 flex flex-col gap-3">
@@ -86,23 +144,6 @@
     if (message) toast(message, { kind: "success" });
   }}
 />
-
-<Dialog bind:open={renaming} title="Rename plan" size="sm">
-  <form
-    id="rename-plan"
-    onsubmit={(event) => {
-      event.preventDefault();
-      if (name.trim() !== "") plans.renamePlan(plan.id, name.trim());
-      renaming = false;
-    }}
-  >
-    <TextInput label="Name" bind:value={name} required />
-  </form>
-  {#snippet footer()}
-    <Button variant="ghost" onclick={() => (renaming = false)}>Cancel</Button>
-    <Button variant="primary" type="submit" form="rename-plan">Save name</Button>
-  {/snippet}
-</Dialog>
 
 <Dialog bind:open={confirmDelete} title="Delete plan" size="sm">
   <p class="text-body-2 text-ink">Delete {plan.name}? Your academic record isn't affected.</p>

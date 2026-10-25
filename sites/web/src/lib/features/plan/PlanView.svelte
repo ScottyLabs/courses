@@ -232,6 +232,7 @@
 
 <RailLayout
   title="Plan"
+  showTitle={false}
   name="plan panel"
   sheetLabel="Programs"
   sheetButtonLabel="Programs and progress"

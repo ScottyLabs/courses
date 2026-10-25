@@ -11,6 +11,8 @@
     label,
     size = "sm",
     variant = "ghost",
+    icon = Ellipsis,
+    placement = "bottom-end",
     class: className = "",
     children: content,
   }: {
@@ -18,6 +20,9 @@
     label: string;
     size?: "sm" | "md";
     variant?: "ghost" | "outline";
+    /** The button's icon: "..." unless a menu needs another, such as the plan switcher's chevron. */
+    icon?: typeof Ellipsis;
+    placement?: "bottom-start" | "bottom-end";
     class?: string;
     children: Snippet<[close: () => void]>;
   } = $props();
@@ -53,11 +58,11 @@
 <Popover
   bind:open
   {label}
-  placement="bottom-end"
+  {placement}
   class="scrollbar-thin max-h-[min(70dvh,480px)] w-64 max-w-[calc(100vw-1rem)] overflow-y-auto py-1.5"
 >
   {#snippet trigger(props)}
-    <IconButton {...props} {label} {size} {variant} icon={Ellipsis} class="max-md:size-10 {className}" />
+    <IconButton {...props} {label} {size} {variant} {icon} class="max-md:size-10 {className}" />
   {/snippet}
   {#snippet children({ close })}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
