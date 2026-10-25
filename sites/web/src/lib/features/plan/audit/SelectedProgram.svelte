@@ -45,15 +45,25 @@
       label: `${v.name}${v.campus !== null && !v.name.includes(v.campus) ? ` (${v.campus})` : ""}`,
     })),
   );
+
+  // The name's last word stays with the badges after it.
+  const nameHead = $derived(name.includes(" ") ? name.slice(0, name.lastIndexOf(" ") + 1) : "");
+  const nameTail = $derived(name.includes(" ") ? name.slice(name.lastIndexOf(" ") + 1) : name);
 </script>
 
 <li class="flex flex-col gap-2.5 py-3 first:pt-0">
   <div class="flex items-start gap-2">
-    <div class="flex min-h-8 min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-      <span class="text-label-lg text-strong">{name}</span>
-      {#if campus}<Chip tone="neutral" size="sm" label={campus} />{/if}
-      {#if info}<Chip tone="soft" size="sm" label={KIND_LABEL[info.kind]} />{/if}
-    </div>
+    <!-- The badges follow the name's last word, so a long name doesn't leave them on a line of their own. -->
+    <p class="min-h-8 min-w-0 flex-1 pt-1 text-label-lg text-strong">
+      {nameHead}<span class="whitespace-nowrap"
+        >{nameTail}{#if campus}<Chip tone="neutral" size="sm" label={campus} class="ml-2 align-[1px]" />{/if}{#if info}<Chip
+            tone="soft"
+            size="sm"
+            label={KIND_LABEL[info.kind]}
+            class="ml-2 align-[1px]"
+          />{/if}</span
+      >
+    </p>
     <IconButton label="Remove {name}" icon={X} size="sm" class="-mr-1.5 max-md:size-10" onclick={onremove} />
   </div>
 
