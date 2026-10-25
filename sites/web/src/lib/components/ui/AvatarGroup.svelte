@@ -6,6 +6,7 @@
     max = 2,
     size = "sm",
     label = "Friends",
+    decorative = false,
     class: className = "",
   }: {
     people: readonly { name: string; src?: string }[];
@@ -14,6 +15,8 @@
     size?: "xs" | "sm";
     /** Describes who these people are, such as "Friends taking this course". */
     label?: string;
+    /** Hide from assistive technology, when a control around it names the people. */
+    decorative?: boolean;
     class?: string;
   } = $props();
 
@@ -27,9 +30,10 @@
 
 {#if people.length > 0}
   <div
-    role="img"
-    aria-label={description}
-    title={people.map((person) => person.name).join(", ")}
+    role={decorative ? undefined : "img"}
+    aria-label={decorative ? undefined : description}
+    aria-hidden={decorative ? "true" : undefined}
+    title={decorative ? undefined : people.map((person) => person.name).join(", ")}
     class="inline-flex items-center {size === 'sm' ? 'gap-1.5' : 'gap-1'} {className}"
   >
     {#each shown as person, index (index)}

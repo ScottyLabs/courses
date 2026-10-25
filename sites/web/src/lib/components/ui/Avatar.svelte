@@ -31,7 +31,7 @@
     src?: string;
     /** xs 24px (saved cards); sm 35px (course cards); md 48px (friend cards); lg 80px (profile). */
     size?: AvatarSize;
-    /** neutral: readable initials on a light fill; soft: white initials on the pressed fill (Figma cards). */
+    /** neutral: initials on a light fill; soft: initials on the darker pressed fill (Figma cards). */
     tone?: "neutral" | "soft";
     letters?: 1 | 2;
     /** Hide from assistive technology when the name is already next to it. */
@@ -46,7 +46,8 @@
     md: "size-12 text-heading-6",
     lg: "size-20 text-heading-4",
   };
-  const tones = { neutral: "bg-line text-ink", soft: "bg-pressed text-white" };
+  // The Figma's white initials on the pressed fill read at about 1.5:1; ink reads at about 4.8:1.
+  const tones = { neutral: "bg-line text-ink", soft: "bg-pressed text-ink" };
 </script>
 
 <span
