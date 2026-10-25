@@ -76,7 +76,7 @@
   popover="manual"
   data-floating
   role="tooltip"
-  class="pointer-events-none max-w-64 rounded-[6px] bg-strong px-2 py-1 text-label-md text-surface shadow-popover"
+  class="pointer-events-none max-w-64 rounded-[6px] bg-strong px-2 py-1 text-label-md whitespace-pre-line text-surface shadow-popover"
 >
   {text}
 </div>

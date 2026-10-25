@@ -9,10 +9,9 @@
   import { seasonsLabel, type Satisfies } from "$lib/core/plan-table";
   import { codeOf } from "$lib/core/requisite-format";
   import { planPage } from "./context";
-  import CourseIssues from "./CourseIssues.svelte";
   import CourseOptions from "./CourseOptions.svelte";
   import RequisiteText from "./RequisiteText.svelte";
-  import { courseRowInfo } from "./rows";
+  import { courseRowInfo, requisiteDetails } from "./rows";
   import SatisfiesCell from "./SatisfiesCell.svelte";
   import StatusButton from "./StatusButton.svelte";
 
@@ -50,8 +49,6 @@
   } = $props();
 
   const page = planPage();
-  const issuesId = $props.id();
-  let showIssues = $state(false);
 
   const check = $derived<PlanCheck | undefined>(page.derived.checks.get(course.id));
   const info = $derived(
@@ -165,11 +162,8 @@
       {#if info.level !== null && info.statusText !== null}
         <StatusButton
           level={info.level}
-          text={info.statusText}
+          text={requisiteDetails(check, info.statusText)}
           {code}
-          open={showIssues}
-          controls={issuesId}
-          ontoggle={() => (showIssues = !showIssues)}
         />
       {/if}
       {#if entry?.prereqs}
@@ -200,11 +194,7 @@
       {onmovedown}
       {onremove}
       {onupdate}
+      {check}
     />
   </td>
 </tr>
-{#if showIssues && check}
-  <tr>
-    <td colspan="8" class="px-2 pb-1"><CourseIssues id={issuesId} {check} fallback={info.statusText} /></td>
-  </tr>
-{/if}

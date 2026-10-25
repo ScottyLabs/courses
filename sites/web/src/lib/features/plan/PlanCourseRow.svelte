@@ -7,9 +7,8 @@
   import type { PlanCheck, PlanCourse } from "$lib/core/plan";
   import { codeOf } from "$lib/core/requisite-format";
   import { planPage } from "./context";
-  import CourseIssues from "./CourseIssues.svelte";
   import CourseOptions from "./CourseOptions.svelte";
-  import { courseRowInfo } from "./rows";
+  import { courseRowInfo, requisiteDetails } from "./rows";
   import StatusButton from "./StatusButton.svelte";
 
   let {
@@ -40,8 +39,6 @@
   } = $props();
 
   const page = planPage();
-  const issuesId = $props.id();
-  let showIssues = $state(false);
 
   const check = $derived<PlanCheck | undefined>(page.derived.checks.get(course.id));
   const info = $derived(
@@ -117,11 +114,8 @@
     {#if info.level !== null && info.statusText !== null}
       <StatusButton
         level={info.level}
-        text={info.statusText}
+        text={requisiteDetails(check, info.statusText)}
         {code}
-        open={showIssues}
-        controls={issuesId}
-        ontoggle={() => (showIssues = !showIssues)}
       />
     {/if}
     <span class="tabular hidden w-10 shrink-0 text-right text-label-md font-normal text-muted sm:inline" title={FCE_HOURS_HELP}>
@@ -141,9 +135,7 @@
       {onmovedown}
       {onremove}
       {onupdate}
+      {check}
     />
   </div>
-  {#if showIssues && check}
-    <CourseIssues id={issuesId} {check} fallback={info.statusText} />
-  {/if}
-</li>
+  </li>

@@ -90,3 +90,9 @@ export function nudgeTarget(
   if (index >= planned.length - 1) return undefined;
   return planned[index + 2]?.id ?? null;
 }
+
+/** The requisite details a planned course's status tooltip shows: each issue on its own line, or the summary. */
+export function requisiteDetails(check: PlanCheck | undefined, fallback: string | null): string {
+  const lines = check?.check.issues.map((issue) => issue.message) ?? [];
+  return lines.length > 0 ? lines.join("\n") : (fallback ?? "");
+}

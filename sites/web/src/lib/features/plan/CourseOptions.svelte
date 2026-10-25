@@ -1,10 +1,12 @@
 <script lang="ts">
   // A planned course's options: move up or down, move to another semester, pass/fail, units for variable-unit
-  // courses, view the course, remove. The keyboard (and touch) way to do what dragging does.
-  import { ArrowDown, ArrowLeftRight, ArrowUp, ExternalLink, Trash2 } from "@lucide/svelte";
-  import type { PlanCourse } from "$lib/core/plan";
+  // courses, waive or restore its requisites, view the course, remove. The keyboard (and touch) way to do what dragging
+  // does.
+  import { ArrowDown, ArrowLeftRight, ArrowUp, ExternalLink, ShieldCheck, Trash2, Undo2 } from "@lucide/svelte";
+  import type { PlanCheck, PlanCourse } from "$lib/core/plan";
   import { codeOf } from "$lib/core/requisite-format";
   import { termLabel } from "$lib/core/requisites";
+  import { record } from "$lib/state";
   import MenuItem from "./MenuItem.svelte";
   import MenuLabel from "./MenuLabel.svelte";
   import OptionsMenu from "./OptionsMenu.svelte";
@@ -21,6 +23,7 @@
     onmovedown,
     onremove,
     onupdate,
+    check,
   }: {
     course: PlanCourse;
     info: CourseRowInfo;
@@ -35,7 +38,14 @@
     onmovedown?: () => void;
     onremove: () => void;
     onupdate: (patch: { passFail?: boolean; units?: number }) => void;
+    /** The course's requisite check, for waiving or restoring its requisites. */
+    check?: PlanCheck;
   } = $props();
+
+  const canWaive = $derived(
+    check?.check.issues.some((i) => i.severity !== "info" && (i.kind === "prereq" || i.kind === "coreq")) ?? false,
+  );
+  const waived = $derived((check?.check.waived.prereqs || check?.check.waived.coreqs) ?? false);
 
   const code = $derived(codeOf(course.courseId));
 
@@ -88,6 +98,18 @@
           class="tabular h-8 w-20 rounded-tag border border-line-strong bg-surface px-2 text-body-2 text-ink"
         />
       </label>
+    {/if}
+    {#if canWaive}
+      <MenuItem
+        icon={ShieldCheck}
+        onclick={() => {
+          close();
+          record.setOverride(course.courseId, { prereqs: true, coreqs: true, note: "Waived from the degree plan" });
+        }}>Mark requisites as waived</MenuItem
+      >
+    {/if}
+    {#if waived}
+      <MenuItem icon={Undo2} onclick={() => { close(); record.setOverride(course.courseId, null); }}>Undo requisite waiver</MenuItem>
     {/if}
     <MenuItem icon={ExternalLink} {href} onclick={close}>View course</MenuItem>
     <MenuItem icon={Trash2} danger onclick={() => { close(); onremove(); }}>{removeLabel}</MenuItem>
