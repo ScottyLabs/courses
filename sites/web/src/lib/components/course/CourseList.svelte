@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { FCE_HOURS_HELP } from "$lib/core/fce";
   import { fceSummary } from "./data.svelte";
 
   let {
@@ -30,7 +31,7 @@
     <span>Course</span>
     <span>Title</span>
     <span class="col-meets text-right">{allSemesters ? "Offered" : "Meets"}</span>
-    <span class="col-hours text-right">{showFce ? "FCE hrs" : ""}</span>
+    <span class="col-hours text-right" title={showFce ? FCE_HOURS_HELP : undefined}>{showFce ? "FCE hrs" : ""}</span>
     <span class="col-rating text-right">{showFce ? "Rating" : ""}</span>
     <span class="text-right">Units</span>
     <span></span>
@@ -57,7 +58,7 @@
 
   @container course-list (min-width: 34rem) {
     .course-list-head {
-      grid-template-columns: 4.25rem minmax(0, 1fr) 4rem 2.75rem 2rem;
+      grid-template-columns: 4.25rem minmax(0, 1fr) 4.5rem 2.75rem 2rem;
     }
 
     .col-hours {
@@ -67,7 +68,7 @@
 
   @container course-list (min-width: 48rem) {
     .course-list-head {
-      grid-template-columns: 4.25rem minmax(0, 1fr) 10rem 4rem 3rem 2.75rem 2rem;
+      grid-template-columns: 4.25rem minmax(0, 1fr) 10rem 4.5rem 3rem 2.75rem 2rem;
     }
 
     .col-meets,

@@ -33,7 +33,8 @@ share. Each component needs only a course (or its id) and a semester:
 
 - `CourseCard` (the Figma card: requisite status with a popover of the expression as status chips, semester select,
   save star, friends taking it; expanded, the FCE aggregate and table), `CourseRow` in a `CourseList` (Courseweave's
-  compact rows) and `CourseCardSmall` (the Figma's small card, for saved courses and the record's Courses Taken and
+  compact rows; from 34rem wide their hours column is Courseweave's workload cell: the FCE hours, "mini" before a
+  mini's, over a `WorkloadMeter` bar, with the workload described in its title and to screen readers) and `CourseCardSmall` (the Figma's small card, for saved courses and the record's Courses Taken and
   Currently Taking, with `deptLabel`, `children` and `footer` slots).
 - `RequisiteStatus` (the requisite line with its details and waivers, on the course page, the panel and the schedule
   rail's checks), `RequisiteLevelIcon`, `RequisiteExpression`, `RequisiteSummary`, `RequisiteTreeNode`,

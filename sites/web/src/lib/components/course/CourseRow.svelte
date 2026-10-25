@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Star } from "@lucide/svelte";
-  import { formatHours } from "$lib/core/fce";
+  import { FCE_HOURS_HELP, courseIsMini, formatHours } from "$lib/core/fce";
+  import { workloadDescription } from "$lib/core/fce/workload";
   import { meetingSummary } from "$lib/core/explorer/summary";
   import { termLabel } from "$lib/core/requisites";
   import { coursePath } from "$lib/core/routes";
@@ -8,6 +9,7 @@
   import type { Course } from "$lib/core/types";
   import { fceSummary } from "./data.svelte";
   import SaveButton from "./SaveButton.svelte";
+  import WorkloadMeter from "./WorkloadMeter.svelte";
 
   let {
     course,
@@ -36,6 +38,8 @@
   const fce = $derived(fceSummary());
   const stats = $derived(fce.value?.courses.get(course.id));
   const showFce = $derived(fce.status === "ready" && fce.value !== null);
+  const mini = $derived(courseIsMini(course, stats));
+  const workload = $derived(stats ? workloadDescription(stats.hours, course.units, mini) : "");
   const offeredText = $derived(
     offered === undefined
       ? ""
@@ -85,7 +89,7 @@
           </span>
         {/if}
         {#if showFce && stats}
-          <span class="narrow-fce ml-auto flex shrink-0 gap-2 text-muted">
+          <span class="narrow-fce ml-auto flex shrink-0 gap-2 text-muted" title={workload}>
             {#if stats.hours !== null}<span><span class="tabular text-ink">{formatHours(stats.hours)}</span> h/wk</span>{/if}
             {#if stats.courseRate !== null}<span class="inline-flex items-center gap-0.5"
                 ><span class="tabular text-ink">{stats.courseRate.toFixed(1)}</span><Star
@@ -108,10 +112,19 @@
     {/if}
   </span>
 
-  <span class="col-hours pt-px text-right text-body-2" title="Average hours a week from FCEs">
+  <!-- Courseweave's WorkloadCell: the hours, and under them the bar against what the units suggest. -->
+  <span class="col-hours pt-px text-right text-body-2">
     {#if showFce}
       {#if stats?.hours != null}
-        <span class="tabular text-ink">{formatHours(stats.hours)}</span><span class="text-label-md text-muted"> h</span>
+        <span class="block" title="{workload}. {FCE_HOURS_HELP}">
+          <span class="block whitespace-nowrap" aria-hidden="true">
+            {#if mini}<span class="mr-1 text-label-sm font-semibold text-muted">mini</span>{/if}<span
+              class="tabular text-ink">{formatHours(stats.hours)}</span
+            ><span class="ml-0.5 text-label-md text-muted">h</span>
+          </span>
+          <WorkloadMeter hours={stats.hours} units={course.units} {mini} class="mt-1.5" />
+          <span class="sr-only">{workload}</span>
+        </span>
       {:else}
         <span class="text-label-md text-muted">No FCE</span>
       {/if}
@@ -157,7 +170,7 @@
 
   @container course-list (min-width: 34rem) {
     .course-row {
-      grid-template-columns: 4.25rem minmax(0, 1fr) 4rem 2.75rem 2rem;
+      grid-template-columns: 4.25rem minmax(0, 1fr) 4.5rem 2.75rem 2rem;
     }
 
     .col-hours {
@@ -177,7 +190,7 @@
 
   @container course-list (min-width: 48rem) {
     .course-row {
-      grid-template-columns: 4.25rem minmax(0, 1fr) 10rem 4rem 3rem 2.75rem 2rem;
+      grid-template-columns: 4.25rem minmax(0, 1fr) 10rem 4.5rem 3rem 2.75rem 2rem;
     }
 
     .col-meets,
