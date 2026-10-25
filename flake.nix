@@ -62,6 +62,18 @@
             version = "0.1.0";
             nativeBuildInputs = [ pkgs.makeWrapper ];
             buildArgs = {
+              # The service embeds the pinned catalog release (deployments/catalog.json), which the helper's
+              # Cargo-only source filter leaves out; the dependency build keeps the filtered source.
+              src = pkgs.lib.fileset.toSource {
+                root = ./.;
+                fileset = pkgs.lib.fileset.unions [
+                  ./Cargo.toml
+                  ./Cargo.lock
+                  ./crates
+                  ./secretspec.toml
+                  ./deployments/catalog.json
+                ];
+              };
               cargoExtraArgs = "--bin courses-web-api";
               postInstall = ''
                 wrapProgram $out/bin/courses-web-api --set STATIC_DIR ${web}
