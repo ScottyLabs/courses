@@ -21,9 +21,9 @@ beside its requirements:
 - **Title row** (`PlanHeader.svelte`, at the top of the semesters column, level with the requirements heading; no band
   above the page): the plan's name as the page title (click it to rename in place; Enter saves, Escape cancels), a
   chevron beside it that lists the student's plans and "New plan" (same programs and start), and on the right the
-  Cards/Detailed switch (icons only below 1280px) and the plan's options: rename, duplicate, send to Stellic (a script for the student's own Stellic tab, `core/stellic-export.ts`),
-  import from Stellic, delete. On phones, the button that opens the rail's sheet ("Programs and progress") and the
-  progress bar in one line.
+  Cards/Detailed switch (icons only below 1280px) and the plan's options: rename, duplicate, send to Stellic (a script
+  for the student's own Stellic tab, `core/stellic-export.ts`), import from Stellic, delete. On phones, under it, the
+  button that opens the rail's sheet ("Programs and requirements") and the progress bar in one line.
 - **Rail** (`PlanRail.svelte`, a sheet on phones): the programs (`audit/ProgramPicker.svelte`: each with its
   requirements version by entry year and campus, its concentrations, any number of them, pressed again to clear, and
   what's checked alongside; then the program search, whose panel holds the type filter for majors, minors,
