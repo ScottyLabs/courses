@@ -108,7 +108,7 @@
           class="flex flex-col gap-4 rounded-card border border-pressed bg-surface p-5 md:flex-row md:items-end md:justify-between"
         >
           <div class="min-w-0">
-            <p class="text-[40px] leading-none font-semibold tracking-tight text-strong">{codeOf(courseId)}</p>
+            <p class="text-[40px] tabular leading-none font-semibold tracking-tight text-strong">{codeOf(courseId)}</p>
             <h2 class="mt-1 text-heading-4 text-strong">{title}</h2>
             <p class="mt-1.5 text-body-2 text-ink">
               {units === null ? "Variable units" : `${formatUnits(units)} units`}{entry?.passFail

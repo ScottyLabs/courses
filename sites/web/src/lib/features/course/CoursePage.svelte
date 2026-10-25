@@ -180,7 +180,7 @@
         <div class="min-w-0 lg:self-end">
           <div class="flex items-start gap-3">
             <div class="min-w-0 flex-1">
-              <p class="text-[44px] leading-none font-semibold tracking-tight text-strong sm:text-[64px]">{code}</p>
+              <p class="text-[44px] tabular leading-none font-semibold tracking-tight text-strong sm:text-[64px]">{code}</p>
               <h1 class="mt-2 max-w-[32ch] text-heading-3 text-strong sm:text-[32px] sm:leading-10">{title}</h1>
             </div>
             <SaveButton {courseId} />

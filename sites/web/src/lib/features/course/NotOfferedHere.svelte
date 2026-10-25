@@ -54,7 +54,7 @@
     </div>
   {:else}
     <div class="max-w-md">
-      <p class="text-[40px] leading-none font-semibold tracking-tight text-muted">{code}</p>
+      <p class="text-[40px] tabular leading-none font-semibold tracking-tight text-muted">{code}</p>
       <svelte:element this={compact ? "h2" : "h1"} class="mt-2 mb-3 text-strong {compact ? 'text-heading-4' : 'text-heading-3'}">
         {title ?? `No course ${code}`}
       </svelte:element>
