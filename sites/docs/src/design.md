@@ -172,7 +172,9 @@ active filter count; `sheetDone` adds a button at the sheet's foot that closes i
 short lines under it (the schedule's courses and totals). `RailSection` is a collapsible filter with an icon, label
 and chevron. `sheetButtonLabel` and `sheetIcon` replace the Filter button's text and icon where the rail isn't
 filters (the schedules page's "Courses (6)").
-`RailLayout`'s `autoCollapse` folds the rail to its strip while something sits beside the results (the Courses page's
+`RailLayout`'s `showTitle={false}` keeps the rail's title for screen readers only, when the page's own title already
+says where the student is (the degree plan); `railFooter` pins a snippet to the bottom of the rail and of its phone
+sheet (a schedule's totals). `autoCollapse` folds the rail to its strip while something sits beside the results (the Courses page's
 course panel below 1440px), with `bind:railCollapsed` to follow it.
 `PageToolbar` has slots for the title, an intro, the search field, the result count, removable chips (plus a Reset
 pill on phones) and right-aligned actions; `actionsLayout` (`auto`, `inline`, `row`) chooses whether the actions share

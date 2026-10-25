@@ -14,6 +14,8 @@
     name = "filters",
     titleAction,
     rail,
+    railFooter,
+    showTitle = true,
     header,
     children,
     filterCount = 0,
@@ -35,6 +37,10 @@
     titleAction?: Snippet;
     /** Rail content: RailGroup and RailSection blocks. Rendered once: in the column on desktop, in a sheet below it. */
     rail: Snippet;
+    /** Pinned to the bottom of the rail (and of the phone sheet), such as a schedule's totals. */
+    railFooter?: Snippet;
+    /** False to keep the title for screen readers only, when the header already says where the student is. */
+    showTitle?: boolean;
     /** White band at the top of the main column, usually a PageToolbar. */
     header?: Snippet;
     /** Main content on the page background. */
@@ -138,7 +144,7 @@
       class="shrink-0 border-r border-line bg-surface {shownCollapsed ? 'w-16' : RAIL_WIDTH}"
     >
       <div
-        class="scrollbar-thin sticky top-(--header-h) h-[calc(100dvh-var(--header-h))] overflow-y-auto overscroll-contain"
+        class="scrollbar-thin sticky top-(--header-h) flex h-[calc(100dvh-var(--header-h))] flex-col overflow-y-auto overscroll-contain"
       >
         {#if shownCollapsed}
           <div class="flex flex-col items-center gap-2 pt-5">
@@ -159,8 +165,8 @@
             {/if}
           </div>
         {:else}
-          <div class="relative px-6 pt-[39px] pb-6 min-[90rem]:px-[31px]">
-            <div class="flex items-center gap-2 pr-20">
+          <div class="relative px-6 pt-[39px] min-[90rem]:px-[31px] {showTitle ? 'pb-6' : ''}">
+            <div class={showTitle ? "flex items-center gap-2 pr-20" : "sr-only"}>
               <h2 class="text-heading-5 text-ink">{title}</h2>
               {@render titleAction?.()}
             </div>
@@ -177,6 +183,11 @@
             </Button>
           </div>
           <div>{@render rail()}</div>
+          {#if railFooter}
+            <div class="sticky bottom-0 mt-auto border-t border-line bg-surface px-6 py-4 min-[90rem]:px-[31px]">
+              {@render railFooter()}
+            </div>
+          {/if}
         {/if}
       </div>
     </aside>
@@ -194,8 +205,11 @@
   </div>
 </div>
 
-{#snippet doneFooter()}
-  <Button variant="primary" full onclick={() => (sheetOpen = false)}>{sheetDone}</Button>
+{#snippet sheetFooter()}
+  {#if railFooter}<div class={sheetDone === undefined ? "" : "mb-3"}>{@render railFooter()}</div>{/if}
+  {#if sheetDone !== undefined}
+    <Button variant="primary" full onclick={() => (sheetOpen = false)}>{sheetDone}</Button>
+  {/if}
 {/snippet}
 
 {#if !desktop.current}
@@ -204,7 +218,7 @@
     title={sheetLabel}
     {backLabel}
     side="right"
-    footer={sheetDone === undefined ? undefined : doneFooter}
+    footer={sheetDone === undefined && railFooter === undefined ? undefined : sheetFooter}
   >
     <div class="pt-2">{@render rail()}</div>
   </Sheet>
