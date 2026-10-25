@@ -126,6 +126,8 @@
     return openTerms[term] ?? col?.phase !== "past";
   }
 
+  let flashTimer: ReturnType<typeof setTimeout> | undefined;
+
   function jumpTo(planCourseId: string, term: string): void {
     openTerms = { ...openTerms, [term]: true };
     tab = "semesters";
@@ -137,6 +139,14 @@
         const el = document.getElementById(`plan-course-${planCourseId}`);
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
         el?.focus({ preventScroll: true });
+        // Flash the row red so it stands out; restart the animation when the same row is jumped to again.
+        if (el) {
+          el.classList.remove("animate-flash-danger");
+          void el.offsetWidth;
+          el.classList.add("animate-flash-danger");
+          clearTimeout(flashTimer);
+          flashTimer = setTimeout(() => el.classList.remove("animate-flash-danger"), 1600);
+        }
       },
       fromDialog ? 120 : 30,
     );

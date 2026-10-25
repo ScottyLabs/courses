@@ -4,7 +4,6 @@
   import { ChevronDown } from "@lucide/svelte";
   import { getRail } from "$lib/components/layout/rail-context";
   import RailGroup from "$lib/components/layout/RailGroup.svelte";
-  import StatBox from "$lib/components/ui/StatBox.svelte";
   import { entryYearOf, startTermOptions } from "$lib/core/degree/hooks";
   import { termPhase } from "$lib/core/plan";
   import { termLabel } from "$lib/core/requisites";
@@ -57,26 +56,30 @@
           : "Pick a program to see what's left for your degree."}
     </p>
   {/if}
-  <div class="grid grid-cols-2 gap-2 rounded-card bg-surface-2 p-2">
-    <StatBox
-      variant="plain"
-      label="Units planned"
-      value={page.derived.totalUnits}
-      unit={numbers.needUnits ? `of ${numbers.needUnits}` : undefined}
-    />
-    <div title="From your record, and AP, IB and transfer credit" class="grid">
-      <StatBox variant="plain" label="Units completed" value={page.derived.completedUnits} />
+  <!-- One column of figures: label on the left, value on the right. -->
+  <dl class="flex flex-col divide-y divide-line rounded-card bg-surface-2 px-3">
+    <div class="flex items-baseline justify-between gap-3 py-2">
+      <dt class="text-body-2 text-muted">Units planned</dt>
+      <dd class="tabular text-body-1 text-strong">
+        {page.derived.totalUnits}{#if numbers.needUnits}<span class="ml-1 text-body-2 text-muted">of {numbers.needUnits}</span>{/if}
+      </dd>
     </div>
-    <StatBox
-      variant="plain"
-      label={numbers.requirements ? "Requirements met or planned" : "Requirements"}
-      value={numbers.requirements
-        ? `${numbers.requirements.done + numbers.requirements.inProgress + numbers.requirements.planned}/${numbers.requirements.total}`
-        : "\u2013"}
-    />
-    <StatBox variant="plain" label="Semesters">
-      <span class="flex min-w-0 flex-wrap items-baseline gap-x-1">
-        <span class="tabular text-[20px] leading-7">{page.derived.columns.length}</span>
+    <div class="flex items-baseline justify-between gap-3 py-2" title="From your record, and AP, IB and transfer credit">
+      <dt class="text-body-2 text-muted">Units completed</dt>
+      <dd class="tabular text-body-1 text-strong">{page.derived.completedUnits}</dd>
+    </div>
+    <div class="flex items-baseline justify-between gap-3 py-2">
+      <dt class="text-body-2 text-muted">Requirements met or planned</dt>
+      <dd class="tabular text-body-1 whitespace-nowrap text-strong">
+        {numbers.requirements
+          ? `${numbers.requirements.done + numbers.requirements.inProgress + numbers.requirements.planned}/${numbers.requirements.total}`
+          : "\u2013"}
+      </dd>
+    </div>
+    <div class="flex items-baseline justify-between gap-3 py-2">
+      <dt class="text-body-2 text-muted">Semesters</dt>
+      <dd class="flex min-w-0 flex-wrap items-baseline justify-end gap-x-1">
+        <span class="tabular text-body-1 text-strong">{page.derived.columns.length}</span>
         <label for="plan-start" class="sr-only">First semester</label>
         <span class="inline-flex items-baseline gap-x-1 whitespace-nowrap">
           <span aria-hidden="true" class="text-body-2 text-muted">from</span>
@@ -99,9 +102,9 @@
             </select>
           </span>
         </span>
-      </span>
-    </StatBox>
-  </div>
+      </dd>
+    </div>
+  </dl>
 </RailGroup>
 
 {#if problems.length > 0}
