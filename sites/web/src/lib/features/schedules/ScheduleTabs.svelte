@@ -199,7 +199,7 @@
               finishRename(false);
             }
           }}
-          class="mb-1.5 h-9 w-52 shrink-0 rounded-field border border-accent bg-surface px-3 text-heading-6 text-strong"
+          class="focus-field mb-1.5 h-9 w-52 shrink-0 rounded-field border border-line-strong bg-surface px-3 text-heading-6 text-strong"
         />
       {:else}
         <button
