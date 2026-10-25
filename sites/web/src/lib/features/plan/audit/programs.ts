@@ -37,7 +37,8 @@ function matchesKind(p: ProgramInfo, filter: KindFilter): boolean {
 
 /**
  * Programs whose names contain every word of `query`, leaving out the chosen ones: names starting with the query
- * first, then Pittsburgh before other campuses, majors before minors, then by name.
+ * first, then Pittsburgh before other campuses, majors before minors, then by name. With no query, a kind filter
+ * lists every program of that kind; "all" lists nothing.
  */
 export function searchPrograms(
   programs: ProgramInfo[],
@@ -47,7 +48,7 @@ export function searchPrograms(
 ): ProgramInfo[] {
   const q = normalize(query).trim();
   const tokens = q.split(/\s+/u).filter((t) => t !== "");
-  if (tokens.length === 0) return [];
+  if (tokens.length === 0 && filter === "all") return [];
   return programs
     .filter((p) => {
       if (chosen.has(p.catalogId) || !matchesKind(p, filter)) return false;

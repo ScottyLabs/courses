@@ -73,10 +73,11 @@
     [
       "inline-flex max-w-full shrink-0 items-center whitespace-nowrap transition-colors",
       shape === "pill" ? "rounded-full" : "rounded-tag",
-      tones[tone],
+      // Pressed replaces the tone, the way a pressed ToggleChips pill looks: appending a fill to a tone that sets its
+      // own leaves which one shows to the stylesheet's order.
+      pressed === true ? "border border-line-strong bg-line text-strong" : tones[tone],
       sizes[size],
       interactive ? "hover:brightness-[0.97] hover:border-line-strong" : "",
-      pressed === true ? "bg-line" : "",
       className,
     ].join(" "),
   );

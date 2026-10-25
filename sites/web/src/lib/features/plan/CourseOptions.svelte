@@ -95,7 +95,7 @@
           step="1"
           value={course.units ?? info.units}
           oninput={onunits}
-          class="tabular h-8 w-20 rounded-tag border border-line-strong bg-surface px-2 text-body-2 text-ink"
+          class="tabular focus-field h-8 w-20 rounded-tag border border-line-strong bg-surface px-2 text-body-2 text-ink"
         />
       </label>
     {/if}

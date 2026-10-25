@@ -223,18 +223,20 @@
     ? 'border-accent ring-2 ring-accent/25'
     : page.dragging
       ? 'border-dashed border-line-strong'
-      : 'border-pressed'} {phase === 'past' ? 'bg-surface/70' : 'bg-surface'}"
+      : 'border-pressed'} bg-surface"
 >
-  <header class="flex items-center gap-2 border-b border-line py-2 pr-2 pl-4">
+  <!-- Collapsed, the footer's rule is enough under the header. -->
+  <header class="flex items-center gap-2 py-2 pr-2 pl-4 {open ? 'border-b border-line' : ''}">
     <div class="flex min-h-10 min-w-0 flex-1 items-center gap-2 md:min-h-9">
-      <h3 id={headingId} class="min-w-0 truncate text-heading-6 text-strong">
+      <!-- On phones the name is a button whose focus ring the heading mustn't clip, so the button truncates. -->
+      <h3 id={headingId} class="min-w-0 text-heading-6 text-strong {page.compact ? 'flex' : 'truncate'}">
         {#if page.compact}
           <button
             type="button"
             onclick={() => page.toggleTerm(term)}
             aria-expanded={open}
             aria-controls={bodyId}
-            class="-ml-1 flex min-h-10 max-w-full items-center gap-2 rounded-tag pl-1 text-left"
+            class="-ml-1 flex min-h-10 min-w-0 items-center gap-2 rounded-tag px-1 text-left"
           >
             <ChevronDown
               aria-hidden="true"

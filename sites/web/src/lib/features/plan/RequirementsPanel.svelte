@@ -43,7 +43,7 @@
 {#if status === "signin" || status === "forbidden" || (plan.programs.length === 0 && session.status !== "signed-in")}
   <SignInNote title="Sign in to check requirements" forbidden={status === "forbidden"} />
 {:else if plan.programs.length === 0}
-  <div class="rounded-card border border-dashed border-line-strong bg-surface">
+  <div class="rounded-card border border-pressed bg-surface">
     <AuditPanel input={page.derived.auditInput} data={null} {base} />
   </div>
 {:else}

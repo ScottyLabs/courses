@@ -5,10 +5,23 @@
   import Button from "$lib/components/ui/Button.svelte";
   import { session } from "$lib/data";
 
-  let { title, forbidden = false }: { title: string; forbidden?: boolean } = $props();
+  let {
+    title,
+    forbidden = false,
+    boxed = true,
+  }: {
+    title: string;
+    forbidden?: boolean;
+    /** A card of its own on the page; false inside a card that's already there (the plan's programs). */
+    boxed?: boolean;
+  } = $props();
 </script>
 
-<div class="flex flex-col gap-3 rounded-card border border-dashed border-line-strong bg-surface p-4 sm:flex-row sm:items-center">
+<div
+  class="flex flex-col gap-3 sm:flex-row sm:items-center {boxed
+    ? 'rounded-card border border-pressed bg-surface p-4'
+    : ''}"
+>
   <span class="grid size-10 shrink-0 place-items-center rounded-full bg-paper text-ink">
     <LogIn aria-hidden="true" class="size-5" />
   </span>

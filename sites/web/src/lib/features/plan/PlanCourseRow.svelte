@@ -72,7 +72,7 @@
   draggable={page.dragEnabled ? "true" : undefined}
   ondragstart={page.dragEnabled ? ondragstart : undefined}
   ondragend={page.dragEnabled ? () => page.endDrag() : undefined}
-  class="group relative rounded-tag px-1 hover:bg-paper focus-visible:outline-offset-0 {page.dragEnabled
+  class="group relative rounded-field px-1 hover:bg-paper focus-visible:outline-offset-0 {page.dragEnabled
     ? 'cursor-grab active:cursor-grabbing'
     : ''}"
 >
@@ -100,7 +100,7 @@
     {#if info.passFail}
       <span
         title={info.passFailOnly ? "Pass/fail only: units are not factorable" : "Taking pass/fail: units are not factorable"}
-        class="shrink-0 rounded-tag border border-pressed px-1 text-label-sm font-semibold text-muted"
+        class="shrink-0 rounded-tag bg-line px-1 text-label-sm font-semibold text-ink"
       >
         P/F
       </span>
