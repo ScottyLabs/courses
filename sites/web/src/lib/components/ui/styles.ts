@@ -6,7 +6,8 @@ const toggleLook =
   "inline-flex min-w-0 items-center justify-center rounded-full border border-line-strong text-label-md text-ink transition-colors hover:bg-hover aria-pressed:bg-line aria-pressed:text-strong disabled:opacity-50";
 
 /** Toggle pill used by RangeSlider presets and ToggleChips (Figma "6 Units"). */
-export const togglePill = `${toggleLook} h-[34px] px-2`;
+/** A toggle pill: a 40px tap target on touch layouts, the Figma's 34px from lg. */
+export const togglePill = `${toggleLook} h-10 px-2 lg:h-[34px]`;
 
 /** A round toggle for a single letter, such as a weekday: a 40px tap target on touch layouts, the pill's 34px from lg. */
 export const toggleCircle = `${toggleLook} size-10 shrink-0 lg:size-[34px]`;
