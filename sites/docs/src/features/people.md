@@ -70,7 +70,7 @@ Friends are new in CMU Courses; the Figma's "Profile Page (Friends)" sets the lo
 | `lib/features/friends/friends.ts` | The friends store: friends and requests, the invite made in this tab, sharing; errors in plain words (tested) |
 | `lib/features/friends/instance.svelte.ts` | The website's store, emptied when the account changes |
 | `lib/features/profile/FriendsSection.svelte` | The section: requests, friend cards, sent requests, sharing settings |
-| `lib/features/friends/FriendsActions.svelte` | "Share Link" and "Add Friends" beside the heading, with their dialogs |
+| `lib/features/friends/FriendsActions.svelte` | "Share link" and "Add friends" beside the heading, with their dialogs |
 | `lib/features/friends/FriendSchedule.svelte` | A friend's friends-visible schedule for a semester |
 | `lib/features/friends/InvitePage.svelte` | The invite page |
 
@@ -78,9 +78,9 @@ Friends are new in CMU Courses; the Figma's "Profile Page (Friends)" sets the lo
   taking in the chosen semester (from `GET /api/friends/courses`), with the ones the student is also taking (their
   schedule for the semester and courses in progress on their record) first and marked. The semester defaults to the
   one in session. The card's menu removes the friend after a confirmation.
-- **Requests**: incoming ones can be accepted or declined, sent ones canceled. "Add Friends" sends a request by Andrew
+- **Requests**: incoming ones can be accepted or declined, sent ones canceled. "Add friends" sends a request by Andrew
   ID (an email address works too); when nobody with that ID has signed in, it offers an invite link instead.
-- **Invite links**: "Share Link" makes a link (`/invite/<token>`, built from the site's own origin), copies or shares
+- **Invite links**: "Share link" makes a link (`/invite/<token>`, built from the site's own origin), copies or shares
   it, makes a new one or revokes it. The API can't list a student's links, so the dialog shows only the one made in
   this tab.
 - **Sharing**: "What friends can see" holds the two switches, share my courses and share my schedules, each saying

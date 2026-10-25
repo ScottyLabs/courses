@@ -48,6 +48,23 @@ export interface InstructorListFile {
   }[];
 }
 
+/**
+ * A `catalog/details/<NN>` chunk without the registrar's placeholder description ("No course description
+ * provided."), so every page words a missing description alike.
+ */
+export function withoutPlaceholders(
+  chunk: Record<string, CatalogDetails>,
+): Record<string, CatalogDetails> {
+  const out: Record<string, CatalogDetails> = {};
+  for (const [id, details] of Object.entries(chunk)) {
+    if (/^no course description provided\.?$/iu.test(details.description?.trim() ?? "")) {
+      const { description: _placeholder, ...rest } = details;
+      out[id] = rest;
+    } else out[id] = details;
+  }
+  return out;
+}
+
 /** Course-number prefix of a course id: "15" for "15122". Large documents are split by it. */
 export function prefixOf(courseId: string): string {
   return courseId.slice(0, 2);

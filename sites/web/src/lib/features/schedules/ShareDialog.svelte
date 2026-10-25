@@ -100,7 +100,7 @@
           onchange={(value) => schedules.setVisibility(schedule.id, value === "friends" ? "friends" : "private")}
           options={[
             { value: "private", label: "Only me" },
-            { value: "friends", label: "Friends" },
+            { value: "friends", label: "Visible to friends" },
           ]}
           class="self-start"
         />

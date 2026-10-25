@@ -8,8 +8,8 @@
   // The Friends heading's buttons (Figma "Share Link", "Add Friends") and their dialogs.
 </script>
 
-<Button size="sm" icon={Link} class="max-sm:h-10" onclick={() => (friendDialogs.inviting = true)}>Share Link</Button>
-<Button size="sm" icon={Plus} class="max-sm:h-10" onclick={() => (friendDialogs.adding = true)}>Add Friends</Button>
+<Button size="sm" icon={Link} class="max-sm:h-10" onclick={() => (friendDialogs.inviting = true)}>Share link</Button>
+<Button size="sm" icon={Plus} class="max-sm:h-10" onclick={() => (friendDialogs.adding = true)}>Add friends</Button>
 
 <AddFriendDialog
   bind:open={friendDialogs.adding}

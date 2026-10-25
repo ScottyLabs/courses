@@ -31,6 +31,7 @@ import {
   type BuildInfo,
   type DocumentTypes,
   type RegistrarFinal,
+  withoutPlaceholders,
 } from "./documents.ts";
 import { SignInRequiredError } from "./errors.ts";
 
@@ -152,9 +153,13 @@ export class Catalog {
 
   /** Descriptions and profiles for every course with this number prefix; empty when none has any. */
   catalogDetails(prefix: string): Promise<Record<string, CatalogDetails>> {
-    return orIfMissing(
-      this.document<Record<string, CatalogDetails>>(docs.catalogDetails(prefix)),
-      {},
+    return this.#memo(`details:${prefix}`, async () =>
+      withoutPlaceholders(
+        await orIfMissing(
+          this.document<Record<string, CatalogDetails>>(docs.catalogDetails(prefix)),
+          {},
+        ),
+      ),
     );
   }
 

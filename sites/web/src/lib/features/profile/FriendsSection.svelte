@@ -22,7 +22,7 @@
   // friend shares, and the student's own sharing settings.
   let { title: _title }: { title: string } = $props();
 
-  // "Share Link" and "Add Friends" beside the section title.
+  // "Share link" and "Add friends" beside the section title.
   profileBand(() => ({ actions: friendsActions }));
 
   $effect(() => {
@@ -131,8 +131,8 @@
             description="Add friends by Andrew ID, or send an invite link. You'll see the courses and schedules they choose to share."
           >
             <div class="flex flex-wrap justify-center gap-2">
-              <Button variant="primary" onclick={() => (friendDialogs.adding = true)}>Add Friends</Button>
-              <Button onclick={() => (friendDialogs.inviting = true)}>Share Link</Button>
+              <Button variant="primary" onclick={() => (friendDialogs.adding = true)}>Add friends</Button>
+              <Button onclick={() => (friendDialogs.inviting = true)}>Share link</Button>
             </div>
           </EmptyState>
         </div>

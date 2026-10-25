@@ -210,15 +210,15 @@
     <section class="flex flex-col gap-4">
       <h3 class="text-heading-5 text-strong">Buttons</h3>
       <div class="flex flex-wrap items-center gap-3">
-        <Button variant="primary" icon={Upload}>Upload Schedule</Button>
+        <Button variant="primary" icon={Upload}>Upload SIO calendar</Button>
         <Button variant="secondary">Reset</Button>
         <Button icon={LogOut}>Sign out</Button>
         <Button variant="ghost" icon={Plus}>Add</Button>
         <Button variant="danger" icon={Trash2}>Delete</Button>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-        <Button size="sm" icon={Link}>Share Link</Button>
-        <Button size="sm" icon={Download}>SIO Export</Button>
+        <Button size="sm" icon={Link}>Share link</Button>
+        <Button size="sm" icon={Download}>Export from SIO</Button>
         <Button size="lg" variant="primary">Large</Button>
         <Button loading>Saving</Button>
         <Button disabled>Disabled</Button>
