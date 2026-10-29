@@ -1,207 +1,49 @@
-//! Public-facing course catalog API. Pulls the catalog from the CDN S3
-//! bucket and exposes REST routes under `/api`. Re-fetches on S3 ETag
-//! change.
-//!
-//! S3 credentials come from the typed secretspec SDK (`CDN_*`).
-
-use std::sync::Arc;
-use std::time::Duration;
-
-use anyhow::{Context, Result, anyhow};
-use arc_swap::ArcSwap;
-use aws_sdk_s3::Client as S3Client;
-use aws_sdk_s3::config::{BehaviorVersion, Credentials, Region};
+//! Legacy public API skeleton; the browser uses courses-web-api instead.
+use anyhow::Result;
 use axum::{
-    extract::{Path, State},
-    http::header,
+    http::StatusCode,
     response::{IntoResponse, Response},
     routing::get,
 };
-use serde::Serialize;
+use serde_json::json;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
-use tracing::{info, warn};
-use utoipa::{OpenApi, ToSchema};
+use utoipa::OpenApi;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_scalar::{Scalar, Servable};
 
-secretspec_derive::declare_secrets!("../../secretspec.toml");
-
-struct Catalog {
-    etag: String,
-    bytes: bytes::Bytes,
-}
-
-#[derive(Clone)]
-struct AppState {
-    catalog: Arc<ArcSwap<Catalog>>,
-}
-
 #[derive(OpenApi)]
-#[openapi(
-    tags(
-        (name = "health", description = "Health check"),
-        (name = "catalog", description = "Course catalog"),
-    ),
-    info(title = "ScottyLabs Courses API", version = "0.1.0")
-)]
+#[openapi(info(title = "Legacy Courses API skeleton", version = "0.1.0"))]
 struct ApiDoc;
-
-/// Build an S3 client for the CDN bucket from the given endpoint and credentials.
-fn build_s3_client(endpoint: String, access_key_id: String, secret_access_key: String) -> S3Client {
-    let credentials = Credentials::new(access_key_id, secret_access_key, None, None, "courses-cdn");
-    let config = aws_sdk_s3::config::Builder::new()
-        .behavior_version(BehaviorVersion::latest())
-        .region(Region::new("us-east-1"))
-        .endpoint_url(endpoint)
-        .credentials_provider(credentials)
-        .force_path_style(true)
-        .build();
-    S3Client::from_conf(config)
-}
-
-async fn fetch_catalog(client: &S3Client, bucket: &str, key: &str) -> Result<Catalog> {
-    let resp = client
-        .get_object()
-        .bucket(bucket)
-        .key(key)
-        .send()
-        .await
-        .with_context(|| format!("get_object s3://{bucket}/{key}"))?;
-
-    let etag = resp
-        .e_tag()
-        .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
-        .trim_matches('"')
-        .to_string();
-    let bytes = resp.body.collect().await?.into_bytes();
-    Ok(Catalog { etag, bytes })
-}
-
-async fn fetch_etag(client: &S3Client, bucket: &str, key: &str) -> Result<String> {
-    let resp = client
-        .head_object()
-        .bucket(bucket)
-        .key(key)
-        .send()
-        .await
-        .with_context(|| format!("head_object s3://{bucket}/{key}"))?;
-
-    Ok(resp
-        .e_tag()
-        .ok_or_else(|| anyhow!("missing ETag on s3://{bucket}/{key}"))?
-        .trim_matches('"')
-        .to_string())
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
-        )
-        .init();
-
-    let secrets = SecretSpec::builder()
-        .with_provider("env")
-        .with_reason("courses-api startup")
-        .load()?
-        .secrets;
-
+    tracing_subscriber::fmt().init();
     let port = std::env::var("PORT").unwrap_or_else(|_| "3001".into());
-    let s3_key = std::env::var("S3_KEY").unwrap_or_else(|_| "catalog.bin".into());
-    let poll_interval: u64 = std::env::var("POLL_INTERVAL")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(300);
-
-    let endpoint = secrets
-        .cdn_s3_endpoint
-        .context("CDN_S3_ENDPOINT must be set")?;
-    let bucket = secrets.cdn_s3_bucket.context("CDN_S3_BUCKET must be set")?;
-    let access_key_id = secrets
-        .cdn_access_key_id
-        .context("CDN_ACCESS_KEY_ID must be set")?;
-    let secret_access_key = secrets
-        .cdn_secret_access_key
-        .context("CDN_SECRET_ACCESS_KEY must be set")?;
-
-    let client = build_s3_client(endpoint, access_key_id, secret_access_key);
-
-    let initial = fetch_catalog(&client, &bucket, &s3_key).await?;
-    info!(
-        bucket = %bucket,
-        key = %s3_key,
-        etag = %initial.etag,
-        bytes = initial.bytes.len(),
-        "catalog loaded"
-    );
-
-    let catalog = Arc::new(ArcSwap::from_pointee(initial));
-    spawn_s3_poller(
-        client.clone(),
-        bucket.clone(),
-        s3_key.clone(),
-        Duration::from_secs(poll_interval),
-        catalog.clone(),
-    );
-
-    let state = AppState { catalog };
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .routes(routes!(health))
         .routes(routes!(version))
         .routes(routes!(binary_handler))
         .routes(routes!(course_by_code))
-        .with_state(state)
         .split_for_parts();
-
     let app = router
         .merge(Scalar::with_url("/api/scalar", api.clone()))
         .route(
             "/api/openapi.json",
-            get(move || {
-                let api = api.clone();
-                async move { axum::Json(api) }
-            }),
+            get(move || async move { axum::Json(api) }),
         )
         .layer(TraceLayer::new_for_http());
-
-    let addr = format!("0.0.0.0:{port}");
-    let listener = TcpListener::bind(&addr).await?;
-
-    info!(addr = %addr, "listening");
+    let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
     axum::serve(listener, app).await?;
     Ok(())
 }
 
-fn spawn_s3_poller(
-    client: S3Client,
-    bucket: String,
-    key: String,
-    interval: Duration,
-    catalog: Arc<ArcSwap<Catalog>>,
-) {
-    tokio::spawn(async move {
-        loop {
-            tokio::time::sleep(interval).await;
-
-            let current_etag = catalog.load().etag.clone();
-            match fetch_etag(&client, &bucket, &key).await {
-                Ok(remote_etag) if remote_etag != current_etag => {
-                    match fetch_catalog(&client, &bucket, &key).await {
-                        Ok(next) => {
-                            info!(etag = %next.etag, "catalog reloaded");
-                            catalog.store(Arc::new(next));
-                        }
-                        Err(e) => warn!(error = %e, "reload failed"),
-                    }
-                }
-                Ok(_) => {}
-                Err(e) => warn!(error = %e, "etag check failed"),
-            }
-        }
-    });
+fn not_implemented() -> Response {
+    (
+        StatusCode::NOT_IMPLEMENTED,
+        axum::Json(json!({"message": "Backend endpoint not implemented"})),
+    )
+        .into_response()
 }
 
 #[utoipa::path(get, path = "/api/health", tag = "health", responses((status = OK, body = str)))]
@@ -209,51 +51,17 @@ async fn health() -> &'static str {
     "ok"
 }
 
-#[derive(Serialize, ToSchema)]
-struct VersionInfo {
-    bytes: usize,
-    etag: String,
+#[utoipa::path(get, path = "/api/version", responses((status = 501, description = "Not implemented")))]
+async fn version() -> Response {
+    not_implemented()
 }
 
-#[utoipa::path(get, path = "/api/version", tag = "catalog", responses((status = OK, body = VersionInfo)))]
-async fn version(State(state): State<AppState>) -> impl IntoResponse {
-    let cat = state.catalog.load();
-    axum::Json(VersionInfo {
-        bytes: cat.bytes.len(),
-        etag: cat.etag.clone(),
-    })
+#[utoipa::path(get, path = "/api/binary", responses((status = 501, description = "Not implemented")))]
+async fn binary_handler() -> Response {
+    not_implemented()
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/binary",
-    tag = "catalog",
-    responses((status = OK, description = "Catalog binary, gzipped when Content-Encoding: gzip", content_type = "application/octet-stream"))
-)]
-async fn binary_handler(State(state): State<AppState>) -> Response {
-    let cat = state.catalog.load_full();
-    let is_gzip = cat.bytes.starts_with(&[0x1f, 0x8b]);
-
-    let mut response = Response::new(axum::body::Body::from(cat.bytes.clone()));
-    let h = response.headers_mut();
-    h.insert(
-        header::CONTENT_TYPE,
-        "application/octet-stream".parse().unwrap(),
-    );
-    h.insert(header::CACHE_CONTROL, "public, max-age=60".parse().unwrap());
-    if is_gzip {
-        h.insert(header::CONTENT_ENCODING, "gzip".parse().unwrap());
-    }
-    response
-}
-
-#[utoipa::path(
-    get,
-    path = "/api/courses/{code}",
-    tag = "catalog",
-    params(("code" = String, Path, description = "Course code, e.g. 15-122")),
-    responses((status = OK, description = "Course JSON"), (status = NOT_FOUND, description = "Unknown course code"))
-)]
-async fn course_by_code(State(_state): State<AppState>, Path(_code): Path<String>) -> Response {
-    unimplemented!()
+#[utoipa::path(get, path = "/api/courses/{code}", params(("code" = String, Path)), responses((status = 501, description = "Not implemented")))]
+async fn course_by_code(axum::extract::Path(_code): axum::extract::Path<String>) -> Response {
+    not_implemented()
 }

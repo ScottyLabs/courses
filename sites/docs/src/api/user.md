@@ -1,5 +1,7 @@
 # Personal data and consent
 
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](../backend-development.md) for current status.
+
 All endpoints below require a verified CMU identity. Every mutation requires an exact `Origin` matching `APP_URL`. JSON errors use `{ "message": "..." }`; 401 means no session, 403 means disallowed identity/origin, 404 means no accessible record, and 409 means a stale schedule revision. The request body limit is 128 KiB.
 
 ## Storage and authentication
@@ -22,7 +24,7 @@ Sessions are currently in memory and expire after one hour of inactivity. Restar
 | `DELETE /api/schedules/{id}/share` | Revoke the token |
 | `GET /api/shared-schedules/{token}` | Public read-only name, term and course/section IDs; no owner or restricted course fields |
 
-Items are `{course_code, section_ids}`. Each course and section must belong to the term. Names are 1–120 characters; schedules allow at most 50 courses and 20 section IDs per course. Stale saves return 409; reload the saved version before editing again. Anonymous drafts remain local until explicit save after login.
+Items are `{course_code, section_ids}`. Each course and section must belong to the term. Names are 1-120 characters; schedules allow at most 50 courses and 20 section IDs per course. Stale saves return 409; reload the saved version before editing again. Anonymous drafts remain local until explicit save after login.
 
 ## Saved courses and history
 

@@ -1,5 +1,7 @@
 # Deployment runbook
 
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](backend-development.md) for current status.
+
 ## Current production finding
 
 The pushed backend commit `d220aa7` built successfully in Kennel but its `web-api` deployment failed the startup health check. The old code tried to create a relative personal database in a read-only service filesystem, and the generated catalog was absent from the build. A successful Nix build is not a successful rollout.
@@ -64,8 +66,8 @@ For application/catalog rollback, redeploy a known-good Git commit and its relea
 
 ## Diagnosing startup failure
 
-- “Read-only filesystem”: verify `scottylabs.sqlite.enable`, `DATABASE_PATH`, and the service's persistent directory.
-- “Catalog key required” or authentication failure: verify the release key in the correct profile; never print it.
+- "Read-only filesystem": verify `scottylabs.sqlite.enable`, `DATABASE_PATH`, and the service's persistent directory.
+- "Catalog key required" or authentication failure: verify the release key in the correct profile; never print it.
 - Checksum mismatch: verify the committed manifest and immutable CDN object. Do not skip verification.
 - OIDC discovery failure: check issuer URL, realm, connectivity and certificates.
 - Login succeeds but `/api/me` returns 403: inspect the issuer's verified CMU email mapping, not project-group membership.

@@ -41,6 +41,8 @@ pub struct CurrentUser {
     pub subject: String,
     pub name: String,
     pub groups: Vec<String>,
+    // Reserved for profile implementations.
+    #[allow(dead_code)]
     pub andrew_id: String,
 }
 
@@ -113,9 +115,7 @@ pub struct UserInfo {
 pub async fn me(
     user: CurrentUser,
     Extension(auth): Extension<Arc<AuthConfig>>,
-    Extension(backend): Extension<crate::backend::Backend>,
 ) -> Result<Json<UserInfo>, crate::backend::ApiError> {
-    crate::backend::register_user(&backend, &user)?;
     Ok(Json(UserInfo {
         can_create: true,
         is_admin: user.is_admin(&auth),

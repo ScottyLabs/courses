@@ -11,9 +11,6 @@ axum = { version = "0.8.9", features = ["multipart"] }
 aes-gcm = "0.10"
 flate2 = "1"
 reqwest = { version = "0.13", features = ["json"] }
-chrono = { version = "0.4", features = ["serde"] }
-chrono-tz = "0.10"
-ical = "0.11"
 axum-oidc = { git = "https://codeberg.org/pfzetto/axum-oidc", rev = "007135e2c26830f6c89d1659302c228076c7afa7" }
 base64 = "0.22.1"
 serde = { version = "1.0.228", features = ["derive"] }

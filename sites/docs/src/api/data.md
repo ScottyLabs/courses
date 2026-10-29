@@ -1,5 +1,7 @@
 # Catalog data and releases
 
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](../backend-development.md) for current status.
+
 ## Inputs and provenance
 
 `data/raw/` preserves the supplied exports, including files not currently shown in the app. The inventory records path, byte count, modification time and SHA-256. A filesystem copy time is **not** a scrape date. The [audit](data-audit.md) records known source coverage and omissions.

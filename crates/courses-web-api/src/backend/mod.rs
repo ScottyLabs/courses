@@ -1,4 +1,4 @@
-//! SQLite catalog reads and durable, owner-scoped personal records.
+//! Database foundation, request guard and shared endpoint skeleton error.
 use crate::auth::CurrentUser;
 use axum::{
     Extension, Json,
@@ -7,9 +7,8 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use rusqlite::{Connection, params, types::Value as SqlValue};
+use rusqlite::Connection;
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     path::PathBuf,
@@ -33,18 +32,17 @@ impl From<rusqlite::Error> for ApiError {
         )
     }
 }
-fn bad(msg: &str) -> ApiError {
-    ApiError(StatusCode::BAD_REQUEST, msg.into())
-}
-fn missing() -> ApiError {
-    ApiError(StatusCode::NOT_FOUND, "Record not found".into())
-}
-fn require(user: Result<CurrentUser, StatusCode>) -> Result<CurrentUser, ApiError> {
-    user.map_err(|s| ApiError(s, "CMU sign-in required".into()))
+pub(crate) fn not_implemented() -> ApiError {
+    ApiError(
+        StatusCode::NOT_IMPLEMENTED,
+        "Backend endpoint not implemented".into(),
+    )
 }
 #[derive(Clone)]
 pub struct Backend {
     pub catalog: PathBuf,
+    // Reserved for endpoint implementations; initialization remains active.
+    #[allow(dead_code)]
     users: Arc<Mutex<Connection>>,
     pub origin: String,
 }
@@ -114,31 +112,6 @@ PRAGMA user_version=3;")?;
         })
     }
 }
-fn rows(db: &Connection, sql: &str, p: Vec<SqlValue>) -> Result<Vec<Value>, ApiError> {
-    let mut q = db.prepare(sql)?;
-    let records = q.query_map(rusqlite::params_from_iter(p), |r| r.get::<_, String>(0))?;
-    records
-        .map(|r| {
-            let s = r?;
-            serde_json::from_str(&s).map_err(|_| {
-                ApiError(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Invalid stored record".into(),
-                )
-            })
-        })
-        .collect()
-}
-fn val(s: &str) -> SqlValue {
-    SqlValue::Text(s.to_owned())
-}
-fn audience(user: &Result<CurrentUser, StatusCode>) -> Result<bool, ApiError> {
-    match user {
-        Ok(_) => Ok(true),
-        Err(StatusCode::UNAUTHORIZED) => Ok(false),
-        Err(s) => Err(ApiError(*s, "CMU sign-in required".into())),
-    }
-}
 pub async fn guard(Extension(b): Extension<Backend>, req: Request, next: Next) -> Response {
     if !matches!(
         *req.method(),
@@ -169,10 +142,7 @@ pub async fn guard(Extension(b): Extension<Backend>, req: Request, next: Next) -
 
 mod catalog;
 mod personal;
-#[cfg(test)]
-use catalog::course_filter;
 pub use catalog::*;
-use personal::user_db;
 pub use personal::*;
 
 #[cfg(test)]

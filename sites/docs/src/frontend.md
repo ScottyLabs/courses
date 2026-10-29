@@ -1,5 +1,7 @@
 > The current implementation uses SQLite WASM. See [the maintainer guide](maintaining.md) and [backend handoff](api/sqlite-backend.md); older DuckDB references below describe the original design.
 
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](backend-development.md) for current status.
+
 # Frontend implementation notes
 
 The SvelteKit application lives in `sites/web`. Its layout follows the

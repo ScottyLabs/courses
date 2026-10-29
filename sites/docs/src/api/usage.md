@@ -1,5 +1,7 @@
 # Courses API
 
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](../backend-development.md) for current status.
+
 The intended public data API is `https://api.cmu.courses/v2`. Course codes,
 names, descriptions, units, prerequisites, and similar catalog fields are public.
 Section times and locations, instructors, and FCE data require CMU authentication

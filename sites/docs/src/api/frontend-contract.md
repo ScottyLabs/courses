@@ -1,5 +1,7 @@
 # Frontend API contract
 
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](../backend-development.md) for current status.
+
 > Implementation update (2026-10-23): core catalog, auth, schedule, saved-course,
 > and requirements routes now exist. See [SQLite backend](./sqlite-backend.md)
 > for the current behavior and deferred routes. Older DuckDB notes below are historical.

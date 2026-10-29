@@ -1,6 +1,8 @@
 # SQLite backend and browser handoff
 
-Implemented in `courses-web-api`; replaces the web app's DuckDB/custom-binary
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](../backend-development.md) for current status.
+
+Database foundation retained in `courses-web-api`; intended to replace the web app's DuckDB/custom-binary
 catalog transport. The separate `courses-api` crate is not the browser backend.
 
 ## Run
@@ -22,7 +24,7 @@ Project membership alone no longer grants access. Verify that the issuer's
 university identity mapping actually verifies email ownership before deployment.
 No development login bypass exists. Live CMU login was not exercised in this change.
 
-`USER_DB_PATH` (or Kennel’s provisioned `DATABASE_PATH`) is a durable SQLite database using WAL and a busy timeout. Mount
+`USER_DB_PATH` (or Kennel's provisioned `DATABASE_PATH`) is a durable SQLite database using WAL and a busy timeout. Mount
 it on persistent storage, keep it outside `STATIC_DIR`, and back it up with
 SQLite's backup API (do not copy only the main file during writes). This is a
 single-host deployment; replicas require a shared transactional storage design.
@@ -30,7 +32,7 @@ Sessions currently use the existing in-memory store: restart requires sign-in,
 but schedules and saved courses remain. Catalog files are read-only and separate
 from personal data. Generated exports and databases are gitignored.
 
-## Access and endpoints
+## Target access and endpoints (not implemented)
 
 Anonymous users can read courses, descriptions, prerequisites, units, terms,
 gen eds, weekly times, and public catalog requirements. The public DB never
@@ -39,7 +41,7 @@ CMU users receive a separate member database. JSON uses the same audience split.
 `min_fce` queries and instructor routes require CMU identity. Missing login
 returns 401; an authenticated non-CMU identity returns 403.
 
-Implemented routes:
+Retained routes (currently 501):
 
 - `GET /api/terms`, `/api/courses`, `/api/courses/{code}`
 - `GET /api/instructors`, `/api/instructors/{id}`, `/api/geneds`
@@ -57,12 +59,12 @@ and omit owner identity. `program_id` can be stored with a schedule.
 All cookie mutations require an exact `Origin: APP_URL`; requests are limited
 to 128 KiB. Responses use `private, no-store` and `Vary: Cookie`.
 
-Saved courses now load from and save to the API after login. Anonymous stars
+The target behavior is to load and save courses through the API after login. Anonymous stars
 remain local drafts, without copying protected fields. Personal mutations never
 run against the browser database. `taking` and `taken` are separate from stars
 and require `term_id` on mutations; removing a star preserves history.
 
-Friendship requests, expiring invites, explicit sharing consent, persistent course history and personal finals imports are now implemented. See [personal API](user.md) for their contracts.
+Friendship requests, expiring invites, explicit sharing consent, persistent course history and personal finals imports need implementation. See [personal API](user.md) for their contracts.
 The generated OpenAPI currently describes the auth/health routes; the route list
 above and `contracts.ts` describe these new handlers.
 
@@ -71,7 +73,7 @@ above and `contracts.ts` describe these new handlers.
 `public.sqlite` and `member.sqlite` contain the full imported history for server
 queries. Smaller `*-browser.sqlite` files contain default course rows plus the
 three latest terms; older term queries fall back to the server. Programs remain
-API-served. Gzipped browser files are about 4.4–7.0 MB over the wire; sizes vary with catalog coverage. SQLite WASM runs in a worker and is bundled by Vite, with no external CDN.
+API-served. Gzipped browser files are about 4.4-7.0 MB over the wire; sizes vary with catalog coverage. SQLite WASM runs in a worker and is bundled by Vite, with no external CDN.
 
 First reads use JSON while WASM and the correct audience's database load.
 After schema validation, covered queries use local SQL. Initialization/query
@@ -93,23 +95,23 @@ python3 scripts/scrape_programs.py
 python3 scripts/import_catalog.py data/raw
 ```
 
-The public scraper discovers links from CMU's Programs A–Z, respects robots.txt,
+The public scraper discovers links from CMU's Programs A-Z, respects robots.txt,
 uses serial requests with a delay and timeouts, and records URL, catalog year,
 retrieval timestamp, HTML checksum, requirement text, and referenced courses.
 It preserves source HTML and reports failures rather than claiming completeness.
 Text is displayed as text, never injected HTML. Course references are not
-interpreted as “all required”; electives, grades, double-counting and substitutions
+interpreted as "all required"; electives, grades, double-counting and substitutions
 need a separately validated degree-audit evaluator.
 
 Existing Stellic exports retain 2,848 versioned requirement trees. To refresh
 them, use `cargo run -p courses-scraper -- --mode programs --concurrency 4` in the
 existing authenticated scraping environment. `--mode courses` refreshes course
-and section data. A valid Stellic session is required. The Spring 2027 refresh used CourseWeave’s public snapshot; no authenticated bulk scrape was run.
+and section data. A valid Stellic session is required. The Spring 2027 refresh used CourseWeave's public snapshot; no authenticated bulk scrape was run.
 Do not use `--incremental` when refreshing stale existing records.
 
 ### Targeted Spring 2027 refresh
 
-Sign in to Stellic in a browser. In DevTools → Network, open
+Sign in to Stellic in a browser. In DevTools -> Network, open
 `planner/getstudentprofile/` and copy the **Cookie request-header value** into
 `data/private/stellic-cookie.txt` (including `csrftoken`). Do not put the cookie
 in a chat, command-line argument, or committed file. The private directory is

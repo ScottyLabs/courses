@@ -1,5 +1,7 @@
 # Browser DuckDB catalog
 
+> Backend reset: product endpoints currently return 501. This document describes retained infrastructure or the intended integration contract; feature behavior must be rebuilt. See [backend development](../backend-development.md) for current status.
+
 The frontend uses `@duckdb/duckdb-wasm` for local catalog queries. This page
 specifies the downloadable database you will build. No production database,
 catalog publisher, or backend handlers are implemented here. Durable user

@@ -1,5 +1,7 @@
 # Overview
 
+> Historical pipeline overview. Both API crates are now skeletons; catalog endpoints return 501. See the [current backend guide](../../docs/src/backend-development.md). Source collection and database tooling remain.
+
 The CMU Courses project has three layers:
 
 1. `courses-scraper` pulls course information, sections, program audits, and syllabi from Stellic and Canvas. Output lands under `exported/` as JSON files keyed by course code, program, and term.

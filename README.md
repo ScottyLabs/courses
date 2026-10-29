@@ -2,6 +2,12 @@
 
 Course browsing app with a Svelte frontend and Rust API.
 
+The backend is intentionally a skeleton: frontend code, database infrastructure,
+authentication and endpoint files remain; product handlers return HTTP 501.
+Start with the [backend developer guide](sites/docs/src/backend-development.md)
+for the code map, route inventory and prioritized implementation list. Existing
+database records are preserved.
+
 ## Maintainers
 
 Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matrix](sites/docs/src/features.md), and [deployment runbook](sites/docs/src/deployment.md).
