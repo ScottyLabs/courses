@@ -1,4 +1,12 @@
 <script lang="ts">
-  let { children } = $props();
+	import ProfileSidebar from '$lib/components/ProfileSidebar.svelte';
+
+	let { children } = $props();
 </script>
-{@render children()}
+
+<main class="flex flex-1 flex-col">
+	<div class="flex flex-1 flex-row">
+		<ProfileSidebar />
+		{@render children()}
+	</div>
+</main>

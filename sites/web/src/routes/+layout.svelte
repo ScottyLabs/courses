@@ -1,6 +1,5 @@
 <script lang="ts">
 	import './layout.css';
-	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 
@@ -16,9 +15,9 @@
 	/>
 </svelte:head>
 
-{#if page.url.pathname !== '/'}<Header />{/if}
+<Header />
 {@render children()}
-{#if page.url.pathname !== '/'}<Footer />{/if}
+<Footer />
 
 <style>
 	:global(body) {
@@ -26,7 +25,7 @@
 		padding: 0;
 
 		min-height: 100dvh;
-		min-width: 0;
+		min-width: 100dvh;
 		display: flex;
 		flex-direction: column;
 

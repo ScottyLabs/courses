@@ -1,154 +1,105 @@
-import { ApiError } from "./contracts";
+import type { components } from "$lib/api";
 
-const PREFIX = "catalog-sqlite-v1-";
-const MAX_BYTES = 128 * 1024 * 1024;
+type CatalogVersion = components["schemas"]["CatalogVersion"];
 
-async function version(signal: AbortSignal): Promise<string> {
-  const response = await fetch("/api/catalog/version", {
-    credentials: "same-origin",
-    cache: "no-store",
-    signal,
-  });
-  if (!response.ok) {
-    throw new ApiError(response.status, "Catalog version unavailable");
-  }
-  const value = await response.json();
-  if (typeof value?.hash !== "string" || !value.hash) {
-    throw new Error("Invalid catalog version");
-  }
-  return value.hash;
+function isCatalogVersion(value: unknown): value is CatalogVersion {
+  return (
+    typeof value === "object" && value !== null && "hash" in value && typeof value.hash === "string"
+  );
 }
 
-async function digest(value: string) {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
+const CATALOG_PREFIX = "catalog-";
 
-async function directory() {
-  try {
-    return await navigator.storage?.getDirectory();
-  } catch {
-    return undefined;
-  } // Unsupported/private storage: use memory instead.
-}
+export type CatalogLoad = {
+  bytes: Uint8Array;
+  fromCache: boolean;
+  versionMs: number;
+  fetchMs: number;
+  decompressMs: number;
+  hash: string;
+};
 
-async function remove(root: FileSystemDirectoryHandle | undefined, name: string) {
-  try {
-    await root?.removeEntry(name);
-  } catch {
-    /* best effort */
+/**
+ * Load the catalog binary, preferring an OPFS-cached copy keyed by the
+ * server's content hash. On a hash miss, downloads `/api/catalog/binary`,
+ * persists the gzipped bytes to OPFS, and prunes stale catalogs.
+ *
+ * Returns the decompressed bytes.
+ */
+export async function loadCatalog(): Promise<CatalogLoad> {
+  const t0 = performance.now();
+  const version: unknown = await (await fetch("/api/catalog/version")).json();
+  if (!isCatalogVersion(version)) {
+    throw new Error("invalid /api/catalog/version response");
   }
-}
+  const t1 = performance.now();
 
-async function readLimited(stream: ReadableStream<Uint8Array>, signal: AbortSignal) {
-  const reader = stream.getReader();
-  const chunks: Uint8Array<ArrayBuffer>[] = [];
-  let size = 0;
-  try {
-    while (true) {
-      signal.throwIfAborted();
-      const { value, done } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > MAX_BYTES) {
-        throw new Error("Catalog exceeds the browser size limit");
-      }
-      chunks.push(new Uint8Array(value));
-    }
-  } finally {
-    await reader.cancel().catch(() => {});
-  }
-  return new Uint8Array(await new Blob(chunks).arrayBuffer());
-}
+  const root = await navigator.storage.getDirectory();
+  const filename = `${CATALOG_PREFIX}${version.hash}.bin`;
 
-/** A cache hit still verifies the server's current version and authenticated access. */
-export async function loadCatalog(scope: string, signal: AbortSignal) {
-  const hash = await version(signal);
-  const prefix = `${PREFIX}${await digest(scope)}-`;
-  const filename = `${prefix}${await digest(hash)}.sqlite`;
-  const root = await directory();
-  signal.throwIfAborted();
-  let bytes: Uint8Array<ArrayBuffer> | undefined;
-  try {
-    const file = await (await root?.getFileHandle(filename))?.getFile();
-    if (file && file.size <= MAX_BYTES) {
-      bytes = new Uint8Array(await file.arrayBuffer());
-    }
-  } catch {
-    /* miss or storage unavailable */
+  let gzipped = await readOpfs(root, filename);
+  let fromCache = gzipped !== null;
+
+  if (!gzipped) {
+    const response = await fetch("/api/catalog/binary");
+    gzipped = new Uint8Array(await response.arrayBuffer());
+    await writeOpfs(root, filename, gzipped);
+    await pruneStale(root, filename);
   }
-  const fromCache = !!bytes;
-  if (!bytes) {
-    const response = await fetch("/api/catalog/binary", {
-      credentials: "same-origin",
-      cache: "no-store",
-      signal,
-    });
-    if (!response.ok) {
-      throw new ApiError(response.status, "Catalog download unavailable");
-    }
-    if (!response.body) throw new Error("Empty catalog download");
-    bytes = await readLimited(response.body, signal);
-    // Fetch decodes HTTP Content-Encoding; only decompress bytes still bearing gzip magic.
-    if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
-      bytes = await readLimited(
-        new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip")),
-        signal,
-      );
-    }
-    if ((await version(signal)) !== hash) {
-      throw new Error("Catalog changed during download");
-    }
-  }
-  signal.throwIfAborted();
-  if (/^[a-f0-9]{64}$/.test(hash)) {
-    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-    const actual = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
-    if (actual !== hash) {
-      await remove(root, filename);
-      throw new Error("Catalog checksum mismatch; retry after publication completes");
-    }
-  }
-  const validatedBytes = bytes;
+  const t2 = performance.now();
+
+  const decompressed = new Uint8Array(
+    await new Response(
+      new Blob([gzipped]).stream().pipeThrough(new DecompressionStream("gzip")),
+    ).arrayBuffer(),
+  );
+  const t3 = performance.now();
+
   return {
-    bytes,
-    invalidate: () => remove(root, filename),
-    // Call only after SQLite has opened the file and validated the schema.
-    async commit() {
-      if (!root || fromCache) return;
-      signal.throwIfAborted();
-      try {
-        const writable = await (
-          await root.getFileHandle(filename, { create: true })
-        ).createWritable();
-        try {
-          await writable.write(validatedBytes);
-          signal.throwIfAborted();
-          await writable.close();
-        } catch (cause) {
-          await writable.abort().catch(() => {});
-          throw cause;
-        }
-        for await (const name of root.keys()) {
-          if (name.startsWith(prefix) && name !== filename) {
-            await remove(root, name);
-          }
-        }
-      } catch {
-        /* Quota/cache failure must not prevent local queries. */
-      }
-    },
+    bytes: decompressed,
+    fromCache,
+    versionMs: t1 - t0,
+    fetchMs: t2 - t1,
+    decompressMs: t3 - t2,
+    hash: version.hash,
   };
 }
 
-export async function clearCatalogCache() {
-  const root = await directory();
-  if (!root) return;
+async function readOpfs(
+  root: FileSystemDirectoryHandle,
+  name: string,
+): Promise<Uint8Array<ArrayBuffer> | null> {
   try {
-    for await (const name of root.keys()) {
-      if (name.startsWith(PREFIX) || name.startsWith("catalog-v1-")) await remove(root, name);
+    const handle = await root.getFileHandle(name);
+    const file = await handle.getFile();
+    return new Uint8Array(await file.arrayBuffer());
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "NotFoundError") return null;
+    throw e;
+  }
+}
+
+async function writeOpfs(
+  root: FileSystemDirectoryHandle,
+  name: string,
+  bytes: Uint8Array<ArrayBuffer>,
+): Promise<void> {
+  const handle = await root.getFileHandle(name, { create: true });
+  // FileSystemWritableFileStream is available on every browser that ships
+  // OPFS (Chromium, Firefox, Safari 15.2+).
+  const stream = await handle.createWritable();
+  await stream.write(bytes);
+  await stream.close();
+}
+
+async function pruneStale(root: FileSystemDirectoryHandle, keep: string): Promise<void> {
+  for await (const [name] of root.entries()) {
+    if (name.startsWith(CATALOG_PREFIX) && name !== keep) {
+      try {
+        await root.removeEntry(name);
+      } catch {
+        // best effort; another tab may have raced us
+      }
     }
-  } catch {
-    /* best effort */
   }
 }
