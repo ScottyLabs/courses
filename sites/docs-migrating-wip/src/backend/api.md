@@ -9,12 +9,17 @@ GET /catalog/code/{course-code}
 GET /catalog/search/{n,query}
   - Reutrn a JSON of the top n results related to the query
 
+GET /catalog/exams/{code,semester}
+ - Semester should eba  letter followed by the last two digits of the year (i.e. F25, S27, N25, M24)
+ - Course code shoudl be valid
+ - 200 OK if success
+ - 404 if course isnt found for this semester
 
 
 JSON Output format
 
 ```
-{
+course: {
   number: int, 
   current-name: string, 
   description: string, 
@@ -36,6 +41,9 @@ JSON Output format
 }
 ```
 
+
+
 TODO: 
  - Filters on requirements, professor, timings, departments, etc
  - Adding exam endpoints
+ -
