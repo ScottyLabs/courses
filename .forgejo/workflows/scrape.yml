@@ -33,22 +33,21 @@ jobs:
       CANVAS_TOKEN: ${{ inputs.canvas_token }}
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v7
-      - uses: https://git.cmu.dev/ScottyLabs/kennel/.forgejo/actions/prepare@main
 
       - name: Scrape
-        run: devenv shell -- cargo run --release -p courses-scraper -- --mode ${{ inputs.mode }}
+        run: nix develop --command cargo run --release -p courses-scraper -- --mode ${{ inputs.mode }}
 
       - name: Build catalog
-        run: devenv shell -- cargo run --release -p courses-index -- --write-catalog catalog.bin
+        run: nix develop --command cargo run --release -p courses-index -- --write-catalog catalog.bin
 
       - name: Upload to garage
         run: |
-          devenv shell -- cdn-s3 cp catalog.bin s3://cdn-courses/catalog.bin \
+          nix develop --command cdn-s3 cp catalog.bin s3://cdn-courses/catalog.bin \
             --content-type application/octet-stream \
             --content-encoding gzip
 
       - name: Upload syllabi to garage
         run: |
           if [ -d exported/syllabi ]; then
-            devenv shell -- cdn-s3 sync exported/syllabi/ s3://cdn-courses/syllabi/
+            nix develop --command cdn-s3 sync exported/syllabi/ s3://cdn-courses/syllabi/
           fi

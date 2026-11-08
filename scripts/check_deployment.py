@@ -14,6 +14,8 @@ origin = args.origin.rstrip("/")
 
 
 def get(path):
+    # origin is the deployment the operator checks
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
     with urllib.request.urlopen(origin + path, timeout=45) as response:
         return response.read()
 

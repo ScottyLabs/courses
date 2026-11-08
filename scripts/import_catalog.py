@@ -462,9 +462,12 @@ CREATE INDEX course_department ON catalog_courses(term_id,department);""")
             source.backup(browser)
             keep = [""] + terms[:3]
             marks = ",".join("?" for _ in keep)
+            # marks only holds placeholders
+            # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             browser.execute(
                 f"DELETE FROM catalog_courses WHERE term_id NOT IN ({marks})", keep
             )
+            # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             browser.execute(
                 f"DELETE FROM catalog_coverage WHERE dataset='courses' AND term_id NOT IN ({marks})",
                 keep,

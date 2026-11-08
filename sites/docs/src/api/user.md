@@ -22,7 +22,7 @@ Sessions are currently in memory and expire after one hour of inactivity. Restar
 | `DELETE /api/schedules/{id}/share` | Revoke the token |
 | `GET /api/shared-schedules/{token}` | Public read-only name, term and course/section IDs; no owner or restricted course fields |
 
-Items are `{course_code, section_ids}`. Each course and section must belong to the term. Names are 1–120 characters; schedules allow at most 50 courses and 20 section IDs per course. Stale saves return 409; reload the saved version before editing again. Anonymous drafts remain local until explicit save after login.
+Items are `{course_code, section_ids}`. Each course and section must belong to the term. Names are 1-120 characters; schedules allow at most 50 courses and 20 section IDs per course. Stale saves return 409; reload the saved version before editing again. Anonymous drafts remain local until explicit save after login.
 
 ## Saved courses and history
 

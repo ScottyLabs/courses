@@ -8,7 +8,7 @@ catalog transport. The separate `courses-api` crate is not the browser backend.
 ```sh
 python3 scripts/import_catalog.py data/raw
 python3 scripts/verify_catalog.py
-# Load the existing OIDC environment using devenv, then:
+# Inside nix develop, which loads the OIDC environment:
 CATALOG_DIR=data/catalog USER_DB_PATH=data/private/users.sqlite cargo run -p courses-web-api
 # In sites/web:
 deno task dev
@@ -22,7 +22,7 @@ Project membership alone no longer grants access. Verify that the issuer's
 university identity mapping actually verifies email ownership before deployment.
 No development login bypass exists. Live CMU login was not exercised in this change.
 
-`USER_DB_PATH` (or Kennel’s provisioned `DATABASE_PATH`) is a durable SQLite database using WAL and a busy timeout. Mount
+`USER_DB_PATH` (or Kennel's provisioned `DATABASE_PATH`) is a durable SQLite database using WAL and a busy timeout. Mount
 it on persistent storage, keep it outside `STATIC_DIR`, and back it up with
 SQLite's backup API (do not copy only the main file during writes). This is a
 single-host deployment; replicas require a shared transactional storage design.
@@ -71,7 +71,7 @@ above and `contracts.ts` describe these new handlers.
 `public.sqlite` and `member.sqlite` contain the full imported history for server
 queries. Smaller `*-browser.sqlite` files contain default course rows plus the
 three latest terms; older term queries fall back to the server. Programs remain
-API-served. Gzipped browser files are about 4.4–7.0 MB over the wire; sizes vary with catalog coverage. SQLite WASM runs in a worker and is bundled by Vite, with no external CDN.
+API-served. Gzipped browser files are about 4.4-7.0 MB over the wire; sizes vary with catalog coverage. SQLite WASM runs in a worker and is bundled by Vite, with no external CDN.
 
 First reads use JSON while WASM and the correct audience's database load.
 After schema validation, covered queries use local SQL. Initialization/query
@@ -93,23 +93,23 @@ python3 scripts/scrape_programs.py
 python3 scripts/import_catalog.py data/raw
 ```
 
-The public scraper discovers links from CMU's Programs A–Z, respects robots.txt,
+The public scraper discovers links from CMU's Programs A-Z, respects robots.txt,
 uses serial requests with a delay and timeouts, and records URL, catalog year,
 retrieval timestamp, HTML checksum, requirement text, and referenced courses.
 It preserves source HTML and reports failures rather than claiming completeness.
 Text is displayed as text, never injected HTML. Course references are not
-interpreted as “all required”; electives, grades, double-counting and substitutions
+interpreted as "all required"; electives, grades, double-counting and substitutions
 need a separately validated degree-audit evaluator.
 
 Existing Stellic exports retain 2,848 versioned requirement trees. To refresh
 them, use `cargo run -p courses-scraper -- --mode programs --concurrency 4` in the
 existing authenticated scraping environment. `--mode courses` refreshes course
-and section data. A valid Stellic session is required. The Spring 2027 refresh used CourseWeave’s public snapshot; no authenticated bulk scrape was run.
+and section data. A valid Stellic session is required. The Spring 2027 refresh used CourseWeave's public snapshot; no authenticated bulk scrape was run.
 Do not use `--incremental` when refreshing stale existing records.
 
 ### Targeted Spring 2027 refresh
 
-Sign in to Stellic in a browser. In DevTools → Network, open
+Sign in to Stellic in a browser. In DevTools > Network, open
 `planner/getstudentprofile/` and copy the **Cookie request-header value** into
 `data/private/stellic-cookie.txt` (including `csrftoken`). Do not put the cookie
 in a chat, command-line argument, or committed file. The private directory is

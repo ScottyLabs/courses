@@ -9,33 +9,24 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    scottylabs = {
-      url = "git+https://git.cmu.dev/ScottyLabs/kennel";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    scottylabs.url = "git+https://git.cmu.dev/ScottyLabs/kennel";
+    nixpkgs.follows = "scottylabs/nixpkgs";
+    flake-parts.follows = "scottylabs/flake-parts";
   };
 
   outputs =
-    {
-      nixpkgs,
-      scottylabs,
-      ...
-    }:
-    let
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ inputs.scottylabs.flakeModules.default ];
       systems = [
         "x86_64-linux"
         "aarch64-linux"
+        "aarch64-darwin"
       ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
-    in
-    {
-      packages = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          helpers = scottylabs.mkLib pkgs;
 
+      perSystem =
+        { pkgs, helpers, ... }:
+        let
           web = helpers.buildDenoTask {
             src = ./sites/web;
             pname = "courses-web";
@@ -43,40 +34,80 @@
             task = "build";
             output = "build";
           };
+        in
+        {
+          scottylabs = {
+            project.name = "courses";
 
-          docs = helpers.buildZensical {
-            src = ./sites/docs;
-            name = "courses-docs";
-          };
+            rust.enable = true;
+            deno = {
+              enable = true;
+              svelte.enable = true;
+              dirs = [ "sites/web" ];
+            };
 
-          api = helpers.buildRustService {
-            src = ./.;
-            pname = "courses-api";
-            version = "0.1.0";
-            buildArgs.cargoExtraArgs = "--bin courses-api";
-          };
+            postgres.enable = true;
+            sqlite.enable = true;
 
-          web-api = helpers.buildRustService {
-            src = ./.;
-            pname = "courses-web-api";
-            version = "0.1.0";
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-            buildArgs = {
-              cargoExtraArgs = "--bin courses-web-api";
-              postInstall = ''
-                wrapProgram $out/bin/courses-web-api --set STATIC_DIR ${web}
+            ricochet = {
+              enable = true;
+              appUrl = "http://localhost:5173";
+            };
+
+            processes = {
+              web-api.run = "secretspec run -P dev -- cargo run -p courses-web-api";
+              web.run = "cd sites/web && deno task dev";
+            };
+
+            shell = {
+              packages = [
+                pkgs.zensical
+                pkgs.nodejs
+              ];
+
+              # aws s3 against the CDN bucket, shadowing the sccache AWS_* keys
+              scripts.cdn-s3 = ''
+                AWS_ACCESS_KEY_ID="$CDN_ACCESS_KEY_ID" AWS_SECRET_ACCESS_KEY="$CDN_SECRET_ACCESS_KEY" AWS_DEFAULT_REGION=us-east-1 \
+                  exec ${pkgs.awscli2}/bin/aws s3 "$@" --endpoint-url https://s3.scottylabs.org
               '';
             };
           };
-        in
-        {
-          inherit
-            api
-            web-api
-            web
-            docs
-            ;
-        }
-      );
+
+          treefmt.settings.global.excludes = [
+            "exported/**"
+            "data/**"
+          ];
+
+          services = {
+            api = {
+              package = helpers.buildRustService {
+                src = ./.;
+                pname = "courses-api";
+                version = "0.1.0";
+                buildArgs.cargoExtraArgs = "--locked --bin courses-api";
+              };
+              customDomain = "api.cmu.courses";
+            };
+
+            web-api = {
+              package = helpers.buildRustService {
+                src = ./.;
+                pname = "courses-web-api";
+                version = "0.1.0";
+                buildArgs.cargoExtraArgs = "--locked --bin courses-web-api";
+              };
+              customDomain = "cmu.courses";
+              env.STATIC_DIR = "${web}";
+            };
+          };
+
+          sites.docs = {
+            package = helpers.buildZensical {
+              src = ./sites/docs;
+              name = "courses-docs";
+            };
+            customDomain = "docs.cmu.courses";
+          };
+        };
     };
 }

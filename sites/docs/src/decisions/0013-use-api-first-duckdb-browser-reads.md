@@ -30,7 +30,7 @@ SQL projection, completeness metadata, versioning, and caching behavior.
 
 - The first search does not wait for the WASM engine or database download.
 - Each tab holds its own read-only catalog, cached by version/access scope in OPFS.
-- The selected WASM bundle adds roughly 8–9 MB compressed plus the database.
+- The selected WASM bundle adds roughly 8-9 MB compressed plus the database.
 - API and local query semantics must be kept aligned; this implementation does
   not share Diesel queries between Rust and the browser or implement SQLite FTS5.
 - Local reads require authenticated startup and periodic session verification;

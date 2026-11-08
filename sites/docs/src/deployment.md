@@ -64,8 +64,8 @@ For application/catalog rollback, redeploy a known-good Git commit and its relea
 
 ## Diagnosing startup failure
 
-- “Read-only filesystem”: verify `scottylabs.sqlite.enable`, `DATABASE_PATH`, and the service's persistent directory.
-- “Catalog key required” or authentication failure: verify the release key in the correct profile; never print it.
+- "Read-only filesystem": verify `scottylabs.sqlite.enable`, `DATABASE_PATH`, and the service's persistent directory.
+- "Catalog key required" or authentication failure: verify the release key in the correct profile; never print it.
 - Checksum mismatch: verify the committed manifest and immutable CDN object. Do not skip verification.
 - OIDC discovery failure: check issuer URL, realm, connectivity and certificates.
 - Login succeeds but `/api/me` returns 403: inspect the issuer's verified CMU email mapping, not project-group membership.

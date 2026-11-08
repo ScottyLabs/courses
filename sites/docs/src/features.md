@@ -1,6 +1,6 @@
 # Feature status
 
-This matrix describes the browser-facing app. “Implemented” means code and a local verification path exist, not that production login and rollout have already been verified. See the [deployment runbook](deployment.md) for the current rollout status.
+This matrix describes the browser-facing app. "Implemented" means code and a local verification path exist, not that production login and rollout have already been verified. See the [deployment runbook](deployment.md) for the current rollout status.
 
 | Feature | Behavior / implementation | Verification |
 | --- | --- | --- |
@@ -26,4 +26,4 @@ This matrix describes the browser-facing app. “Implemented” means code and a
 - Missing source times, rooms, instructors and descriptions remain missing. Refreshing S27 schedules does not refresh historical FCEs or every description.
 - Finals come from the user's own calendar export. There is no university-wide official finals feed in this app.
 - The current deployment is one personal SQLite writer with in-memory sessions. Multi-replica deployment and restart-persistent sessions require additional infrastructure.
-- “All features implemented” must not be used to imply all historical frontend wishlist items, unprovided datasets, or a validated degree audit. The endpoint contract and this matrix define the delivered behavior.
+- "All features implemented" must not be used to imply all historical frontend wishlist items, unprovided datasets, or a validated degree audit. The endpoint contract and this matrix define the delivered behavior.

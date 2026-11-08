@@ -17,7 +17,7 @@ fn validate_schedule(b: &Backend, v: &Value) -> Result<(), ApiError> {
         .as_str()
         .ok_or_else(|| bad("Schedule name required"))?;
     if name.trim().is_empty() || name.len() > 120 {
-        return Err(bad("Name must be 1–120 characters"));
+        return Err(bad("Name must be 1\u{2013}120 characters"));
     }
     let t = v["term_id"].as_str().ok_or_else(|| bad("Term required"))?;
     let db = b.db(true)?;

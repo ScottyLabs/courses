@@ -52,7 +52,7 @@ When changing catalog queries, update both `backend/catalog.rs` and `sqlite-cata
 
 Personal schema changes must preserve existing records. Current additions are `CREATE TABLE IF NOT EXISTS`; `PRAGMA user_version` identifies the schema. Future column changes need a version-gated migration, a test opening a previous schema, and a backup/rollback plan. Never run a catalog importer against the personal database.
 
-Requirement text is a reference, not a degree-audit algorithm. Preserve source URLs and catalog/entry years. Do not translate a list of referenced courses into “all required” without interpreting alternatives, minimum grades, double-counting and substitutions.
+Requirement text is a reference, not a degree-audit algorithm. Preserve source URLs and catalog/entry years. Do not translate a list of referenced courses into "all required" without interpreting alternatives, minimum grades, double-counting and substitutions.
 
 ## Verification
 

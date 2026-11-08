@@ -100,7 +100,7 @@ async fn main() -> Result<()> {
         )
         .init();
 
-    // devenv/secretspec injects these into the process environment. Read only
+    // secretspec injects these into the process environment. Read only
     // web API settings, without requiring unrelated scraper/CDN/build secrets.
     let env = |name: &str| std::env::var(name).with_context(|| format!("{name} must be set"));
     let port = std::env::var("PORT").unwrap_or_else(|_| "3002".into());

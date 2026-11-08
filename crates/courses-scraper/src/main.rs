@@ -77,7 +77,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     // Personal credentials come from plain env: workflow env in CI, the
-    // devenv shell's secretspec dev profile (.env via local provider) in dev
+    // dev shell's secretspec dev profile (.env via local provider) in dev
     let cookie_header = match &args.cookie_file {
         Some(path) => Some(
             std::fs::read_to_string(path)
