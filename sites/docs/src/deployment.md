@@ -42,7 +42,7 @@ The catalog encryption key is server-only. Do not put it in a Vite/build scope, 
 
 1. Review `deployments/catalog.json`. It pins immutable encrypted objects and hashes, not plaintext data or secrets. Commit the manifest together with code changes. The old release remains available for rollback.
 
-1. Push to `main` to trigger production, `staging` for staging, or use a pull request for a preview. Do not force-push unrelated upstream changes. Kennel resolves secrets, builds the Nix packages, starts the service, then checks `/api/health` before routing traffic.
+1. Push to `main`, `staging`, or a pull request, and [kennel deploys it](https://docs.kennel.scottylabs.org/guides/deploying.html). Do not force-push unrelated upstream changes.
 
 1. Check **both** `kennel/build` and `kennel/deploy` statuses on the pushed SHA. Investigate failed CI checks separately; do not call a failed status a completed deployment.
 

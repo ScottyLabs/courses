@@ -8,15 +8,7 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 
 ## Run locally
 
-1. Install [Lix](https://lix.systems/install/) with the ScottyLabs binary cache:
-
-   ```sh
-   curl -sSf -L https://install.lix.systems/lix | sh -s -- install \
-     --extra-conf "extra-substituters = https://scottylabs.cachix.org" \
-     --extra-conf "extra-trusted-public-keys = scottylabs.cachix.org-1:hajjEX5SLi/Y7yYloiXTt2IOr3towcTGRhMh1vu6Tjg="
-   ```
-
-   Then log in with `nix run git+https://git.cmu.dev/ScottyLabs/kennel#login`. The development shell loads the OIDC settings and other secrets. You need access to those secrets for CMU sign-in; there is no local login bypass.
+1. Install Lix and log in to OpenBao by following kennel's [local development](https://docs.kennel.scottylabs.org/guides/local-development.html#installing-nix) and [secrets](https://docs.kennel.scottylabs.org/guides/secrets.html#local-development) guides. The development shell loads the OIDC settings and other secrets, which you can read after you [join the CMU Courses team through governance](https://git.cmu.dev/ScottyLabs/governance#joining-a-team). You need them for CMU sign-in; there is no local login bypass.
 
 1. Clone the repository and enter the development shell:
 
@@ -41,7 +33,7 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
    pitchfork start --local
    ```
 
-1. Open <http://localhost:5173>. Use **Sign in** to test the configured CMU identity provider. The frontend proxies `/api` and `/auth` to the API, and Ricochet returns the callback to port 5173. The API needs `APP_URL=http://localhost:5173` and the callback URL supplied by the development secrets. Stop everything with `pitchfork stop --local`.
+1. Open <http://localhost:5173>. Use **Sign in** to test the configured CMU identity provider. The frontend proxies `/api` and `/auth` to the API, and Ricochet returns the callback to port 5173. The API needs `APP_URL=http://localhost:5173` and the callback URL supplied by the development secrets.
 
 If the API cannot start, first check that the catalog exists and that the development shell loaded the OIDC settings. A `403` from `/api/me` after login means the provider did not supply a verified CMU email in the ID token or matching UserInfo response. An anonymous `401` from `/api/me` before login is expected.
 
@@ -66,7 +58,6 @@ above to test sign-in. Rebuild after changes. Deployment serves
 | `deno task check` | `sites/web` | Check Svelte and TypeScript |
 | `deno task test` | `sites/web` | Run frontend unit tests |
 | `cargo test -p courses-web-api` | Repository root | Run API unit tests |
-| `pitchfork logs web-api` | Repository root | Show a local process's output when troubleshooting |
 
 More details: [architecture](sites/docs-migrating-wip/src/overview.md) and
 [scraper usage](sites/docs-migrating-wip/src/scraper/running.md).
