@@ -8,7 +8,7 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 
 ## Run locally
 
-1. Install Lix and log in to OpenBao by following kennel's [local development](https://docs.kennel.scottylabs.org/guides/local-development.html#installing-nix) and [secrets](https://docs.kennel.scottylabs.org/guides/secrets.html#local-development) guides. The development shell loads the OIDC settings and other secrets, which you can read after you [join the CMU Courses team through governance](https://git.cmu.dev/ScottyLabs/governance#joining-a-team). You need them for CMU sign-in; there is no local login bypass.
+1. Install Lix and log in to OpenBao by following kennel's [local development](https://docs.kennel.scottylabs.org/guides/local-development/#installing-nix) and [secrets](https://docs.kennel.scottylabs.org/guides/secrets/#local-development) guides. The development shell loads the OIDC settings and other secrets, which you can read after you [join the CMU Courses team through governance](https://git.cmu.dev/ScottyLabs/governance#joining-a-team). You need them for CMU sign-in; there is no local login bypass.
 
 1. Clone the repository and enter the development shell:
 
