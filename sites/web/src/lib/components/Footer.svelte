@@ -8,8 +8,8 @@
 	<div class="text-normal flex flex-col text-sm text-fg-gray">
 		<p>Designed, developed and maintained with ❤️ by ScottyLabs.</p>
 		<p>
-			Want to help us make CMU Courses better? Join us at ScottyLabs or make a pull request on our
-			Github repository.
+			Want to help us make CMU Courses better? Join us at ScottyLabs or make a pull request on
+			<a class="underline" href="https://git.cmu.dev/ScottyLabs/courses">git.cmu.dev</a>.
 		</p>
 	</div>
 	<button
