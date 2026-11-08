@@ -8,7 +8,15 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 
 ## Run locally
 
-1. Install [Lix](https://lix.systems/install/) with `curl -sSf -L https://install.lix.systems/lix | sh -s -- install`, then log in with `nix run git+https://git.cmu.dev/ScottyLabs/kennel#login`. The development shell loads the OIDC settings and other secrets. You need access to those secrets for CMU sign-in; there is no local login bypass.
+1. Install [Lix](https://lix.systems/install/) with the ScottyLabs binary cache:
+
+   ```sh
+   curl -sSf -L https://install.lix.systems/lix | sh -s -- install \
+     --extra-conf "extra-substituters = https://scottylabs.cachix.org" \
+     --extra-conf "extra-trusted-public-keys = scottylabs.cachix.org-1:hajjEX5SLi/Y7yYloiXTt2IOr3towcTGRhMh1vu6Tjg="
+   ```
+
+   Then log in with `nix run git+https://git.cmu.dev/ScottyLabs/kennel#login`. The development shell loads the OIDC settings and other secrets. You need access to those secrets for CMU sign-in; there is no local login bypass.
 
 1. Clone the repository and enter the development shell:
 
