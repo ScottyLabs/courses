@@ -1,8 +1,4 @@
-//! Walk `exported/syllabi/<term>/<dept>/<code_nodash>[-<section>].<ext>`
-//! and attach one [`SyllabusRef`] per file to its course, so "does this
-//! specific section in this specific term have a syllabus" is answerable
-//! downstream. The file contents themselves are not opened; refs point at
-//! the CDN copies of the same tree.
+//! Walk `exported/syllabi/<term>/<dept>/<code_nodash>[-<section>].<ext>` and attach one [`SyllabusRef`] per file to its course, so "does this specific section in this specific term have a syllabus" is answerable downstream. The file contents themselves are not opened; refs point at the CDN copies of the same tree.
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;

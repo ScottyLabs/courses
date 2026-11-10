@@ -46,7 +46,7 @@ StuCo instructors can opt out of FCEs, so a `98-` course that ran may have no FC
 ## Deduplication
 
 | Boundary | Mechanism |
-| ----------------------------------------- | ----------------------------------------- |
+| -- | -- |
 | FCE rows to (year, sem) tuples per course | `HashSet<(year, sem)>` |
 | FCE codes union SOC codes | `HashSet<String>` |
 | FCE tuples union SOC term per course | `HashSet<(year, sem)>` |

@@ -3,7 +3,7 @@
 ## CLI
 
 | Flag | Env | Default | Purpose |
-| --------------- | ------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -- | -- | -- | -- |
 | `--mode` | `MODE` | `courses` | One of `courses`, `programs`, `syllabi`, `ldap`, `all` (`all` runs the three scrape pipelines in parallel, then the directory pipeline). |
 | `--export-root` | `EXPORT_ROOT` | `exported` | Root for all output. Scrape pipelines write under `<export_root>/<username>/`, syllabi under `<export_root>/syllabi/`, the directory aggregate at `<export_root>/ldap.json`. |
 | `--fce-path` | `FCE_PATH` | `data/fces.csv` | SmartEvals FCE CSV (used in `courses` and `all`). |

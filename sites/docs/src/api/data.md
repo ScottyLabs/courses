@@ -18,7 +18,7 @@ CourseWeave's S27 snapshot has 3,085 courses and 6,760 sections. Its claimed gen
 ## Database outputs
 
 | File | Reader | Contents |
-| --- | --- | --- |
+| -- | -- | -- |
 | `public.sqlite` | Backend anonymous queries | Sanitized full course history and public programs |
 | `member.sqlite` | Backend CMU queries | Full history plus restricted fields and Stellic program trees |
 | `public-browser.sqlite` | Anonymous browser worker | Default rows and three newest terms, no program bodies |

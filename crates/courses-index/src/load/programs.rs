@@ -1,15 +1,6 @@
-//! Walk every `exported/programs/<catalog_id>/<audit_id>.json`, collect the
-//! set of course codes referenced by the audit's `tree`, and attach a
-//! `ProgramMembership` to each matching course. The audit JSON's `tree` is a
-//! deeply nested choice/constraint structure, so the walk just looks for
-//! `{"type": "course", "data": {"course": {"code": ...}}}` nodes regardless
-//! of nesting depth.
+//! Walk every `exported/programs/<catalog_id>/<audit_id>.json`, collect the set of course codes referenced by the audit's `tree`, and attach a `ProgramMembership` to each matching course. The audit JSON's `tree` is a deeply nested choice/constraint structure, so the walk just looks for `{"type": "course", "data": {"course": {"code": ...}}}` nodes regardless of nesting depth.
 //!
-//! A single course can appear multiple times within one audit's tree (listed
-//! under several requirement branches); the per-audit set is deduplicated
-//! before emission. Across audits, the same course typically belongs to many
-//! programs, so the resulting `Course.programs` is an unordered list of
-//! `(audit, program)` tuples.
+//! A single course can appear multiple times within one audit's tree (listed under several requirement branches); the per-audit set is deduplicated before emission. Across audits, the same course typically belongs to many programs, so the resulting `Course.programs` is an unordered list of `(audit, program)` tuples.
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -32,8 +23,7 @@ pub struct ProgramLoad {
     pub orphan_codes: HashSet<String>,
 }
 
-/// Walk `programs_root` and populate each course's `programs` field with one
-/// `ProgramMembership` per audit it appears in.
+/// Walk `programs_root` and populate each course's `programs` field with one `ProgramMembership` per audit it appears in.
 pub fn load_programs(programs_root: &Path, courses: &mut [Course]) -> Result<ProgramLoad> {
     let code_to_id: HashMap<String, CourseId> =
         courses.iter().map(|c| (c.code.clone(), c.id)).collect();

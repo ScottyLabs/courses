@@ -15,7 +15,7 @@ Search base `ou=andrewperson,dc=andrew,dc=cmu,dc=edu`, scope one, filter `(uid=<
 Requested server-side so the response never carries more than we save:
 
 | Attribute | Notes |
-| ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| -- | -- |
 | `uid` | Lowercased, used as the output key. |
 | `cn` / `displayName` / `givenName` / `sn` | Name parts, mostly redundant with Stellic's. |
 | `title` | Job title, e.g. "Teaching Professor", "Systems Scientist". |

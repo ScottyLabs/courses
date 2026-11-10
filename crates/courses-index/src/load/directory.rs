@@ -1,7 +1,5 @@
-//! Merge `<exported_root>/ldap.json` (CMU directory attributes keyed by
-//! lowercased AndrewID, written by the scraper's `ldap` mode) onto
-//! [`Professor`]s by username. A missing file is a no-op so catalogs
-//! still build from scrapes that predate directory enrichment.
+//! Merge `<exported_root>/ldap.json` (CMU directory attributes keyed by lowercased AndrewID, written by the scraper's `ldap` mode) onto
+//! [`Professor`]s by username. A missing file is a no-op so catalogs still build from scrapes that predate directory enrichment.
 
 use std::collections::HashMap;
 use std::fs;

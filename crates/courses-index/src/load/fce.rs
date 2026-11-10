@@ -1,22 +1,10 @@
-//! Read `data/fces.csv` into one [`FceRow`] per survey row and roll the rows
-//! up into a per-course [`FceAggregate`]. Likert ratings are kept as
-//! `Option<f32>` because roughly 5% of rows have no responses and report
-//! enrollment counts only; those rows still land in the row store but are
-//! skipped when averaging.
+//! Read `data/fces.csv` into one [`FceRow`] per survey row and roll the rows up into a per-course [`FceAggregate`]. Likert ratings are kept as `Option<f32>` because roughly 5% of rows have no responses and report enrollment counts only; those rows still land in the row store but are skipped when averaging.
 //!
-//! Course matching uses the dashless `Num` column. Most rows are 5-char
-//! `<dept2><num3>`, but the dump also contains a small number of legacy
-//! prefixed forms like `FA14-12-100` and a handful of rows with the dash
-//! already inserted (`05-436`). Both shapes are normalized to `XX-YYY`.
+//! Course matching uses the dashless `Num` column. Most rows are 5-char `<dept2><num3>`, but the dump also contains a small number of legacy prefixed forms like `FA14-12-100` and a handful of rows with the dash already inserted (`05-436`). Both shapes are normalized to `XX-YYY`.
 //!
-//! Instructor ids are *not* assigned here. Each row carries
-//! `instructor_fce_key` (a normalized `LASTNAME, FIRST` string) and leaves
-//! `instructor_id` at `None`. A later professor-merge pass joins those keys
-//! against the Stellic instructor set.
+//! Instructor ids are *not* assigned here. Each row carries `instructor_fce_key` (a normalized `LASTNAME, FIRST` string) and leaves `instructor_id` at `None`. A later professor-merge pass joins those keys against the Stellic instructor set.
 //!
-//! Rows whose `College` is `Teaching Assistants` are dropped at parse
-//! time. They reuse the course's Num but list TA usernames as instructors
-//! and never carry Likert data, so they would only pollute the row store.
+//! Rows whose `College` is `Teaching Assistants` are dropped at parse time. They reuse the course's Num but list TA usernames as instructors and never carry Likert data, so they would only pollute the row store.
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -40,8 +28,7 @@ pub struct FceLoad {
     pub rows_skipped_bad_num: usize,
 }
 
-/// Read `fce_csv` and attach aggregates to each course in `courses`. Returns
-/// the per-row store; the orchestrator owns it.
+/// Read `fce_csv` and attach aggregates to each course in `courses`. Returns the per-row store; the orchestrator owns it.
 pub fn load_fces(fce_csv: &Path, courses: &mut [Course]) -> Result<FceLoad> {
     let code_to_id: HashMap<String, CourseId> =
         courses.iter().map(|c| (c.code.clone(), c.id)).collect();
@@ -173,8 +160,7 @@ struct RawRow {
 fn normalize_code(raw: &str) -> Option<String> {
     let trimmed = raw.trim();
 
-    // The legacy "FA14-12-100" / "SP19-21-127" forms carry a non-numeric
-    // term prefix that needs to come off before the rest can be parsed.
+    // The legacy "FA14-12-100" / "SP19-21-127" forms carry a non-numeric term prefix that needs to come off before the rest can be parsed.
     let without_prefix = match trimmed.split_once('-') {
         Some((head, tail)) if head.chars().any(|c| c.is_ascii_alphabetic()) => tail,
         _ => trimmed,

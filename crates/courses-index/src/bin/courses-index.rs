@@ -1,5 +1,4 @@
-//! Native CLI for the catalog pipeline. Walks `exported/` and `data/fces.csv`
-//! into a `Corpus` and writes the catalog artifact.
+//! Native CLI for the catalog pipeline. Walks `exported/` and `data/fces.csv` into a `Corpus` and writes the catalog artifact.
 
 use std::path::PathBuf;
 
@@ -13,10 +12,7 @@ use courses_index::load;
 #[derive(Parser, Debug)]
 #[command(about = "Build the course catalog artifact")]
 struct Args {
-    /// Path to the scrape output root. The directory should contain one
-    /// subdirectory per student (named by AndrewID), each with
-    /// `courses_history/`, `programs/`, and `syllabi/` underneath. The
-    /// loader walks every immediate subdirectory and consolidates.
+    /// Path to the scrape output root. The directory should contain one subdirectory per student (named by AndrewID), each with `courses_history/`, `programs/`, and `syllabi/` underneath. The loader walks every immediate subdirectory and consolidates.
     #[arg(long, env = "EXPORTED_ROOT", default_value = "exported")]
     exported_root: PathBuf,
 

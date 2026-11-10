@@ -4,8 +4,7 @@ Date: 2026-10-14
 
 ## Status
 
-Superseded for browser queries by [decision 13](0013-use-api-first-duckdb-browser-reads.md).
-The server's database/query implementation remains the backend owner's choice.
+Superseded for browser queries by [decision 13](0013-use-api-first-duckdb-browser-reads.md). The server's database/query implementation remains the backend owner's choice.
 
 ## Context
 

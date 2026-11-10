@@ -1,7 +1,5 @@
-//! CMU course catalog scraper. Pulls course info, sections, program audits
-//! and syllabi from Stellic and Canvas into `exported/`, driven by FCE and
-//! Schedule of Classes discovery feeds. The companion `courses-index` crate
-//! reads this output to build the catalog.
+//! CMU course catalog scraper. Pulls course info, sections, program audits and syllabi from Stellic and Canvas into `exported/`, driven by FCE and
+//! Schedule of Classes discovery feeds. The companion `courses-index` crate reads this output to build the catalog.
 //!
 //! `sites/docs-migrating-wip` carries per-source reference material covering
 //! API shapes, data conventions, and operator guidance.
@@ -46,10 +44,8 @@ struct Args {
     #[arg(long, default_value_t = 32, env = "CONCURRENCY")]
     concurrency: usize,
 
-    /// Root directory for scrape output. The scraper writes under
-    /// `<export_root>/<username>/{courses_history,programs,syllabi}/`,
-    /// where `<username>` is the Stellic-authed AndrewID. Multiple
-    /// students' scrapes coexist as sibling subdirectories.
+    /// Root directory for scrape output. The scraper writes under `<export_root>/<username>/{courses_history,programs,syllabi}/`,
+    /// where `<username>` is the Stellic-authed AndrewID. Multiple students' scrapes coexist as sibling subdirectories.
     #[arg(long, default_value = "exported", env = "EXPORT_ROOT")]
     export_root: PathBuf,
 
@@ -76,8 +72,7 @@ fn main() -> Result<()> {
         .init();
     let args = Args::parse();
 
-    // Personal credentials come from plain env: workflow env in CI, the
-    // dev shell's secretspec dev profile (.env via local provider) in dev
+    // Personal credentials come from plain env: workflow env in CI, the dev shell's secretspec dev profile (.env via local provider) in dev
     let cookie_header = match &args.cookie_file {
         Some(path) => Some(
             std::fs::read_to_string(path)
@@ -114,8 +109,7 @@ fn main() -> Result<()> {
         .ok()
         .filter(|s| !s.is_empty());
 
-    // Directory enrichment reads existing scrape output and talks only
-    // to LDAP, no Stellic session needed
+    // Directory enrichment reads existing scrape output and talks only to LDAP, no Stellic session needed
     if args.mode == Mode::Ldap {
         let password = ldap_password.context("CMU_LDAP_PASSWORD required for ldap mode")?;
 
@@ -129,8 +123,7 @@ fn main() -> Result<()> {
     let needs_canvas = matches!(args.mode, Mode::Syllabi | Mode::All);
 
     // Always authenticate against Stellic, even for syllabi-only runs:
-    // the AndrewID it returns names the per-student subdir under
-    // `export_root` for all output kinds.
+    // the AndrewID it returns names the per-student subdir under `export_root` for all output kinds.
     let (stellic, term_joined) =
         Stellic::login(cookie_header, &args.export_root, args.concurrency)?;
 
@@ -350,8 +343,7 @@ fn scrape_courses(
         }
     };
     if target.is_some() {
-        // Explicit refreshes are serial regardless of the pool setting. Stop
-        // the whole run on the first failed request, including 401/403/429.
+        // Explicit refreshes are serial regardless of the pool setting. Stop the whole run on the first failed request, including 401/403/429.
         for task in &tasks {
             std::thread::sleep(std::time::Duration::from_secs(2));
             done.fetch_add(1, Ordering::Relaxed);

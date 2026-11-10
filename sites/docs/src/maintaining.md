@@ -13,7 +13,7 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 ## Code map
 
 | Location | Responsibility |
-| --- | --- |
+| -- | -- |
 | `crates/courses-web-api/src/main.rs` | Configuration, OIDC/session middleware, routes and static assets |
 | `auth.rs` | Verified CMU email policy and authenticated principal extraction |
 | `backend/mod.rs` | Database initialization, shared errors, SQL JSON decoding and Origin guard |

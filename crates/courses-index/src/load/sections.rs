@@ -1,16 +1,11 @@
-//! Walk `ly*_sm*.json` files to emit `SectionTime` rows and enrich the
-//! courses produced by [`super::courses`]. Each file carries one course's
-//! sections for a given (lyear, sem); the authoritative term comes from each
-//! section's `start_date`, which is unambiguous across anchor shifts. Months
+//! Walk `ly*_sm*.json` files to emit `SectionTime` rows and enrich the courses produced by [`super::courses`]. Each file carries one course's sections for a given (lyear, sem); the authoritative term comes from each section's `start_date`, which is unambiguous across anchor shifts. Months
 //! 1-5 map to Spring, 6-7 to Summer, 8-12 to Fall.
 //!
 //! The walk populates three outputs together:
 //!
 //! 1. `Vec<SectionTime>` for schedule-fit and overlap queries.
-//! 2. A richer instructor set per course (section files reference ~3,221
-//!    distinct instructor ids vs ~1,866 in `info.json`'s `instructors`).
-//! 3. Extra (year, sem, campus) tuples added to each course's
-//!    `semesters_offered`.
+//! 2. A richer instructor set per course (section files reference ~3,221 distinct instructor ids vs ~1,866 in `info.json`'s `instructors`).
+//! 3. Extra (year, sem, campus) tuples added to each course's `semesters_offered`.
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -108,9 +103,7 @@ pub struct SectionLoad {
     pub orphaned_course_codes: HashSet<String>,
 }
 
-/// Walk every `ly*_sm*.json` under `courses_history_root`, emit `SectionTime`
-/// rows, and enrich each course in `courses` with section-level instructors
-/// and additional `semesters_offered` tuples. Mutates `courses` in place.
+/// Walk every `ly*_sm*.json` under `courses_history_root`, emit `SectionTime` rows, and enrich each course in `courses` with section-level instructors and additional `semesters_offered` tuples. Mutates `courses` in place.
 pub fn load_sections(courses_history_root: &Path, courses: &mut [Course]) -> Result<SectionLoad> {
     let code_to_id: HashMap<&str, CourseId> =
         courses.iter().map(|c| (c.code.as_str(), c.id)).collect();

@@ -1,9 +1,6 @@
-//! CMU directory (LDAP) enrichment for instructors. One authenticated
-//! bind against `ldaps://ldap.cmu.edu` as the scottylabs-svc service
-//! account, then batched OR-filter searches over every instructor
+//! CMU directory (LDAP) enrichment for instructors. One authenticated bind against `ldaps://ldap.cmu.edu` as the scottylabs-svc service account, then batched OR-filter searches over every instructor
 //! AndrewID present in the existing scrape output under `export_root`,
-//! writing one aggregate `ldap.json` at the export root keyed by
-//! lowercased AndrewID.
+//! writing one aggregate `ldap.json` at the export root keyed by lowercased AndrewID.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -18,10 +15,8 @@ const BIND_DN: &str = "uid=scottylabs-svc,ou=andrewperson,dc=andrew,dc=cmu,dc=ed
 const SEARCH_BASE: &str = "ou=andrewperson,dc=andrew,dc=cmu,dc=edu";
 const BATCH_SIZE: usize = 50;
 
-/// Attributes worth keeping, requested server-side so the response
-/// never carries more than we save. `cmuDepartment`,
-/// `eduPersonAffiliation`, and `eduPersonSchoolCollegeName` are
-/// multi-valued for some people; every attribute is stored as a list.
+/// Attributes worth keeping, requested server-side so the response never carries more than we save. `cmuDepartment`,
+/// `eduPersonAffiliation`, and `eduPersonSchoolCollegeName` are multi-valued for some people; every attribute is stored as a list.
 const ATTRS: &[&str] = &[
     "uid",
     "cn",
@@ -40,8 +35,7 @@ const ATTRS: &[&str] = &[
     "guid",
 ];
 
-/// Look up every known instructor AndrewID in the CMU directory and
-/// write the aggregate to `<export_root>/ldap.json`. Re-runs overwrite.
+/// Look up every known instructor AndrewID in the CMU directory and write the aggregate to `<export_root>/ldap.json`. Re-runs overwrite.
 pub fn scrape_ldap(export_root: &Path, password: &str) -> Result<()> {
     let uids = collect_instructor_uids(export_root)?;
     if uids.is_empty() {
@@ -104,8 +98,7 @@ pub fn scrape_ldap(export_root: &Path, password: &str) -> Result<()> {
     Ok(())
 }
 
-/// Union of every instructor `username` across every student subdir's
-/// `courses_history` output, both `info.json` and section files.
+/// Union of every instructor `username` across every student subdir's `courses_history` output, both `info.json` and section files.
 fn collect_instructor_uids(export_root: &Path) -> Result<BTreeSet<String>> {
     let mut uids = BTreeSet::new();
 
@@ -137,8 +130,7 @@ fn collect_instructor_uids(export_root: &Path) -> Result<BTreeSet<String>> {
     Ok(uids)
 }
 
-/// Recursively collect non-empty `username` string values. Instructor
-/// objects are the only carriers of that key in the scrape output.
+/// Recursively collect non-empty `username` string values. Instructor objects are the only carriers of that key in the scrape output.
 fn collect_usernames(v: &serde_json::Value, out: &mut BTreeSet<String>) {
     match v {
         serde_json::Value::Object(map) => {

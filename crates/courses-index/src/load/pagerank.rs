@@ -1,14 +1,7 @@
-//! Build the prereq graph from each course's `prereqs_text`, run PageRank
-//! over it, and write the resulting score back to `Course.pagerank`. The
-//! text is parsed with a simple `\d{2}-\d{3}` scan rather than walking the
-//! Stellic `req_obj` tree because the text already contains every code the
-//! tree does, in a form we treat purely as edges (logical structure does not
-//! affect rank flow).
+//! Build the prereq graph from each course's `prereqs_text`, run PageRank over it, and write the resulting score back to `Course.pagerank`. The text is parsed with a simple `\d{2}-\d{3}` scan rather than walking the
+//! Stellic `req_obj` tree because the text already contains every code the tree does, in a form we treat purely as edges (logical structure does not affect rank flow).
 //!
-//! Each prereq reference inside course C's text adds an edge `C -> A` so
-//! rank flows from C toward its prereqs. A course referenced as a prereq
-//! by many downstream courses accumulates rank, which is the popularity
-//! and centrality signal we want as a tiebreaker for relevance.
+//! Each prereq reference inside course C's text adds an edge `C -> A` so rank flows from C toward its prereqs. A course referenced as a prereq by many downstream courses accumulates rank, which is the popularity and centrality signal we want as a tiebreaker for relevance.
 
 use std::collections::HashMap;
 use std::sync::OnceLock;

@@ -4,8 +4,7 @@ Date: 2026-10-14
 
 ## Status
 
-Accepted; the initial-load behavior is amended by
-[decision 13](0013-use-api-first-duckdb-browser-reads.md).
+Accepted; the initial-load behavior is amended by [decision 13](0013-use-api-first-duckdb-browser-reads.md).
 
 ## Context
 

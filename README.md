@@ -46,18 +46,14 @@ deno task build
 deno task preview
 ```
 
-Open <http://localhost:4173> to inspect the built UI. Vite's preview server does
-not use the development `/api` and `/auth` proxy, so use the development server
-above to test sign-in. Rebuild after changes. Deployment serves
-`sites/web/build` through `courses-web-api` using `STATIC_DIR`.
+Open <http://localhost:4173> to inspect the built UI. Vite's preview server does not use the development `/api` and `/auth` proxy, so use the development server above to test sign-in. Rebuild after changes. Deployment serves `sites/web/build` through `courses-web-api` using `STATIC_DIR`.
 
 ## Useful commands
 
 | Command | Run from | Purpose |
-| --- | --- | --- |
+| -- | -- | -- |
 | `deno task check` | `sites/web` | Check Svelte and TypeScript |
 | `deno task test` | `sites/web` | Run frontend unit tests |
 | `cargo test -p courses-web-api` | Repository root | Run API unit tests |
 
-More details: [architecture](sites/docs-migrating-wip/src/overview.md) and
-[scraper usage](sites/docs-migrating-wip/src/scraper/running.md).
+More details: [architecture](sites/docs-migrating-wip/src/overview.md) and [scraper usage](sites/docs-migrating-wip/src/scraper/running.md).

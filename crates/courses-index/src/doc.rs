@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
-/// Dense integer id assigned at build time. Stable for a given build run and
-/// never reused across codes.
+/// Dense integer id assigned at build time. Stable for a given build run and never reused across codes.
 pub type CourseId = u32;
 pub type InstructorId = u32;
 pub type SectionId = u32;
@@ -48,8 +47,7 @@ pub struct Term {
 
 impl Term {
     /// Format as the syllabus-registry short code used on disk, e.g. `F26`, `S26`, `M25`.
-    /// Summer (Stellic sem 3) always maps to `M`; the syllabi registry distinguishes
-    /// `M` vs `N` by session, which we collapse here since catalog data does not.
+    /// Summer (Stellic sem 3) always maps to `M`; the syllabi registry distinguishes `M` vs `N` by session, which we collapse here since catalog data does not.
     pub fn short_code(&self) -> String {
         let yy = self.year % 100;
         let letter = match self.sem {
@@ -69,16 +67,12 @@ pub struct Course {
     pub dept: String,
     pub course_num: u32,
     pub name: String,
-    /// Backed by `Arc<str>` so identical descriptions across courses share
-    /// a single allocation. The post-load dedup pass populates this; raw
-    /// loaders just construct fresh Arcs.
+    /// Backed by `Arc<str>` so identical descriptions across courses share a single allocation. The post-load dedup pass populates this; raw loaders just construct fresh Arcs.
     pub description: Arc<str>,
     pub units: f32,
     pub units_min: f32,
     pub units_max: f32,
-    /// Low-cardinality fields back onto `Arc<str>` so the post-load dedup
-    /// pass can collapse repeated values to a single shared allocation
-    /// without changing on-disk shape.
+    /// Low-cardinality fields back onto `Arc<str>` so the post-load dedup pass can collapse repeated values to a single shared allocation without changing on-disk shape.
     pub school: Option<Arc<str>>,
     pub level: Option<Arc<str>>,
     pub attribute_tags: Vec<Arc<str>>,
@@ -107,11 +101,7 @@ pub struct GenEdTag {
     pub sem: u8,
 }
 
-/// One syllabus object on the CDN, scoped to a (term, section) of this
-/// course. The object key is
-/// `syllabi/<term>/<dept>/<code_nodash>[-<section>].<ext>`, where `dept`
-/// is the Canvas registry's department code (e.g. `CS`), not the
-/// course's numeric prefix.
+/// One syllabus object on the CDN, scoped to a (term, section) of this course. The object key is `syllabi/<term>/<dept>/<code_nodash>[-<section>].<ext>`, where `dept` is the Canvas registry's department code (e.g. `CS`), not the course's numeric prefix.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SyllabusRef {
     pub term: Arc<str>,
@@ -171,8 +161,7 @@ pub struct Professor {
     pub courses_taught: Vec<CourseTaught>,
     pub fce_aggregates: Option<FceAggregate>,
     pub n_sections_taught: u32,
-    /// Directory (LDAP) enrichment. Defaults when the scrape has no
-    /// `ldap.json` or the AndrewID wasn't found in the directory.
+    /// Directory (LDAP) enrichment. Defaults when the scrape has no `ldap.json` or the AndrewID wasn't found in the directory.
     pub email: Option<String>,
     pub title: Option<String>,
     pub directory_departments: Vec<String>,
@@ -197,8 +186,7 @@ pub struct SectionTime {
     pub term: Term,
     /// Bitmask with bit 0 = Monday through bit 6 = Sunday.
     pub days: u8,
-    /// Minutes from midnight, 0..1440. Async sections have `days == 0` and
-    /// `start_minutes == end_minutes == 0`.
+    /// Minutes from midnight, 0..1440. Async sections have `days == 0` and `start_minutes == end_minutes == 0`.
     pub start_minutes: u16,
     pub end_minutes: u16,
     pub building: Option<String>,
@@ -236,8 +224,7 @@ impl SectionType {
     }
 }
 
-/// One FCE survey row. Preserves the raw per-(year, sem, section, instructor)
-/// data so queries can average over arbitrary subsets.
+/// One FCE survey row. Preserves the raw per-(year, sem, section, instructor) data so queries can average over arbitrary subsets.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FceRow {
     pub course_id: CourseId,

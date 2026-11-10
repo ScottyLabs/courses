@@ -1,7 +1,7 @@
 # Architecture decisions
 
 | # | Decision | Status |
-|---|---|---|
+| -- | -- | -- |
 | 1 | [Record architecture decisions](0001-record-architecture-decisions.md) | accepted |
 | 2 | [Serve the website and a public course API](0002-serve-the-website-and-a-public-course-api.md) | accepted |
 | 3 | [Query the catalog in the browser](0003-query-the-catalog-in-the-browser.md) | accepted |

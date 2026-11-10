@@ -18,7 +18,7 @@ A single catalog program resolves to one audit version at a time, the one matchi
 The `type` integer is only exposed by `getprograms/`, and once a program is added to a plan the label disappears. The five values:
 
 | type | name | examples |
-| ---- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -- | -- | -- |
 | 1 | Major | "BS in Mathematical Sciences", "BFA in Music Performance (Tuba)", "PHD in Architecture-Engineering-Construction Management", "MS in Software Engineering" |
 | 2 | Minor | "Minor in Computer Science", "Minor in Decision Making and Intelligent Systems", "Minor in Music Theory" |
 | 3 | Additional Major | "Additional Major in Computer Science", "Additional Major in International Relations and Politics" |

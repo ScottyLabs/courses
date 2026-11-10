@@ -1,8 +1,4 @@
-//! Load the scrape sources under `exported/` and `data/fces.csv` into the
-//! in-memory document structs in [`crate::doc`]. Submodules each read one
-//! source and contribute a disjoint set of fields to the `Course` /
-//! `Professor` / `SectionTime` / `FceRow` stores, so passes that touch
-//! non-overlapping fields can run in parallel. The orchestrator lives in
+//! Load the scrape sources under `exported/` and `data/fces.csv` into the in-memory document structs in [`crate::doc`]. Submodules each read one source and contribute a disjoint set of fields to the `Course` / `Professor` / `SectionTime` / `FceRow` stores, so passes that touch non-overlapping fields can run in parallel. The orchestrator lives in
 //! [`run`].
 
 pub mod courses;
@@ -42,11 +38,7 @@ pub struct Corpus {
 }
 
 /// Walk every immediate subdirectory of `exported_root` (one per student,
-/// named by AndrewID) and consolidate the per-student scrapes into a single
-/// corpus. `info.json` (catalog data) is loaded from the first student's
-/// subdir since it is identical across students. Sections, programs, and
-/// syllabi are loaded from every subdir and deduped by `section_id` /
-/// natural keys.
+/// named by AndrewID) and consolidate the per-student scrapes into a single corpus. `info.json` (catalog data) is loaded from the first student's subdir since it is identical across students. Sections, programs, and syllabi are loaded from every subdir and deduped by `section_id` / natural keys.
 pub fn run(exported_root: &Path, fce_csv: &Path) -> Result<Corpus> {
     let student_roots = find_student_roots(exported_root)?;
     let primary = student_roots
@@ -109,13 +101,10 @@ pub fn run(exported_root: &Path, fce_csv: &Path) -> Result<Corpus> {
     Ok(corpus)
 }
 
-/// Collapse repeated string values across courses to shared `Arc<str>`
-/// allocations. Targets every field with low expected cardinality:
+/// Collapse repeated string values across courses to shared `Arc<str>` allocations. Targets every field with low expected cardinality:
 /// `description` (boilerplate text repeats across thousands of courses),
 /// `level` and `school` (handful of distinct values total),
-/// `attribute_tags` and `gened_tags` (a few dozen each), `skills` (a few
-/// hundred), and syllabus `term`/`dept` codes (a few dozen each). Pure
-/// heap optimization with no on-disk format change.
+/// `attribute_tags` and `gened_tags` (a few dozen each), `skills` (a few hundred), and syllabus `term`/`dept` codes (a few dozen each). Pure heap optimization with no on-disk format change.
 pub fn dedup_descriptions(corpus: &mut Corpus) {
     let mut interner = StrInterner::default();
     let mut bytes_before_desc: usize = 0;
@@ -185,8 +174,7 @@ impl StrInterner {
 }
 
 /// Enumerate the per-student subdirectories under `exported_root`.
-/// A subdir counts as a student dir if it has `courses_history/` or
-/// `programs/` directly underneath. (`syllabi/` lives at `exported_root`,
+/// A subdir counts as a student dir if it has `courses_history/` or `programs/` directly underneath. (`syllabi/` lives at `exported_root`,
 /// not under a student.)
 fn find_student_roots(exported_root: &Path) -> Result<Vec<PathBuf>> {
     let mut out = Vec::new();

@@ -1,14 +1,8 @@
-//! Syllabi pipeline that walks Canvas's Syllabus Registry course to discover
-//! every (term, dept) sub-course, enumerates each sub-course's `Available
-//! Syllabi` module, and saves File items as their original downloads and Page
-//! items as plain-text `.url` pointers under
-//! `<syllabi_dir>/<term>/<dept>/<course_section>.<ext>`.
+//! Syllabi pipeline that walks Canvas's Syllabus Registry course to discover every (term, dept) sub-course, enumerates each sub-course's `Available
+//! Syllabi` module, and saves File items as their original downloads and Page items as plain-text `.url` pointers under `<syllabi_dir>/<term>/<dept>/<course_section>.<ext>`.
 //!
-//! Page items get the URL-only treatment because the page bodies are usually
-//! stub redirects pointing into enrollment-restricted course sites; saving the
-//! pointer lets downstream consumers decide whether to follow it.
-//! `Unavailable Syllabi` and `Individualized Experiences` modules are skipped
-//! on purpose because their items have no retrievable content.
+//! Page items get the URL-only treatment because the page bodies are usually stub redirects pointing into enrollment-restricted course sites; saving the pointer lets downstream consumers decide whether to follow it.
+//! `Unavailable Syllabi` and `Individualized Experiences` modules are skipped on purpose because their items have no retrievable content.
 
 use anyhow::{Context, Result};
 use aws_sdk_s3::config::{BehaviorVersion, Credentials, Region};
@@ -97,8 +91,7 @@ pub fn build_tasks(canvas: &Canvas) -> Result<Vec<Task>> {
     Ok(tasks)
 }
 
-/// List the syllabus objects already in the CDN bucket as ext-stripped
-/// `<term>/<dept>/<course_section>` keys for the cumulative skip check.
+/// List the syllabus objects already in the CDN bucket as ext-stripped `<term>/<dept>/<course_section>` keys for the cumulative skip check.
 pub fn load_existing_keys() -> Result<HashSet<String>> {
     let endpoint = env::var("CDN_S3_ENDPOINT").context("CDN_S3_ENDPOINT must be set")?;
     let bucket = env::var("CDN_S3_BUCKET").context("CDN_S3_BUCKET must be set")?;
@@ -148,8 +141,7 @@ pub fn save_task(
     incremental: bool,
     existing: &HashSet<String>,
 ) -> Result<()> {
-    // Cumulative cross-run skip: the CDN already has this one. Absence
-    // never gets cached, so a syllabus uploaded later is still picked up
+    // Cumulative cross-run skip: the CDN already has this one. Absence never gets cached, so a syllabus uploaded later is still picked up
     if existing.contains(&format!(
         "{}/{}/{}",
         task.term, task.dept, task.course_section

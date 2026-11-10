@@ -1,13 +1,9 @@
 //! HTTP client for CMU's Stellic deployment, a browser-only app behind
-//! Shibboleth that needs a pasted `Cookie:` header plus CSRF header on every
-//! request and strips an XSSI prefix off every JSON response before parsing.
-//! The endpoints it wraps are the ones the scraper actually uses
-//! (`getstudentprofile`, `getcourseinfo`, `getcoursesections`, `getprograms`,
+//! Shibboleth that needs a pasted `Cookie:` header plus CSRF header on every request and strips an XSSI prefix off every JSON response before parsing.
+//! The endpoints it wraps are the ones the scraper actually uses (`getstudentprofile`, `getcourseinfo`, `getcoursesections`, `getprograms`,
 //! `getauditversions`, `getauditinfo`).
 //!
-//! First-run auth goes through `login`, which verifies the cookie by fetching
-//! the profile and stashes it for reuse; there is no refresh flow, so a stale
-//! cookie re-prompts.
+//! First-run auth goes through `login`, which verifies the cookie by fetching the profile and stashes it for reuse; there is no refresh flow, so a stale cookie re-prompts.
 
 use anyhow::Result;
 use serde::Deserialize;
@@ -74,9 +70,7 @@ pub struct Stellic {
 }
 
 impl Stellic {
-    /// Authenticate against Stellic and return a client whose `out_dir` is
-    /// `<export_root>/<username>/courses_history`. The caller derives sibling
-    /// dirs (`programs`, `syllabi`) from the same `<export_root>/<username>`.
+    /// Authenticate against Stellic and return a client whose `out_dir` is `<export_root>/<username>/courses_history`. The caller derives sibling dirs (`programs`, `syllabi`) from the same `<export_root>/<username>`.
     pub fn login(
         cookie: Option<String>,
         export_root: &std::path::Path,

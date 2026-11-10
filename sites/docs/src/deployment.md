@@ -11,7 +11,7 @@ The revised configuration enables Kennel SQLite, uses its `DATABASE_PATH`, and s
 ## Required runtime configuration
 
 | Setting | Source and purpose |
-| --- | --- |
+| -- | -- |
 | `PORT`, `APP_URL`, `COMMIT_HASH` | Injected by Kennel; APP_URL must be the exact public origin |
 | `DATABASE_PATH` | Kennel SQLite resource; persistent per-service database |
 | `USER_DB_PATH` | Optional explicit personal database override |

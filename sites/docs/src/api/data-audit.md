@@ -1,16 +1,11 @@
 # Source data audit, October 23, 2026
 
-The entire supplied `/Users/etashj/Downloads/data` directory was copied into
-`data/raw`. **90,778 non-DS_Store files, 1,718,136,834 bytes** were checked against
-a SHA-256 inventory with zero mismatches. The original Downloads folder is
-unchanged. `data/catalog/inventory.json` records every file, including old backups;
-`data/catalog/report.json` records the import counts and warnings. Raw and derived
-data are local artifacts, not committed or placed in the frontend's static folder.
+The entire supplied `/Users/etashj/Downloads/data` directory was copied into `data/raw`. **90,778 non-DS_Store files, 1,718,136,834 bytes** were checked against a SHA-256 inventory with zero mismatches. The original Downloads folder is unchanged. `data/catalog/inventory.json` records every file, including old backups; `data/catalog/report.json` records the import counts and warnings. Raw and derived data are local artifacts, not committed or placed in the frontend's static folder.
 
 ## Coverage and freshness
 
 | Dataset | Available coverage | Interpretation |
-| --- | --- | --- |
+| -- | -- | -- |
 | Courses | 10,089 distinct merged course codes | Stellic course info plus legacy course records; not all are currently offered |
 | Schedules | 48,796 legacy course/term records; 100,541 merged section records | Legacy export includes 3,355 course records for Fall 2026, 3,315 for Spring 2026, and 114 for Summer 2026 |
 | Stellic sections | Dated starts August 30, 2021-June 30, 2025 | Older than the legacy schedule export; dates come from records, not `ly*` filenames |
@@ -25,38 +20,18 @@ data are local artifacts, not committed or placed in the frontend's static folde
 | Advanced credit | AP, IB, Cambridge and non-offered-course files | Preserved in raw data; not yet exposed as scheduling equivalency rules |
 | Finals | Existing repository `data/exams.pdf` | Not imported; no verified current finals feed in this migration |
 
-File modification/copy timestamps are **not** evidence of scrape freshness.
-Fall 2026 schedule coverage is useful, but its exact retrieval date is unknown.
-The newer public requirements come from the official
-[Programs A-Z](https://coursecatalog.web.cmu.edu/programs/) and are archived in
-`data/programs-current` with source URLs, HTML hashes and retrieval timestamps.
-This verifies all links discovered by the scraper, not every possible graduate
-or unpublished program.
+File modification/copy timestamps are **not** evidence of scrape freshness. Fall 2026 schedule coverage is useful, but its exact retrieval date is unknown. The newer public requirements come from the official [Programs A-Z](https://coursecatalog.web.cmu.edu/programs/) and are archived in `data/programs-current` with source URLs, HTML hashes and retrieval timestamps. This verifies all links discovered by the scraper, not every possible graduate or unpublished program.
 
 ## Import choices and limitations
 
-- Prefer Stellic course details; retain legacy-only course codes and department
-  labels. Prefer dated Stellic sections for overlapping course/terms; retain
-  newer legacy terms. Keep only explicit fields intended for the app.
-- FCE summaries are respondent-weighted across the available CSV history;
-  teaching-assistant rows are excluded. They are not "current semester ratings."
-- Two Stellic sections lack dates (`11605/ly3_sm3.json`,
-  `36641/ly3_sm3.json`) and are omitted from the normalized schedule, with warnings.
-  Their source files are retained.
-- Raw exports may include student-specific context. Those fields are not copied
-  to the public/member course payloads. All older snapshots, legacy professors,
-  raw FCE rows, advanced-credit data and ancillary files remain available locally.
-- Variable/unknown-unit courses currently use the numeric source value where
-  available, otherwise zero. A future range/variable-units UI should distinguish
-  these rather than treating zero as a confirmed fixed unit count.
-- The requirements UI shows source text or versioned trees and stores the chosen
-  program with a personal schedule. It does not yet certify degree completion,
-  elective eligibility, substitutions, or double-counting rules.
+- Prefer Stellic course details; retain legacy-only course codes and department labels. Prefer dated Stellic sections for overlapping course/terms; retain newer legacy terms. Keep only explicit fields intended for the app.
+- FCE summaries are respondent-weighted across the available CSV history; teaching-assistant rows are excluded. They are not "current semester ratings."
+- Two Stellic sections lack dates (`11605/ly3_sm3.json`, `36641/ly3_sm3.json`) and are omitted from the normalized schedule, with warnings. Their source files are retained.
+- Raw exports may include student-specific context. Those fields are not copied to the public/member course payloads. All older snapshots, legacy professors, raw FCE rows, advanced-credit data and ancillary files remain available locally.
+- Variable/unknown-unit courses currently use the numeric source value where available, otherwise zero. A future range/variable-units UI should distinguish these rather than treating zero as a confirmed fixed unit count.
+- The requirements UI shows source text or versioned trees and stores the chosen program with a personal schedule. It does not yet certify degree completion, elective eligibility, substitutions, or double-counting rules.
 
-For registration-quality planning, refresh sections for the target term,
-especially Spring 2027. The existing authenticated Stellic scraper supports
-courses and program requirements; commands and access requirements are in
-[backend setup](./sqlite-backend.md). No live Stellic session was used here.
+For registration-quality planning, refresh sections for the target term, especially Spring 2027. The existing authenticated Stellic scraper supports courses and program requirements; commands and access requirements are in [backend setup](./sqlite-backend.md). No live Stellic session was used here.
 
 ## Spring 2027 refresh from CourseWeave
 

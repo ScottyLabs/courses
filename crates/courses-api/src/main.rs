@@ -1,6 +1,4 @@
-//! Public-facing course catalog API. Pulls the catalog from the CDN S3
-//! bucket and exposes REST routes under `/api`. Re-fetches on S3 ETag
-//! change.
+//! Public-facing course catalog API. Pulls the catalog from the CDN S3 bucket and exposes REST routes under `/api`. Re-fetches on S3 ETag change.
 //!
 //! S3 credentials come from the typed secretspec SDK (`CDN_*`).
 

@@ -1,17 +1,10 @@
-//! Build the [`Professor`] corpus by joining the Stellic instructor refs
-//! attached to each course with the FCE survey rows. Matching keys both
-//! sides into a `LASTNAME, F` shape (last name plus first-initial,
+//! Build the [`Professor`] corpus by joining the Stellic instructor refs attached to each course with the FCE survey rows. Matching keys both sides into a `LASTNAME, F` shape (last name plus first-initial,
 //! uppercased), buckets all Stellic refs by that key, then looks up each
-//! FCE row's instructor string in the same map. Rows whose key resolves
-//! to exactly one Stellic id get `instructor_id` filled in; ambiguous
-//! keys with multiple Stellic candidates and fully-unmatched keys keep
-//! `instructor_id = None`.
+//! FCE row's instructor string in the same map. Rows whose key resolves to exactly one Stellic id get `instructor_id` filled in; ambiguous keys with multiple Stellic candidates and fully-unmatched keys keep `instructor_id = None`.
 //!
 //! Stellic-only and FCE-only instructors both produce `Professor` entries;
-//! the only difference is whether `stellic_id` and/or `fce_key` are
-//! populated. Synthetic ids for FCE-only professors start above the highest
-//! Stellic id so the existing `SectionTime.instructors` and
-//! `InstructorRef.id` references stay valid.
+//! the only difference is whether `stellic_id` and/or `fce_key` are populated. Synthetic ids for FCE-only professors start above the highest
+//! Stellic id so the existing `SectionTime.instructors` and `InstructorRef.id` references stay valid.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -284,9 +277,7 @@ impl FceOnlyBuilder {
                 .insert((row.year, row.sem));
         }
 
-        // FceRow only has course_id, not code; without a back-reference here we
-        // emit empty `course_code` for fce-only profs and let the index step
-        // resolve it from the courses table.
+        // FceRow only has course_id, not code; without a back-reference here we emit empty `course_code` for fce-only profs and let the index step resolve it from the courses table.
         by_course
             .into_values()
             .map(|sems| {
@@ -336,8 +327,7 @@ fn title_word(s: &str) -> String {
         .join(" ")
 }
 
-/// Normalize either form ("First Last" from Stellic, "LAST, FIRST" from FCE)
-/// into "LAST, F" uppercase.
+/// Normalize either form ("First Last" from Stellic, "LAST, FIRST" from FCE) into "LAST, F" uppercase.
 fn first_initial_key(raw: &str) -> Option<String> {
     let s = raw.trim();
     if s.is_empty() {

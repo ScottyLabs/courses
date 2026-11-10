@@ -1,12 +1,8 @@
-//! Parse every `exported/courses_history/<code>/info.json` into a partial
-//! `Course`, populating every field derivable from `info.json` alone (code,
+//! Parse every `exported/courses_history/<code>/info.json` into a partial `Course`, populating every field derivable from `info.json` alone (code,
 //! name, units, description, attributes, gened tags, skills, prereq text,
-//! co/anti/equiv cross-references, campuses, offerings, info.json-listed
-//! instructors). Fields sourced from elsewhere stay at their defaults.
+//! co/anti/equiv cross-references, campuses, offerings, info.json-listed instructors). Fields sourced from elsewhere stay at their defaults.
 //!
-//! Course ids are assigned at the end by sorting surviving courses by `code`
-//! ascending and numbering from 0, which gives the stable-across-runs
-//! property the binary format requires.
+//! Course ids are assigned at the end by sorting surviving courses by `code` ascending and numbering from 0, which gives the stable-across-runs property the binary format requires.
 
 use std::fs;
 use std::path::Path;

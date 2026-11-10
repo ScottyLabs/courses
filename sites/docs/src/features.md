@@ -3,7 +3,7 @@
 This matrix describes the browser-facing app. "Implemented" means code and a local verification path exist, not that production login and rollout have already been verified. See the [deployment runbook](deployment.md) for the current rollout status.
 
 | Feature | Behavior / implementation | Verification |
-| --- | --- | --- |
+| -- | -- | -- |
 | Public course search and filters | JSON first, SQLite WASM after warmup; older terms fall back to JSON | SQL adapter tests and real browser smoke test |
 | Anonymous privacy | No instructor/FCE/location bytes in public exports; protected routes reject anonymous callers | Full database scan plus API tests |
 | CMU authentication | Verified CMU-domain email from configured OIDC issuer | Claim-policy tests; real IdP sign-in remains an operator check |

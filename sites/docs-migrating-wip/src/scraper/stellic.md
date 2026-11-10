@@ -90,7 +90,7 @@ Query: `program_id=<id>&programs=<id>` (both required, both the same value). Ret
 ## Limits
 
 | Resource | Cap | Notes |
-| --------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -- | -- | -- |
 | Plans per user | 3 | Server-enforced; the 4th `createplan` returns code 493 with text "You can't have more than 3 plans at a time." |
 | Majors (type 1) per plan | 5 | Server-enforced and counts the user's existing declared majors, so a student with two declared majors gets only three free major slots on a fresh plan. |
 | Minors, additional majors, sub-requirement bundles, eligibility | None observed | 22 mixed programs of these types fit in one plan without rejection. |

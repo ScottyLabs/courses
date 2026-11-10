@@ -1,6 +1,4 @@
-//! OIDC authentication: verified CMU email claims establish membership, and
-//! the `CurrentUser` extractor turns a valid session into an authenticated
-//! principal (or a `401`).
+//! OIDC authentication: verified CMU email claims establish membership, and the `CurrentUser` extractor turns a valid session into an authenticated principal (or a `401`).
 
 use axum::{
     Extension, Json,
@@ -64,9 +62,7 @@ where
             .await
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-        // Only a verified university email from the configured, verified OIDC issuer
-        // is accepted. The provider may place email claims in UserInfo rather
-        // than the ID token; require the subjects to match before using them.
+        // Only a verified university email from the configured, verified OIDC issuer is accepted. The provider may place email claims in UserInfo rather than the ID token; require the subjects to match before using them.
         let email = verified_identity_email(
             claims.subject().as_str(),
             claims.email().map(|email| email.as_str()),

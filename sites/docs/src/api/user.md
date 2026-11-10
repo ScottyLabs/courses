@@ -13,7 +13,7 @@ Sessions are currently in memory and expire after one hour of inactivity. Restar
 ## Schedules
 
 | Endpoint | Behavior |
-| --- | --- |
+| -- | -- |
 | `GET /api/schedules` | List the caller's schedules |
 | `POST /api/schedules` | Create `{name, term_id}` with empty items and revision 1 |
 | `PUT /api/schedules/{id}` | Replace name, term, items and optional program_id with matching revision |
@@ -33,7 +33,7 @@ The profile UI allows adding and removing course history. These records are not 
 ## Friends
 
 | Endpoint | Behavior |
-| --- | --- |
+| -- | -- |
 | `GET /api/profile/friends` | Accepted friends plus incoming/outgoing requests |
 | `POST /api/profile/friends` | `{andrew_id}` creates a pending request |
 | `POST /api/profile/friends/{id}/accept` | Only the recipient can accept |
