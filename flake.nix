@@ -63,7 +63,13 @@
               packages = [
                 pkgs.zensical
                 pkgs.nodejs
+                pkgs.python3
               ];
+
+              exports = ''
+                export CATALOG_DIR="''${CATALOG_DIR:-$SCOTTYLABS_ROOT/data/catalog}"
+                export USER_DB_PATH="''${USER_DB_PATH:-$SCOTTYLABS_ROOT/data/private/users.sqlite}"
+              '';
 
               # aws s3 against the CDN bucket, shadowing the sccache AWS_* keys
               scripts.cdn-s3 = ''
@@ -83,6 +89,7 @@
               package = helpers.buildRustService {
                 src = ./.;
                 pname = "courses-api";
+                extraSources = [ "secretspec.toml" ];
                 version = "0.1.0";
                 buildArgs.cargoExtraArgs = "--locked --bin courses-api";
               };
@@ -93,6 +100,7 @@
               package = helpers.buildRustService {
                 src = ./.;
                 pname = "courses-web-api";
+                extraSources = [ "deployments/catalog.json" ];
                 version = "0.1.0";
                 buildArgs.cargoExtraArgs = "--locked --bin courses-web-api";
               };

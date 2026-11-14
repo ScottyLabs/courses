@@ -8,15 +8,22 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 
 ## Run locally
 
-1. Install Lix and log in to OpenBao by following kennel's [local development](https://docs.kennel.scottylabs.org/guides/local-development/#installing-nix) and [secrets](https://docs.kennel.scottylabs.org/guides/secrets/#local-development) guides. The development shell loads the OIDC settings and other secrets, which you can read after you [join the CMU Courses team through governance](https://git.cmu.dev/ScottyLabs/governance#joining-a-team). You need them for CMU sign-in; there is no local login bypass.
+1. Install Lix and configure the ScottyLabs binary cache using the [Kennel setup guide](https://docs.kennel.scottylabs.org/guides/local-development/#installing-nix). To use Collar from outside the project shell, install it once:
 
-1. Clone the repository and enter the development shell:
+   ```sh
+   nix profile install 'git+https://git.cmu.dev/ScottyLabs/collar#collar'
+   ```
+
+1. Clone the repository and enter its shell with Collar:
 
    ```sh
    git clone ssh://forgejo@git.cmu.dev/ScottyLabs/courses.git
    cd courses
-   nix develop
+   collar auth bao login
+   collar dev shell
    ```
+
+   From an existing checkout, pull the latest changes and run `collar dev shell` from the repository root. The shell also bundles Collar, so `nix develop` is available as a bootstrap option. OpenBao supplies the app's OIDC settings to members of the [CMU Courses team](https://git.cmu.dev/ScottyLabs/governance#joining-a-team). Use `collar auth login` for Forgejo access.
 
 1. Prepare the local catalog if `data/catalog/public.sqlite` and `data/catalog/member.sqlite` are absent. Copy the supplied source exports into `data/raw`, then run:
 
@@ -30,10 +37,10 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 1. Start PostgreSQL, the Ricochet OIDC callback relay, the browser API on port 3002 and the Svelte app on port 5173 from the repository root:
 
    ```sh
-   pitchfork start --local
+   collar dev up
    ```
 
-1. Open <http://localhost:5173>. Use **Sign in** to test the configured CMU identity provider. The frontend proxies `/api` and `/auth` to the API, and Ricochet returns the callback to port 5173. The API needs `APP_URL=http://localhost:5173` and the callback URL supplied by the development secrets.
+1. Open <http://localhost:5173>. Use **Sign in** to test the configured CMU identity provider. The frontend proxies `/api` and `/auth` to the API, and Ricochet returns the callback to port 5173. The API needs `APP_URL=http://localhost:5173` and the callback URL supplied by the development secrets. Use `collar dev status` to inspect the processes, `collar dev logs web-api` for API logs, and `collar dev down` to stop the stack.
 
 If the API cannot start, first check that the catalog exists and that the development shell loaded the OIDC settings. A `403` from `/api/me` after login means the provider did not supply a verified CMU email in the ID token or matching UserInfo response. An anonymous `401` from `/api/me` before login is expected.
 
@@ -53,7 +60,6 @@ Open <http://localhost:4173> to inspect the built UI. Vite's preview server does
 | Command | Run from | Purpose |
 | -- | -- | -- |
 | `deno task check` | `sites/web` | Check Svelte and TypeScript |
-| `deno task test` | `sites/web` | Run frontend unit tests |
 | `cargo test -p courses-web-api` | Repository root | Run API unit tests |
 
 More details: [architecture](sites/docs-migrating-wip/src/overview.md) and [scraper usage](sites/docs-migrating-wip/src/scraper/running.md).
