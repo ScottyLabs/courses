@@ -4,6 +4,9 @@ import { sveltekit } from "@sveltejs/kit/vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  optimizeDeps: {
+    exclude: ["@sqlite.org/sqlite-wasm"],
+  },
   server: {
     proxy: {
       "/api": "http://localhost:3002",

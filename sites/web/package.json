@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@lucide/svelte": "1.56.0"
+    "@lucide/svelte": "1.56.0",
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "3.0.10",

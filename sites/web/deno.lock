@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "npm:@lucide/svelte@1.56.0": "1.56.0_svelte@5.53.12",
+    "npm:@sqlite.org/sqlite-wasm@3.54.1-build1": "3.54.1-build1",
     "npm:@sveltejs/adapter-static@3.0.10": "3.0.10_@sveltejs+kit@2.57.0_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@sveltejs+vite-plugin-svelte@7.0.0_@types+node@24.12.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1",
     "npm:@sveltejs/kit@*": "2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@types+node@24.12.0",
     "npm:@sveltejs/kit@2.57.0": "2.57.0_@sveltejs+vite-plugin-svelte@7.0.0_svelte@5.53.12_typescript@5.9.3_vite@8.0.1_@emnapi+core@1.11.3_@emnapi+runtime@1.11.3_@types+node@24.12.0",
@@ -200,6 +201,9 @@
     },
     "@rolldown/pluginutils@1.0.0-rc.10": {
       "integrity": "sha512-UkVDEFk1w3mveXeKgaTuYfKWtPbvgck1dT8TUG3bnccrH0XtLTuAyfCoks4Q/M5ZGToSVJTIQYCzy2g/atAOeg=="
+    },
+    "@sqlite.org/sqlite-wasm@3.54.1-build1": {
+      "integrity": "sha512-foW427VBLJ3G87bsnvQTZCc9zYe0Fq1wH0pz1I6BlKLKXcArIAyTkHtq0iT2llmhcMQt9T/p6l5PpQQh+6O8uQ=="
     },
     "@standard-schema/spec@1.1.0": {
       "integrity": "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="
@@ -916,6 +920,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@lucide/svelte@1.56.0",
+        "npm:@sqlite.org/sqlite-wasm@3.54.1-build1",
         "npm:@sveltejs/adapter-static@3.0.10",
         "npm:@sveltejs/kit@2.57.0",
         "npm:@sveltejs/vite-plugin-svelte@7.0.0",
