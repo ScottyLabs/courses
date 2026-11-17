@@ -254,6 +254,37 @@ async fn anonymous_cannot_read_instructors_or_personal_data() {
     std::fs::remove_dir_all(&b.catalog).unwrap();
 }
 #[tokio::test]
+async fn member_snapshot_requires_verified_access() {
+    let b = fixture();
+    std::fs::write(b.catalog.join("public-browser.sqlite.gz"), b"public").unwrap();
+    std::fs::write(b.catalog.join("member-browser.sqlite.gz"), b"member").unwrap();
+
+    for status in [StatusCode::UNAUTHORIZED, StatusCode::FORBIDDEN] {
+        assert_eq!(
+            member_binary(Err(status), Extension(b.clone()))
+                .await
+                .unwrap_err()
+                .0,
+            status
+        );
+        let response = binary(Err(status), Extension(b.clone())).await.unwrap();
+        let body = axum::body::to_bytes(response.into_body(), 1024)
+            .await
+            .unwrap();
+        assert_eq!(&body[..], b"public");
+    }
+
+    let response = member_binary(user("alice"), Extension(b.clone()))
+        .await
+        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), 1024)
+        .await
+        .unwrap();
+    assert_eq!(&body[..], b"member");
+    std::fs::remove_dir_all(&b.catalog).unwrap();
+}
+
+#[tokio::test]
 async fn origin_is_required_for_cookie_mutations() {
     use tower::ServiceExt;
     let b = fixture();

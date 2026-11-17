@@ -16,21 +16,46 @@ other failed data request.
 
 ## Loading and caching
 
-On the first query, Vite's SQLite WASM module and the catalog download start in
-parallel. The browser decompresses the response using its gzip content encoding.
-SQLite opens the resulting bytes as a read-only, in-memory database on the main
-thread. Concurrent callers share the opening promise, later queries reuse the
-connection, and a failed open can be retried on the next call.
+The root layout starts loading the public snapshot and checking session status
+in parallel. The public request omits cookies. When `/auth/status` reports
+`can_access_member_catalog: true`, the app requests `/api/catalog/member-binary`
+with the same-origin session cookie. The endpoint checks CMU access again.
 
-The server downloads and decrypts the catalog release from S3. The frontend
-uses the same-origin `/api/catalog/binary` endpoint without session cookies to
-select the public snapshot. The request bypasses the HTTP cache because that
-URL can also serve a member snapshot. Reloading the page requires another
-download.
+The browser decodes gzip via HTTP `Content-Encoding` and opens each SQLite
+snapshot read-only in memory. Queries share any preload already in progress and
+retry a failed load. Member downloads are canceled and the member connection is
+closed when session state changes or the page is left. The server still handles
+encryption of deployment artifacts. Browsers receive standard SQLite bytes.
 
 ## Follow-up work
 
 Add typed functions such as `searchCourses` above the query helper as screens
 need them. Move query execution to a worker if catalog loading or queries
-affect UI responsiveness. A dedicated public URL keyed by catalog release
-would allow browser caching across page loads.
+affect UI responsiveness.
+
+## Frontend sign-in and member queries
+
+Import `loggedIn` from `$lib/session` and use `$loggedIn` in Svelte. The
+root layout initializes it from the existing session check. Use `$session.status`
+when the UI needs to distinguish loading or a failed check from signed out.
+
+`queryCatalog` always queries the public snapshot. For CMU-only data, use
+`queryMemberCatalog` and catch `CatalogAccessError`:
+
+```ts
+import { CatalogAccessError, queryMemberCatalog } from "$lib/catalog-sqlite";
+
+try {
+  const instructors = await queryMemberCatalog("SELECT name FROM catalog_instructors");
+} catch (error) {
+  if (error instanceof CatalogAccessError && error.code === "sign-in-required") {
+    // Show a sign-in prompt.
+  } else {
+    throw error;
+  }
+}
+```
+
+A confirmed sign-in without CMU access throws `cmu-access-required`.
+A failed member download throws `member-catalog-unavailable`. Treat the
+frontend errors as UI feedback. The server enforces access to the member bytes.

@@ -198,6 +198,7 @@ async fn build_app(oidc_config: OidcConfig) -> Result<Router> {
         // Public catalog routes choose a sanitized database; private handlers require CMU identity.
         .route("/api/catalog/version", get(backend::version))
         .route("/api/catalog/binary", get(backend::binary))
+        .route("/api/catalog/member-binary", get(backend::member_binary))
         .route("/api/terms", get(backend::terms))
         .route("/api/courses", get(backend::courses))
         .route("/api/courses/{code}", get(backend::course))

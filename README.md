@@ -42,7 +42,7 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 
 1. Open <http://localhost:5173>. Use **Sign in** to test the configured CMU identity provider. The frontend proxies `/api` and `/auth` to the API, and Ricochet returns the callback to port 5173. The API needs `APP_URL=http://localhost:5173` and the callback URL supplied by the development secrets. Use `collar dev status` to inspect the processes, `collar dev logs web-api` for API logs, and `collar dev down` to stop the stack.
 
-If the API cannot start, first check that the catalog exists and that the development shell loaded the OIDC settings. A `403` from `/api/me` after login means the provider did not supply a verified CMU email in the ID token or matching UserInfo response. An anonymous `401` from `/api/me` before login is expected.
+If the API cannot start, first check that the catalog exists and that the development shell loaded the OIDC settings. A `403` from `/api/me` after login means the provider did not supply a verified CMU email in the ID token or matching UserInfo response. The header uses `GET /auth/status`, which returns `200` with `name: null` while signed out and the account name after sign-in. Its `can_access_member_catalog` field controls whether the frontend preloads the member SQLite snapshot. Member-only endpoints such as `/api/me` still return `401` before login.
 
 ## Preview a production build
 

@@ -208,7 +208,18 @@ pub async fn binary(
     user: Result<CurrentUser, StatusCode>,
     Extension(b): Extension<Backend>,
 ) -> Result<Response, ApiError> {
-    let member = audience(&user)?;
+    browser_snapshot(&b, audience(&user)?).await
+}
+
+pub async fn member_binary(
+    user: Result<CurrentUser, StatusCode>,
+    Extension(b): Extension<Backend>,
+) -> Result<Response, ApiError> {
+    require(user)?;
+    browser_snapshot(&b, true).await
+}
+
+async fn browser_snapshot(b: &Backend, member: bool) -> Result<Response, ApiError> {
     let bytes = tokio::fs::read(b.catalog.join(if member {
         "member-browser.sqlite.gz"
     } else {

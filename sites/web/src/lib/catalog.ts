@@ -28,7 +28,7 @@ export type CatalogLoad = {
  */
 export async function loadCatalog(): Promise<CatalogLoad> {
   const t0 = performance.now();
-  const version: unknown = await (await fetch("/api/catalog/version")).json();
+  const version: unknown = await (await fetch("/api/catalog/version", { credentials: "omit", cache: "no-store" })).json();
   if (!isCatalogVersion(version)) {
     throw new Error("invalid /api/catalog/version response");
   }
@@ -41,7 +41,7 @@ export async function loadCatalog(): Promise<CatalogLoad> {
   let fromCache = gzipped !== null;
 
   if (!gzipped) {
-    const response = await fetch("/api/catalog/binary");
+    const response = await fetch("/api/catalog/binary", { credentials: "omit", cache: "no-store" });
     gzipped = new Uint8Array(await response.arrayBuffer());
     await writeOpfs(root, filename, gzipped);
     await pruneStale(root, filename);

@@ -1,18 +1,21 @@
 <script lang="ts">
 	import './layout.css';
 	import { refreshSession } from '$lib/session';
+	import { preloadCatalogs } from '$lib/catalog-sqlite';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 
 	let { children } = $props();
 
 	$effect(() => {
+		const disposeCatalogs = preloadCatalogs();
 		void refreshSession();
 		function recheckOnReturn(event: PageTransitionEvent) {
 			if (event.persisted) void refreshSession();
 		}
 		window.addEventListener('pageshow', recheckOnReturn);
 		return () => {
+			disposeCatalogs();
 			window.removeEventListener('pageshow', recheckOnReturn);
 		};
 	});
