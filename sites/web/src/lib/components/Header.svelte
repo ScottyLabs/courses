@@ -1,7 +1,10 @@
-<script>
-	import { Search, CircleUser, Clock, User, LogOut } from '@lucide/svelte';
+<script lang="ts">
+	import { Search, CircleUser, Clock, User } from '@lucide/svelte';
 	import favicon from '@/lib/assets/favicon.ico';
+	import signOutIcon from '$lib/assets/sign-out.svg';
 	import ThemeToggle from '@/lib/components/ThemeToggle.svelte';
+
+	import { refreshSession, session } from '$lib/session';
 </script>
 
 <header class="flex min-h-16 flex-row items-center justify-between bg-bg-secondary p-6 shadow-md">
@@ -33,11 +36,24 @@
 
 	<div class="flex items-center gap-8">
 		<ThemeToggle />
-		<button
-			class="flex cursor-pointer items-center gap-2 rounded-full border border-fg-light-gray px-3 py-2 text-fg-black transition-colors duration-200 hover:border-fg-black hover:text-fg-black"
-		>
-			<LogOut class="size-5" />
-			<span class="font-medium">Sign out</span>
-		</button>
+		{#if $session.status === 'signed-in'}
+			<div class="flex items-center gap-3">
+				<span class="text-sm font-medium text-fg-black">{$session.name}</span>
+				<a href="/auth/logout" data-sveltekit-reload
+					class="flex items-center gap-2 rounded-full border border-fg-light-gray px-4 py-[9px] text-sm font-semibold text-fg-black transition-colors hover:border-fg-black">
+					<img src={signOutIcon} alt="" width="20" height="20" />
+					<span>Sign out</span>
+				</a>
+			</div>
+		{:else if $session.status === 'signed-out'}
+			<a href="/auth/login" data-sveltekit-reload
+				class="rounded-full border border-fg-light-gray px-4 py-[9px] text-sm font-semibold text-fg-black transition-colors hover:border-fg-black">
+				Sign in with CMU
+			</a>
+		{:else if $session.status === 'unavailable'}
+			<button type="button" onclick={refreshSession} class="text-sm text-fg-black underline">
+				Retry sign-in status
+			</button>
+		{/if}
 	</div>
 </header>

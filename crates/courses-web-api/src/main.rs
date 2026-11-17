@@ -266,6 +266,7 @@ async fn build_app(oidc_config: OidcConfig) -> Result<Router> {
                 )
             }),
         )
+        .routes(routes!(auth::status))
         .routes(routes!(auth::me))
         .routes(routes!(health))
         .route(

@@ -1,9 +1,21 @@
 <script lang="ts">
 	import './layout.css';
+	import { refreshSession } from '$lib/session';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 
 	let { children } = $props();
+
+	$effect(() => {
+		void refreshSession();
+		function recheckOnReturn(event: PageTransitionEvent) {
+			if (event.persisted) void refreshSession();
+		}
+		window.addEventListener('pageshow', recheckOnReturn);
+		return () => {
+			window.removeEventListener('pageshow', recheckOnReturn);
+		};
+	});
 </script>
 
 <svelte:head>

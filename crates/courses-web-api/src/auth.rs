@@ -76,12 +76,7 @@ where
         )
         .ok_or(StatusCode::FORBIDDEN)?;
         let subject = claims.subject().to_string();
-        let name = claims
-            .name()
-            .and_then(|n| n.get(None))
-            .map(|n| n.as_str().to_owned())
-            .or_else(|| claims.preferred_username().map(|u| u.as_str().to_owned()))
-            .unwrap_or_else(|| subject.clone());
+        let name = display_name(&claims);
         let groups = claims.additional_claims().groups.clone();
 
         let andrew_id = email.split('@').next().unwrap().to_ascii_lowercase();
@@ -92,6 +87,42 @@ where
             groups,
         })
     }
+}
+
+fn display_name(claims: &OidcClaims<GroupClaims>) -> String {
+    claims
+        .name()
+        .and_then(|name| name.get(None))
+        .map(|name| name.as_str().to_owned())
+        .or_else(|| {
+            claims
+                .preferred_username()
+                .map(|name| name.as_str().to_owned())
+        })
+        .unwrap_or_else(|| claims.subject().to_string())
+}
+
+#[derive(Serialize, utoipa::ToSchema)]
+pub struct SessionInfo {
+    name: Option<String>,
+    can_access_member_catalog: bool,
+}
+
+/// Identifies the signed-in account for the header. Member APIs still use CurrentUser.
+#[utoipa::path(
+    get,
+    path = "/auth/status",
+    tag = "auth",
+    responses((status = OK, body = SessionInfo))
+)]
+pub async fn status(
+    claims: Option<OidcClaims<GroupClaims>>,
+    user: Result<CurrentUser, StatusCode>,
+) -> Json<SessionInfo> {
+    Json(SessionInfo {
+        name: claims.as_ref().map(display_name),
+        can_access_member_catalog: user.is_ok(),
+    })
 }
 
 #[derive(Serialize, utoipa::ToSchema)]
@@ -172,6 +203,24 @@ fn verified_identity_email<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn anonymous_session_status_is_a_successful_signed_out_response() {
+        use axum::response::IntoResponse;
+
+        let response = status(None, Err(StatusCode::UNAUTHORIZED))
+            .await
+            .into_response();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), 1024)
+            .await
+            .unwrap();
+        assert_eq!(
+            &body[..],
+            br#"{"name":null,"can_access_member_catalog":false}"#
+        );
+    }
+
     #[test]
     fn university_identity_requires_verified_exact_domain() {
         assert!(verified_cmu_email(Some("user@andrew.cmu.edu"), true));
