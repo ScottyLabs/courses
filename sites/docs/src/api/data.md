@@ -36,7 +36,7 @@ Public records omit FCEs, instructor identity, syllabus URLs and meeting locatio
 # Optional: refresh official public degree-program reference pages.
 python3 scripts/scrape_programs.py
 # Import into a staging generation when updating a running deployment.
-python3 scripts/import_catalog.py data/raw --output data/catalog-next
+cargo run --locked --release -p courses-index -- --import-catalog exported --output data/catalog-next
 # The verifier defaults to data/catalog; validate the staged generation before switching.
 python3 scripts/verify_catalog.py --root data/catalog-next
 ```

@@ -25,19 +25,27 @@ The revised configuration enables Kennel SQLite, uses its `DATABASE_PATH`, and s
 
 The catalog encryption key is server-only. Do not put it in a Vite/build scope, Git, shell history or logs. The `catalog_publish` scope exposes only the key and CDN credentials to the publishing process. The key must be available to each environment consuming the pinned release. Provisioning new secrets requires an authorized operator.
 
-## Release procedure
+## Publish a catalog from Forgejo
 
-1. Import into a new catalog directory and run the verifier. Review the data report and source dates.
+Provision the CDN settings and the deployment's matching `CATALOG_ENCRYPTION_KEY` in the OpenBao CI profile for the `catalog_publish` scope.
+
+Dispatch **Scrape and Publish Catalog** in `courses` or `all` mode. The workflow builds the catalog from the Stellic course and program exports written by `courses-scraper`. It verifies public and member data and publishes the encrypted release. The workflow attaches only the release manifest as `catalog-release-manifest`.
+
+Download the artifact, review its `catalog.json`, and commit it as `deployments/catalog.json` to activate the release on the next deployment. The API and both browser downloads use the same pinned release.
+
+## Manual release procedure
+
+1. Build into a new catalog directory with `cargo run --locked --release -p courses-index -- --import-catalog exported --output data/catalog-next`. Run `python3 scripts/verify_catalog.py --root data/catalog-next` and review the data report and source dates.
 
 1. Run backend, frontend, importer and browser checks described in the [maintainer guide](maintaining.md).
 
 1. With a dedicated encryption key provisioned, install publisher dependencies in a virtual environment: `pip install -r scripts/publish-requirements.txt`.
 
-1. Run the publisher from the repository root with the catalog directory at `data/catalog`:
+1. Run the publisher from the repository root with the verified catalog directory.
 
    ```sh
    secretspec --reason 'Publish verified CMU Courses catalog' run \
-     -p openbao -P prod -S catalog_publish -- python scripts/publish_catalog.py
+     -p openbao -P prod -S catalog_publish -- python scripts/publish_catalog.py --root data/catalog-next
    ```
 
 1. Review `deployments/catalog.json`. It pins immutable encrypted objects and hashes, not plaintext data or secrets. Commit the manifest together with code changes. The old release remains available for rollback.
@@ -46,7 +54,7 @@ The catalog encryption key is server-only. Do not put it in a Vite/build scope, 
 
 1. Check **both** `kennel/build` and `kennel/deploy` statuses on the pushed SHA. Investigate failed CI checks separately; do not call a failed status a completed deployment.
 
-1. Run `python3 scripts/check_deployment.py https://cmu.courses` for anonymous health, S27 data, restricted-route rejection and public catalog transport checks. Then perform a real CMU sign-in, save/reload a schedule, sign out, and confirm restricted data is unavailable.
+1. Run `python3 scripts/check_deployment.py https://cmu.courses` for anonymous health, latest-term data, restricted-route rejection and public catalog transport checks. Then perform a real CMU sign-in, save/reload a schedule, sign out, and confirm restricted data is unavailable.
 
 First startup installs the pinned encrypted catalog into a sibling `catalogs/<release-id>` directory under the persistent SQLite state directory. Download/decryption failure leaves no completed generation. Keep network transfer and installation within Kennel's startup grace period; if the release grows too large, move artifact installation into an infrastructure pre-start step rather than reporting health early.
 

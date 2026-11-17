@@ -5,6 +5,7 @@ Requires boto3, cryptography and the catalog_publish secretspec scope.
 Only the six audience-separated catalog files are uploaded, never raw exports.
 """
 
+import argparse
 import base64
 import gzip
 import hashlib
@@ -25,7 +26,7 @@ FILES = (
 )
 
 
-def publish():
+def publish(root):
     key = base64.b64decode(os.environ["CATALOG_ENCRYPTION_KEY"], validate=True)
     if len(key) != 32:
         raise ValueError("CATALOG_ENCRYPTION_KEY must contain exactly 32 bytes")
@@ -39,7 +40,7 @@ def publish():
     )
     release = {"id": str(uuid.uuid4()), "files": {}}
     for name in FILES:
-        plain = (Path("data/catalog") / name).read_bytes()
+        plain = (root / name).read_bytes()
         nonce = os.urandom(12)
         encrypted = nonce + cipher.encrypt(nonce, gzip.compress(plain, mtime=0), None)
         object_key = f"sqlite-releases/{release['id']}/{name}.enc"
@@ -63,4 +64,6 @@ def publish():
 
 
 if __name__ == "__main__":
-    publish()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path("data/catalog"))
+    publish(parser.parse_args().root)

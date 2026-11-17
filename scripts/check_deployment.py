@@ -22,9 +22,10 @@ def get(path):
 
 assert get("/api/health") == b"ok"
 terms = json.loads(get("/api/terms"))
-assert any(t["id"] == "S27" for t in terms)
-page = json.loads(get("/api/courses?term=S27&page_size=3"))
-assert page["total"] == 3085
+assert terms
+term = terms[0]["id"]
+page = json.loads(get(f"/api/courses?term={term}&page_size=3"))
+assert page["total"] > 0
 for course in page["items"]:
     assert "fce" not in course and "instructors" not in course
     for section in course["sections"]:
@@ -34,7 +35,7 @@ for route in [
     "/api/instructors",
     "/api/schedules",
     "/api/profile/friends",
-    "/api/finals?term=S27",
+    f"/api/finals?term={term}",
 ]:
     try:
         get(route)
@@ -52,5 +53,5 @@ if binary[:2] == b"\x1f\x8b":
 assert hashlib.sha256(binary).hexdigest() == version["hash"]
 assert binary.startswith(b"SQLite format 3\0")
 print(
-    "PASS: live anonymous API, S27 coverage, access restrictions and public SQLite hash"
+    "PASS: live anonymous API, latest-term coverage, access restrictions and public SQLite hash"
 )
