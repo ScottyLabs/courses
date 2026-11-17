@@ -12,7 +12,7 @@ on:
           - syllabi
           - ldap
           - all
-        default: all
+        default: courses
       cookie_header:
         description: "Stellic `Cookie:` header value"
         required: true
@@ -24,27 +24,49 @@ on:
 
 jobs:
   scrape:
-    name: Scrape and upload
+    name: Scrape and prepare catalog release
     runs-on: native
     enable-openid-connect: true
     env:
       SECRETSPEC_PROFILE: ci
-      COOKIE_HEADER: ${{ inputs.cookie_header }}
-      CANVAS_TOKEN: ${{ inputs.canvas_token }}
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v7
 
       - name: Scrape
-        run: nix develop --command cargo run --release -p courses-scraper -- --mode ${{ inputs.mode }}
+        env:
+          SCRAPE_MODE: ${{ inputs.mode }}
+          COOKIE_HEADER: ${{ inputs.cookie_header }}
+          CANVAS_TOKEN: ${{ inputs.canvas_token }}
+        run: nix develop --command cargo run --release -p courses-scraper -- --mode "$SCRAPE_MODE"
 
-      - name: Build catalog
-        run: nix develop --command cargo run --release -p courses-index -- --write-catalog catalog.bin
-
-      - name: Upload to garage
+      - name: Build and verify SQLite catalogs
+        if: inputs.mode == 'courses' || inputs.mode == 'all'
         run: |
-          nix develop --command cdn-s3 cp catalog.bin s3://cdn-courses/catalog.bin \
-            --content-type application/octet-stream \
-            --content-encoding gzip
+          nix develop --command cargo run --locked --release -p courses-index -- \
+            --import-catalog exported --output data/catalog
+          nix develop --command python3 scripts/verify_catalog.py --root data/catalog
+
+      - name: Publish encrypted catalog release
+        if: inputs.mode == 'courses' || inputs.mode == 'all'
+        run: |
+          nix develop --command bash -euc '
+            publisher_env=$(mktemp -d)
+            cleanup() { rm -rf -- "$publisher_env"; }
+            trap cleanup EXIT
+            python3 -m venv "$publisher_env"
+            "$publisher_env/bin/python" -m pip install -r scripts/publish-requirements.txt
+            secretspec --reason "Publish verified CMU Courses catalog" run \
+              -p openbao-ci -P ci -S catalog_publish -- \
+              "$publisher_env/bin/python" scripts/publish_catalog.py
+          '
+
+      - name: Attach release manifest
+        if: inputs.mode == 'courses' || inputs.mode == 'all'
+        uses: https://data.forgejo.org/actions/upload-artifact@v3
+        with:
+          name: catalog-release-manifest
+          path: deployments/catalog.json
+          if-no-files-found: error
 
       - name: Upload syllabi to garage
         run: |

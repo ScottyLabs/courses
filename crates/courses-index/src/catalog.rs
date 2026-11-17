@@ -15,22 +15,15 @@ use walkdir::WalkDir;
 mod normalize;
 struct Catalog {
     audit: normalize::Audit,
-    snapshot_report: Value,
     terms: Vec<String>,
     courses: Vec<Value>,
     instructors: Vec<Value>,
     member_programs: Vec<Value>,
-    public_programs: Vec<Value>,
     geneds: Vec<Value>,
 }
 
-pub fn build(
-    source: &Path,
-    output: &Path,
-    stellic_root: Option<&Path>,
-    courseweave: Option<&Path>,
-) -> Result<()> {
-    let catalog = normalize::load(source, stellic_root, courseweave)?;
+pub fn build(source: &Path, output: &Path) -> Result<()> {
+    let catalog = normalize::load(source)?;
     fs::create_dir_all(output)?;
     for audience in ["public", "member"] {
         write_audience(&catalog, output, audience)
@@ -102,24 +95,20 @@ fn write_report(catalog: &Catalog, source: &Path, output: &Path) -> Result<()> {
         .filter_map(|program| program["id"].as_str()?.split(':').next())
         .collect();
     let report = json!({
-        "courseweave": catalog.snapshot_report,
         "imported_at": chrono::Utc::now().to_rfc3339(),
         "source_files": inventory.len(), "source_bytes": bytes,
         "courses": catalog.courses.len(), "section_records": section_count,
         "instructors": catalog.instructors.len(), "gened_categories": catalog.geneds.len(),
-        "public_program_pages": catalog.public_programs.len(), "program_audits": catalog.member_programs.len(),
+        "program_audits": catalog.member_programs.len(),
         "programs": programs.len(),
         "section_dates": [audit.section_dates.first(), audit.section_dates.last()],
         "offering_years": [audit.offering_years.first(), audit.offering_years.last()],
         "terms": catalog.terms,
-        "fce_rows": audit.fce_rows, "fce_years": audit.fce_years,
         "warnings": audit.warnings,
         "notes": [
             "File modification times are copy dates, not verified scrape dates.",
             "Stellic student_context/alerts and all unrecognized fields are excluded.",
-            "All original files are inventoried; not all datasets are exposed. Advanced credit, historical FCE rows and old snapshots remain in source; syllabi links are member-only.",
             "Program trees require CMU authentication and are not a validated degree audit engine.",
-            "FCE summary is respondent-weighted across the supplied history.",
         ],
     });
     fs::write(inventory_path, serde_json::to_vec_pretty(&inventory)?)?;
@@ -244,7 +233,7 @@ fn write_audience(catalog: &Catalog, output: &Path, audience: &str) -> Result<()
     } else {
         &[]
     };
-    for program in restricted.iter().chain(&catalog.public_programs) {
+    for program in restricted {
         tx.execute(
             "INSERT INTO programs VALUES(?,?,?)",
             params![

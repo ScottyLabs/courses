@@ -28,21 +28,13 @@ struct Args {
     #[arg(long)]
     prof: Option<String>,
 
-    /// Build SQLite catalogs from this raw data directory.
+    /// Build SQLite catalogs from this Stellic scraper output directory.
     #[arg(long)]
     import_catalog: Option<PathBuf>,
 
     /// Directory for generated SQLite catalogs.
     #[arg(long, visible_alias = "write-catalog")]
     output: Option<PathBuf>,
-
-    /// Fresh per-user Stellic export directory.
-    #[arg(long, requires = "import_catalog")]
-    stellic_root: Option<PathBuf>,
-
-    /// Public CourseWeave S27 snapshot.
-    #[arg(long, requires = "import_catalog")]
-    courseweave: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -58,12 +50,10 @@ fn main() -> Result<()> {
         return catalog::build(
             args.import_catalog
                 .as_deref()
-                .unwrap_or(std::path::Path::new("data/raw")),
+                .unwrap_or(&args.exported_root),
             args.output
                 .as_deref()
                 .unwrap_or(std::path::Path::new("data/catalog")),
-            args.stellic_root.as_deref(),
-            args.courseweave.as_deref(),
         );
     }
 

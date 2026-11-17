@@ -25,14 +25,14 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 
    From an existing checkout, pull the latest changes and run `collar dev shell` from the repository root. The shell also bundles Collar, so `nix develop` is available as a bootstrap option. OpenBao supplies the app's OIDC settings to members of the [CMU Courses team](https://git.cmu.dev/ScottyLabs/governance#joining-a-team). Use `collar auth login` for Forgejo access.
 
-1. Prepare the local catalog if `data/catalog/public.sqlite` and `data/catalog/member.sqlite` are absent. Copy the supplied source exports into `data/raw`, then run:
+1. Prepare the local catalog if `data/catalog/public.sqlite` and `data/catalog/member.sqlite` are absent. Place the Stellic scraper output under `exported/`, then run:
 
    ```sh
-   cargo run --release -p courses-index -- --import-catalog data/raw
+   cargo run --release -p courses-index -- --import-catalog exported
    python3 scripts/verify_catalog.py
    ```
 
-   The catalog and raw exports are intentionally ignored by Git. The local API reads `data/catalog` directly; it does not need CDN or S3 credentials. It creates `data/private/users.sqlite` for local personal data. Keep that file out of Git and static assets. See [backend setup](sites/docs/src/api/sqlite-backend.md) and [data audit](sites/docs/src/api/data-audit.md).
+   The catalog and scraper exports are intentionally ignored by Git. The local API reads `data/catalog` directly; it does not need CDN or S3 credentials. It creates `data/private/users.sqlite` for local personal data. Keep that file out of Git and static assets. See [backend setup](sites/docs/src/api/sqlite-backend.md) and [data audit](sites/docs/src/api/data-audit.md).
 
 1. Start PostgreSQL, the Ricochet OIDC callback relay, the browser API on port 3002 and the Svelte app on port 5173 from the repository root:
 

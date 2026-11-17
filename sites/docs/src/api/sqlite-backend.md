@@ -5,7 +5,7 @@ Implemented in `courses-web-api`; replaces the web app's DuckDB/custom-binary ca
 ## Run
 
 ```sh
-python3 scripts/import_catalog.py data/raw
+cargo run --locked --release -p courses-index -- --import-catalog exported
 python3 scripts/verify_catalog.py
 # Inside nix develop, which loads the OIDC environment:
 CATALOG_DIR=data/catalog USER_DB_PATH=data/private/users.sqlite cargo run -p courses-web-api
@@ -19,7 +19,7 @@ deno task dev
 
 ## Access and endpoints
 
-Anonymous users can read courses, descriptions, prerequisites, units, terms, gen eds, weekly times, and public catalog requirements. The public DB never contains structured instructor identity, FCE data, or meeting locations. CMU users receive a separate member database. JSON uses the same audience split. `min_fce` queries and instructor routes require CMU identity. Missing login returns 401; an authenticated non-CMU identity returns 403.
+Anonymous users can read courses, descriptions, prerequisites, units, terms, gen eds, and weekly times. Stellic program audits are available to CMU members. The public DB never contains structured instructor identity, FCE data, or meeting locations. CMU users receive a separate member database. JSON uses the same audience split. `min_fce` queries and instructor routes require CMU identity. Missing login returns 401; an authenticated non-CMU identity returns 403.
 
 Implemented routes:
 
@@ -48,14 +48,7 @@ Publish the generated directory as a unit (stage a generation, then switch `CATA
 
 ## Requirements refresh
 
-```sh
-python3 scripts/scrape_programs.py
-python3 scripts/import_catalog.py data/raw
-```
-
-The public scraper discovers links from CMU's Programs A-Z, respects robots.txt, uses serial requests with a delay and timeouts, and records URL, catalog year, retrieval timestamp, HTML checksum, requirement text, and referenced courses. It preserves source HTML and reports failures rather than claiming completeness. Text is displayed as text, never injected HTML. Course references are not interpreted as "all required"; electives, grades, double-counting and substitutions need a separately validated degree-audit evaluator.
-
-Existing Stellic exports retain 2,848 versioned requirement trees. To refresh them, use `cargo run -p courses-scraper -- --mode programs --concurrency 4` in the existing authenticated scraping environment. `--mode courses` refreshes course and section data. A valid Stellic session is required. The Spring 2027 refresh used CourseWeave's public snapshot; no authenticated bulk scrape was run. Do not use `--incremental` when refreshing stale existing records.
+Use `cargo run -p courses-scraper -- --mode programs --concurrency 4` in the authenticated scraping environment to refresh Stellic program audits, then rebuild the catalog from an export root that also contains course data. The SQLite builder places program audits in the member API database.
 
 ### Targeted Spring 2027 refresh
 
@@ -64,14 +57,14 @@ Sign in to Stellic in a browser. In DevTools > Network, open `planner/getstudent
 ```sh
 cargo run -p courses-scraper -- --mode courses --term S27 --concurrency 1 \
   --cookie-file data/private/stellic-cookie.txt --export-root exported/spring-2027
-# Use the actual per-user output path reported by the scraper:
-python3 scripts/import_catalog.py data/raw --stellic-root exported/spring-2027/ANDREW_ID
+# Build from the output root containing the per-user directory:
+cargo run --locked --release -p courses-index -- --import-catalog exported/spring-2027
 python3 scripts/verify_catalog.py
 ```
 
 Explicit term mode first checks that the public CMU SOC publishes the requested semester, before making authenticated requests. It processes published course codes serially with a two-second delay and stops on the first failed course. This limits traffic but is not a guarantee against account restrictions.
 
-Explicit term mode bypasses the historical relative-year cap and refuses `--incremental`. It requests course info plus Spring 2027 sections and rejects returned dated sections for a different term. It records completion/failure counts in `scrape-manifest.json`; any failed request makes the run unsuccessful. The refreshed folder overrides matching historical course/term records during import. Before publishing, inspect actual section counts/dates: a successful empty response does not establish that Spring 2027 registration data is published. The existing `physical_year=2026` parameter is retained for the current 2026 Stellic planning context; verify it against a real Spring 2027 browser request if the service returns a different term or empty results.
+Explicit term mode bypasses the historical relative-year cap and refuses `--incremental`. It requests course info plus Spring 2027 sections and rejects returned dated sections for a different term. It records completion/failure counts in `scrape-manifest.json`; any failed request makes the run unsuccessful. The catalog reflects the Stellic export directory selected at build time. Before publishing, inspect actual section counts/dates: a successful empty response does not establish that Spring 2027 registration data is published. The existing `physical_year=2026` parameter is retained for the current 2026 Stellic planning context; verify it against a real Spring 2027 browser request if the service returns a different term or empty results.
 
 ## Completion checks
 

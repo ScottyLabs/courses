@@ -29,7 +29,7 @@ CMU Courses has two different APIs. The browser uses `courses-web-api`, a Rust/A
 | `local-catalog.ts`, `sqlite.worker.ts`, `sqlite-catalog.ts` | Worker lifecycle, SQLite runtime and parameterized queries |
 | `components/CourseHistory.svelte`, `components/Friends.svelte` | Personal-history and consent UI |
 | `routes/+page.svelte` | Main navigation, catalog, schedules and requirement reference UI |
-| `scripts/import_catalog.py` | Local source normalization and independently sanitized database generation |
+| `crates/courses-index/src/catalog.rs` | Build separately sanitized SQLite catalogs from Stellic scraper exports |
 | `scripts/courseweave.py` | Explicit S27 snapshot conversion and source checks |
 | `scripts/scrape_programs.py` | Public CMU catalog requirement discovery and retrieval |
 | `scripts/publish_catalog.py` | Encrypted catalog publishing; never uploads personal data |

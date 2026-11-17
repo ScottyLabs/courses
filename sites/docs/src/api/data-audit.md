@@ -42,6 +42,6 @@ Original JSON, semester metadata, retrieval time and SHA-256 are preserved in ig
 Rebuild and verify:
 
 ```sh
-python3 scripts/import_catalog.py data/raw
+cargo run --locked --release -p courses-index -- --import-catalog exported
 python3 scripts/verify_catalog.py
 ```
