@@ -17,15 +17,20 @@ other failed data request.
 ## Loading and caching
 
 The root layout starts loading the public snapshot and checking session status
-in parallel. The public request omits cookies. When `/auth/status` reports
+in parallel. Vite bundles `src/lib/assets/public-browser.sqlite.gz` as a hashed
+static asset. The public request omits cookies. When `/auth/status` reports
 `can_access_member_catalog: true`, the app requests `/api/catalog/member-binary`
 with the same-origin session cookie. The endpoint checks CMU access again.
 
-The browser decodes gzip via HTTP `Content-Encoding` and opens each SQLite
-snapshot read-only in memory. Queries share any preload already in progress and
+The browser decompresses the public asset and decodes the member response via
+HTTP `Content-Encoding`. It opens both snapshots read-only in memory. Queries share any preload already in progress and
 retry a failed load. Member downloads are canceled and the member connection is
 closed when session state changes or the page is left. The server still handles
 encryption of deployment artifacts. Browsers receive standard SQLite bytes.
+
+To update the bundled snapshot, regenerate the catalog, run
+`scripts/verify_catalog.py`, and replace the bundled file with the verified
+`data/catalog/public-browser.sqlite.gz` before rebuilding.
 
 ## Follow-up work
 

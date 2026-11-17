@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import publicCatalogUrl from "$lib/assets/public-browser.sqlite.gz?url&no-inline";
 import { session } from "$lib/session";
 import { get } from "svelte/store";
 import type { BindingSpec, Database } from "@sqlite.org/sqlite-wasm";
@@ -49,9 +50,9 @@ async function openCatalog(member: boolean, signal?: AbortSignal): Promise<Datab
   });
   const [sqlite, response] = await Promise.all([
     sqliteModule,
-    fetch(member ? "/api/catalog/member-binary" : "/api/catalog/binary", {
+    fetch(member ? "/api/catalog/member-binary" : publicCatalogUrl, {
       credentials: member ? "same-origin" : "omit",
-      cache: "no-store",
+      cache: member ? "no-store" : "default",
       signal,
     }),
   ]);
@@ -64,8 +65,12 @@ async function openCatalog(member: boolean, signal?: AbortSignal): Promise<Datab
     throw new Error(`Catalog download failed (HTTP ${response.status})`);
   }
 
-  // Fetch decodes the endpoint's gzip Content-Encoding.
-  const bytes = new Uint8Array(await response.arrayBuffer());
+  // Fetch decodes the member response's Content-Encoding. The public asset is a gzip file.
+  if (!response.body) throw new Error("Catalog response had no body");
+  const decoded = member
+    ? response
+    : new Response(response.body.pipeThrough(new DecompressionStream("gzip")));
+  const bytes = new Uint8Array(await decoded.arrayBuffer());
   signal?.throwIfAborted();
   const { capi, oo1, wasm } = sqlite;
   const db = new oo1.DB(":memory:");
