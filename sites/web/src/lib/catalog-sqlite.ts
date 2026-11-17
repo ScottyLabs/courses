@@ -3,6 +3,17 @@ import publicCatalogUrl from "$lib/assets/public-browser.sqlite.gz?url&no-inline
 import { session } from "$lib/session";
 import { get } from "svelte/store";
 import type { BindingSpec, Database } from "@sqlite.org/sqlite-wasm";
+import { createCatalogReader } from "./catalog-reader";
+
+export type {
+  CatalogCourse,
+  CatalogInstructor,
+  CatalogPage,
+  CatalogPageOptions,
+  CatalogTerm,
+  CoursePageOptions,
+  InstructorPageOptions,
+} from "./catalog-reader";
 
 const accessMessages = {
   "sign-in-required": "Sign in with CMU to view this catalog data.",
@@ -120,11 +131,17 @@ function clearMemberCatalog() {
   const previous = memberLoad;
   memberLoad = undefined;
   previous?.request.abort();
-  void previous?.database.then((db) => db.close(), () => {});
+  void previous?.database.then(
+    (db) => {
+      db.close();
+    },
+    () => {},
+  );
 }
 
 export function preloadCatalogs() {
-  void publicCatalog().catch(() => {}); // A later query retries a failed preload.
+  // A later query retries a failed preload.
+  void publicCatalog().catch(() => {});
   const unsubscribe = session.subscribe((current) => {
     clearMemberCatalog();
     if (current.status === "signed-in" && current.canAccessMemberCatalog) {
@@ -162,3 +179,7 @@ export async function queryMemberCatalog(sql: string, bind?: BindingSpec) {
     throw error;
   }
 }
+
+/** Typed catalog reads for use by frontend screens. */
+export const { listCourses, streamCourses, listInstructors, streamInstructors, listTerms } =
+  createCatalogReader(queryCatalog, queryMemberCatalog);
