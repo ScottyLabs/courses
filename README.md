@@ -28,7 +28,7 @@ Start with the [maintainer guide](sites/docs/src/maintaining.md), [feature matri
 1. Prepare the local catalog if `data/catalog/public.sqlite` and `data/catalog/member.sqlite` are absent. Copy the supplied source exports into `data/raw`, then run:
 
    ```sh
-   python3 scripts/import_catalog.py data/raw
+   cargo run --release -p courses-index -- --import-catalog data/raw
    python3 scripts/verify_catalog.py
    ```
 

@@ -981,12 +981,18 @@ name = "courses-index"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "csv",
+ "flate2",
+ "indexmap 2.14.2",
  "rayon",
  "regex",
+ "rusqlite",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
  "tracing",
  "tracing-subscriber",
  "walkdir",

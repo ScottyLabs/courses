@@ -1,4 +1,4 @@
-//! Native CLI for the catalog pipeline. Walks `exported/` and `data/fces.csv` into a `Corpus` and writes the catalog artifact.
+//! Inspect scrape data or build the SQLite catalogs.
 
 use std::path::PathBuf;
 
@@ -7,7 +7,7 @@ use clap::Parser;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
-use courses_index::load;
+use courses_index::{catalog, load};
 
 #[derive(Parser, Debug)]
 #[command(about = "Build the course catalog artifact")]
@@ -28,9 +28,21 @@ struct Args {
     #[arg(long)]
     prof: Option<String>,
 
-    /// Write the catalog to this path.
+    /// Build SQLite catalogs from this raw data directory.
     #[arg(long)]
-    write_catalog: Option<PathBuf>,
+    import_catalog: Option<PathBuf>,
+
+    /// Directory for generated SQLite catalogs.
+    #[arg(long, visible_alias = "write-catalog")]
+    output: Option<PathBuf>,
+
+    /// Fresh per-user Stellic export directory.
+    #[arg(long, requires = "import_catalog")]
+    stellic_root: Option<PathBuf>,
+
+    /// Public CourseWeave S27 snapshot.
+    #[arg(long, requires = "import_catalog")]
+    courseweave: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -42,6 +54,19 @@ fn main() -> Result<()> {
 
     let args = Args::parse();
 
+    if args.import_catalog.is_some() || args.output.is_some() {
+        return catalog::build(
+            args.import_catalog
+                .as_deref()
+                .unwrap_or(std::path::Path::new("data/raw")),
+            args.output
+                .as_deref()
+                .unwrap_or(std::path::Path::new("data/catalog")),
+            args.stellic_root.as_deref(),
+            args.courseweave.as_deref(),
+        );
+    }
+
     let corpus = load::run(&args.exported_root, &args.fce_csv)?;
     info!(
         courses = corpus.courses.len(),
@@ -50,10 +75,6 @@ fn main() -> Result<()> {
         fce_rows = corpus.fce_rows.len(),
         "load complete"
     );
-
-    if args.write_catalog.is_some() {
-        unimplemented!();
-    }
 
     if let Some(code) = args.pick {
         match corpus.courses.iter().find(|c| c.code == code) {
