@@ -35,7 +35,9 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v7
 
       - name: Scrape
-        run: nix develop --command cargo run --release -p courses-scraper -- --mode ${{ inputs.mode }}
+        env:
+          SCRAPE_MODE: ${{ inputs.mode }}
+        run: nix develop --command cargo run --release -p courses-scraper -- --mode "$SCRAPE_MODE"
 
       - name: Build catalog
         run: nix develop --command cargo run --release -p courses-index -- --write-catalog catalog.bin
