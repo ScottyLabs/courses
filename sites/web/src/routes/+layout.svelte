@@ -40,7 +40,7 @@
 		padding: 0;
 
 		min-height: 100dvh;
-		min-width: 100dvh;
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
 

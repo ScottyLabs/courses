@@ -3,7 +3,7 @@
 </script>
 
 <footer
-	class="flex min-h-16 flex-row items-center justify-between border-t-1 border-border bg-bg-secondary px-8 py-4"
+	class="flex min-h-16 flex-wrap items-center justify-between gap-3 border-t-1 border-border bg-bg-secondary px-5 py-4 md:px-8"
 >
 	<div class="text-normal flex flex-col text-sm text-fg-gray">
 		<p>Designed, developed and maintained with ❤️ by ScottyLabs.</p>
